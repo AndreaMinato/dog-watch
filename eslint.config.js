@@ -6,6 +6,7 @@ export default antfu({
   pnpm: true,
   antislop: true,
   formatters: {
+    css: true,
     html: true,
   },
 })

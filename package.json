@@ -20,6 +20,7 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
+    "@supabase/supabase-js": "catalog:frontend",
     "vue": "catalog:frontend",
     "vue-router": "catalog:frontend"
   },

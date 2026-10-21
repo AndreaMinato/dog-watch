@@ -1,0 +1,72 @@
+<script setup lang="ts">
+import type { Role } from '../room/room-client'
+import { computed, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
+import { InvalidKeyError } from '../room/room-client'
+import { useRoom } from '../room/use-room'
+
+const { roomKey } = defineProps<{ roomKey?: string }>()
+
+const router = useRouter()
+const { join } = useRoom()
+
+const key = shallowRef('')
+const role = shallowRef<Role>('viewer')
+const name = shallowRef('')
+const pending = shallowRef(false)
+const error = shallowRef<string | null>(null)
+
+const nameLabel = computed(() => role.value === 'camera' ? 'Nome della Camera' : 'Soprannome')
+
+async function submit() {
+  pending.value = true
+  error.value = null
+  try {
+    await join({ key: roomKey ?? key.value, role: role.value, name: name.value })
+    await router.push({ name: 'room' })
+  }
+  catch (cause) {
+    error.value = cause instanceof InvalidKeyError ? 'Chiave non valida' : 'Qualcosa è andato storto, riprova.'
+  }
+  finally {
+    pending.value = false
+  }
+}
+</script>
+
+<template>
+  <form class="join-form" @submit.prevent="submit">
+    <label v-if="roomKey === undefined" class="field">
+      Chiave
+      <input v-model="key" required autocomplete="off" autocapitalize="none" spellcheck="false">
+    </label>
+    <fieldset class="roles">
+      <legend>Ruolo</legend>
+      <label><input v-model="role" type="radio" value="camera"> Camera</label>
+      <label><input v-model="role" type="radio" value="viewer"> Spettatore</label>
+    </fieldset>
+    <label class="field">
+      {{ nameLabel }}
+      <input v-model.trim="name" required maxlength="40">
+    </label>
+    <p v-if="error" role="alert">
+      {{ error }}
+    </p>
+    <button type="submit" :disabled="pending">
+      Entra
+    </button>
+  </form>
+</template>
+
+<style scoped>
+.join-form,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.roles {
+  display: flex;
+  gap: 1rem;
+}
+</style>
