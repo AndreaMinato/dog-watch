@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-test('la Home si apre in italiano', async ({ page }) => {
+test('home page opens in Italian', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'it')
   await expect(page.getByRole('heading', { name: 'dog-watch' })).toBeVisible()
 })
 
-test('il browser di test fornisce una fotocamera finta', async ({ page }) => {
+test('test browser provides a fake camera', async ({ page }) => {
   await page.goto('/')
 
   const videoTracks = await page.evaluate(async () => {
