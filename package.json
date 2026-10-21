@@ -1,0 +1,51 @@
+{
+  "name": "dog-watch",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "build-only": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --build",
+    "lint": "eslint --cache",
+    "test:unit": "vitest --project unit",
+    "test:api": "vitest --project api",
+    "test:e2e": "playwright test",
+    "prepare": "simple-git-hooks"
+  },
+  "dependencies": {
+    "vue": "catalog:frontend",
+    "vue-router": "catalog:frontend"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:dev",
+    "@playwright/test": "catalog:dev",
+    "@tsconfig/node24": "catalog:dev",
+    "@types/node": "catalog:dev",
+    "@vitejs/plugin-vue": "catalog:dev",
+    "@vue/tsconfig": "catalog:dev",
+    "eslint": "catalog:dev",
+    "eslint-plugin-format": "catalog:dev",
+    "eslint-plugin-slop": "catalog:dev",
+    "eslint-plugin-sonarjs": "catalog:dev",
+    "lint-staged": "catalog:dev",
+    "npm-run-all2": "catalog:dev",
+    "simple-git-hooks": "catalog:dev",
+    "typescript": "catalog:dev",
+    "vite": "catalog:dev",
+    "vitest": "catalog:dev",
+    "vue-tsc": "catalog:dev"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*": "eslint --fix --no-warn-ignored"
+  }
+}
