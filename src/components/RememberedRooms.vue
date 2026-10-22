@@ -3,10 +3,10 @@ import type { RememberedRoom } from '../room/remembered-rooms'
 import type { Role } from '../room/room-client'
 import { onBeforeUnmount, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
+import { joinErrorMessage } from '../room/messages'
 import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
 import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
-import { joinErrorMessage } from './join-error-message'
 
 const router = useRouter()
 const { join } = useRoom()

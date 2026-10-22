@@ -7,9 +7,9 @@ import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
-import { refusalMessages } from '../components/refusal-messages'
 import RestScreen from '../components/RestScreen.vue'
 import ViewerList from '../components/ViewerList.vue'
+import { refusalMessages } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
