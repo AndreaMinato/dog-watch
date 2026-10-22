@@ -20,7 +20,10 @@ begin
   update public.rooms set key_hash = new_key_hash where id = target_room;
   delete from public.room_members where room_id = target_room and user_id <> caller;
   perform realtime.send(
-    jsonb_build_object('type', 'key-rotated', 'by', caller), 'control', 'room:' || target_room, true
+    jsonb_build_object('event', jsonb_build_object('type', 'key_rotated', 'by', caller)),
+    'control',
+    'room:' || target_room,
+    true
   );
   return true;
 end;
@@ -41,7 +44,9 @@ begin
     return false;
   end if;
 
-  perform realtime.send(jsonb_build_object('type', 'room-closed'), 'control', 'room:' || target_room, true);
+  perform realtime.send(
+    jsonb_build_object('event', jsonb_build_object('type', 'room_closed')), 'control', 'room:' || target_room, true
+  );
   delete from public.rooms where id = target_room;
   return true;
 end;

@@ -67,7 +67,7 @@ describe('rotate key', () => {
     await rotateKey(camera, roomId)
 
     const { data } = await camera.auth.getSession()
-    expect(await control.received).toMatchObject({ type: 'key-rotated', by: data.session!.user.id })
+    expect(await control.received).toMatchObject({ event: { type: 'key_rotated', by: data.session!.user.id } })
   })
 })
 
@@ -96,7 +96,7 @@ describe('close room', () => {
     const response = await closeRoom(camera, roomId)
 
     expect(response.status).toBe(204)
-    expect(await control.received).toMatchObject({ type: 'room-closed' })
+    expect(await control.received).toMatchObject({ event: { type: 'room_closed' } })
     expect(await channelStatus(camera, `room:${roomId}`)).toBe('CHANNEL_ERROR')
     const rejoin = await invokeFunction('join-room', { user: camera, body: { key, role: 'camera', name: 'soggiorno' } })
     expect(rejoin.status).toBe(403)
