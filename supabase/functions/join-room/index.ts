@@ -44,7 +44,7 @@ export default {
       .from('rooms')
       .update({ last_joined_at: now })
       .eq('key_hash', keyHash)
-      .select('id')
+      .select('id, name')
       .maybeSingle()
     if (error)
       throw error
@@ -63,6 +63,7 @@ export default {
 
     return Response.json({
       roomId: room.id,
+      roomName: room.name,
       topic: `room:${room.id}`,
       iceServers: await createIceServers(turnKey),
       iceServersTtl,
