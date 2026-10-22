@@ -4,6 +4,7 @@ import type { RoomClient } from '../room/room-client'
 import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { keepDevice } from '../device/device-keeper'
 import { startCameraSession } from '../room/camera-session'
+import LensSelector from './LensSelector.vue'
 
 const { room } = defineProps<{ room: RoomClient }>()
 
@@ -41,6 +42,7 @@ onBeforeUnmount(() => {
     muted
     playsinline
   />
+  <LensSelector v-if="session" :session="session" />
 </template>
 
 <style scoped>

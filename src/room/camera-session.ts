@@ -5,6 +5,7 @@ import { createPeerLink } from './peer-link'
 export interface CameraSession {
   readonly preview: MediaStream
   reacquire: () => Promise<void>
+  useCamera: (deviceId: string) => Promise<void>
   close: () => void
 }
 
@@ -15,6 +16,11 @@ const video: MediaTrackConstraints = { width: { ideal: 1280, max: 1280 }, height
 export async function startCameraSession(room: RoomClient): Promise<CameraSession> {
   const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true })
   const links = new Map<string, PeerLink>()
+  let cameraId: string | undefined
+
+  function lens(): MediaTrackConstraints {
+    return cameraId ? { ...video, deviceId: { exact: cameraId } } : video
+  }
 
   async function capture(constraints: MediaStreamConstraints) {
     const captured = await navigator.mediaDevices.getUserMedia(constraints)
@@ -80,7 +86,13 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
     preview: stream,
     async reacquire() {
       if (ended('video') || ended('audio'))
-        await capture({ video: ended('video') && video, audio: ended('audio') })
+        await capture({ video: ended('video') && lens(), audio: ended('audio') })
+    },
+    async useCamera(deviceId) {
+      cameraId = deviceId
+      // Phones often cannot open a second camera while the first one is still running.
+      stream.getVideoTracks().forEach(track => track.stop())
+      await capture({ video: lens() })
     },
     close() {
       stopSignals()

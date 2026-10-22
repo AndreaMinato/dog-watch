@@ -72,3 +72,12 @@ test('the camera rests on a black screen listing its viewers and wakes up on a t
   await expect(rest).toBeHidden()
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
 })
+
+test('a device with a single camera offers no lens choice', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+
+  await expect(camera.getByLabel('Obiettivo')).toHaveCount(0)
+})
