@@ -14,7 +14,8 @@ function remember(client: RoomClient) {
 
 export function useRoom() {
   async function join(request: JoinRequest) {
-    await leave()
+    if (room.value)
+      await leave()
     ended.value = null
     const client = await joinRoom(request)
     client.onMembersChange((current) => {

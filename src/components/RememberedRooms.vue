@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { RememberedRoom } from '../room/remembered-rooms'
 import type { Role } from '../room/room-client'
-import { shallowRef } from 'vue'
+import { onBeforeUnmount, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { forgetRoom, rememberedRooms } from '../room/remembered-rooms'
-import { InvalidKeyError } from '../room/room-client'
+import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
+import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 import { joinErrorMessage } from './join-error-message'
 
@@ -24,7 +24,13 @@ function forget(room: RememberedRoom) {
   rooms.value = rememberedRooms()
 }
 
-async function enter(room: RememberedRoom, key = room.key) {
+const FIRST_RETRY_DELAY_MS = 1_000
+const MAX_RETRY_DELAY_MS = 30_000
+let retry: ReturnType<typeof setTimeout> | undefined
+
+/** With a retry delay, failures other than a definitive answer are retried with backoff. */
+async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) {
+  clearTimeout(retry)
   pending.value = true
   failure.value = null
   try {
@@ -32,6 +38,14 @@ async function enter(room: RememberedRoom, key = room.key) {
     await router.push({ name: 'room' })
   }
   catch (cause) {
+    const definitive = cause instanceof InvalidKeyError || cause instanceof RoomRefusedError
+    if (retryDelay !== undefined && !definitive) {
+      console.error(cause)
+      retry = setTimeout(() => enter(room, key, Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS)), retryDelay)
+      return
+    }
+    if (retryDelay !== undefined)
+      rememberLeftRoom()
     const keyRejected = cause instanceof InvalidKeyError
     if (keyRejected)
       askingKeyFor.value = room.roomId
@@ -44,6 +58,11 @@ async function enter(room: RememberedRoom, key = room.key) {
     pending.value = false
   }
 }
+
+const cameraRoom = cameraRoomToReenter()
+if (cameraRoom)
+  enter(cameraRoom, cameraRoom.key, FIRST_RETRY_DELAY_MS)
+onBeforeUnmount(() => clearTimeout(retry))
 </script>
 
 <template>
