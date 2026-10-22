@@ -6,7 +6,8 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "types": ["node"],
+    "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["tests/**/*"]
+  "include": ["tests/**/*", "supabase/functions/_shared/**/*"]
 }
