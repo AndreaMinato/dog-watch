@@ -43,3 +43,33 @@ test('a fourth viewer is refused', async ({ browser }) => {
   await expect(fourth.getByRole('alert')).toHaveText('La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.')
   await expect(members(camera)).toHaveCount(4)
 })
+
+test('of two viewers joining together for the last place, the later one leaves even if it got in first', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  for (const nickname of ['Andrea', 'Bea'])
+    await joinAsViewer(await openDevice(browser), key, nickname)
+  await expect(members(camera)).toHaveCount(3)
+
+  const slow = await openDevice(browser)
+  const { promise: joined, resolve: onJoined } = Promise.withResolvers<void>()
+  const { promise: slowNetwork, resolve: releaseSlowNetwork } = Promise.withResolvers<void>()
+  await slow.route('**/functions/v1/join-room', async (route) => {
+    const response = await route.fetch()
+    onJoined()
+    await slowNetwork
+    await route.fulfill({ response })
+  })
+  await joinAsViewer(slow, key, 'Carlo')
+  await joined
+
+  const later = await openDevice(browser)
+  await joinAsViewer(later, key, 'Dario')
+  await expect(members(later)).toHaveCount(4)
+
+  releaseSlowNetwork()
+
+  await expect(later.getByRole('alert')).toHaveText('La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.')
+  await expect(members(camera)).toHaveText(['Camera: soggiorno (tu)', 'Spettatore: Andrea', 'Spettatore: Bea', 'Spettatore: Carlo'])
+})

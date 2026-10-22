@@ -62,6 +62,7 @@ export default {
       roomId: room.id,
       topic: `room:${room.id}`,
       iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+      joinedAt: now,
     })
   }),
 }

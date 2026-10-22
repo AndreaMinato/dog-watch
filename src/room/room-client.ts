@@ -66,6 +66,7 @@ interface JoinResponse {
   roomId: string
   topic: string
   iceServers: RTCIceServer[]
+  joinedAt: string
 }
 
 interface SignalMessage {
@@ -82,7 +83,7 @@ interface ControlMessage {
 interface Presence {
   role: Role
   name: string
-  joinedAt: number
+  joinedAt: string
 }
 
 type PresentMember = Member & Pick<Presence, 'joinedAt'>
@@ -95,7 +96,7 @@ function sameName(a: string, b: string): boolean {
 function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<string, Refusal> } {
   const admitted: Member[] = []
   const refusals = new Map<string, Refusal>()
-  const byJoinOrder = [...present].sort((a, b) => a.joinedAt - b.joinedAt || a.id.localeCompare(b.id))
+  const byJoinOrder = [...present].sort((a, b) => Date.parse(a.joinedAt) - Date.parse(b.joinedAt) || a.id.localeCompare(b.id))
   for (const { joinedAt: _, ...member } of byJoinOrder) {
     const sameRole = admitted.filter(other => other.role === member.role)
     if (sameRole.length >= MEMBER_LIMITS[member.role])
@@ -109,7 +110,7 @@ function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<st
 }
 
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic, iceServers } = await invoke<JoinResponse>('join-room', { key, role, name })
+  const { roomId, topic, iceServers, joinedAt } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
       if (status === 403)
@@ -169,7 +170,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   }
 
   await subscribe(channel)
-  await channel.track({ role, name, joinedAt: Date.now() } satisfies Presence)
+  await channel.track({ role, name, joinedAt } satisfies Presence)
   const refusal = await verdict
   if (refusal) {
     await leave()

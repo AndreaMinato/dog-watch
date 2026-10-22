@@ -3,10 +3,11 @@ import type { Role } from '../room/room-client'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
+import { refusalMessages } from '../components/refusal-messages'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
-const { room, members, leave } = useRoom()
+const { room, members, refusal, leave } = useRoom()
 
 const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
@@ -19,6 +20,9 @@ async function exit() {
 <template>
   <main>
     <h1>Stanza</h1>
+    <p v-if="refusal" role="alert">
+      {{ refusalMessages[refusal] }}
+    </p>
     <template v-if="room">
       <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
       <CameraFeeds v-else :room="room" />
