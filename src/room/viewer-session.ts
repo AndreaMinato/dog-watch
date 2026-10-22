@@ -46,9 +46,13 @@ export function startViewerSession(room: RoomClient): ViewerSession {
     const present = new Map(members.filter(member => member.role === 'camera').map(member => [member.id, member]))
     const gone = [...cameras.keys()].filter(id => !present.has(id))
     const arrived = [...present.values()].filter(camera => !cameras.has(camera.id))
+    const changed = [...cameras.values()].filter(({ camera }) => present.has(camera.id) && present.get(camera.id)!.status !== camera.status)
     gone.forEach(disconnect)
     arrived.forEach(connect)
-    if (gone.length > 0 || arrived.length > 0)
+    changed.forEach((connected) => {
+      connected.camera = present.get(connected.camera.id)!
+    })
+    if (gone.length > 0 || arrived.length > 0 || changed.length > 0)
       notify()
   })
 
