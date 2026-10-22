@@ -179,10 +179,10 @@ configure_function_secrets() {
   lines_to_array < <(supabase_api GET "/projects/$ref/secrets" | jq -r '.[].name')
   local existing=(${lines[@]+"${lines[@]}"})
   for name in "${GENERATED_FUNCTION_SECRETS[@]}"; do
-    contains "$name" "${existing[@]}" || openssl rand -base64 32 | tr -d '\n' | set_function_secret "$ref" "$name"
+    contains "$name" ${existing[@]+"${existing[@]}"} || openssl rand -base64 32 | tr -d '\n' | set_function_secret "$ref" "$name"
   done
   for name in "${ASKED_FUNCTION_SECRETS[@]}"; do
-    if ! contains "$name" "${existing[@]}"; then
+    if ! contains "$name" ${existing[@]+"${existing[@]}"}; then
       ask_turn_key
       printf '%s' "${!name}" | set_function_secret "$ref" "$name"
     fi
