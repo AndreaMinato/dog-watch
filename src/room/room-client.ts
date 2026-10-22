@@ -213,7 +213,8 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   }
 
   const presence: Presence = { role, name, joinedAt, status: 'live' }
-  await subscribe(channel)
+  // Realtime drops this Presence with the socket: track it again after every rejoin.
+  await subscribe(channel, () => channel.track(presence))
   await channel.track(presence)
   const refusal = await verdict
   if (refusal) {
@@ -274,13 +275,20 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   }
 }
 
-function subscribe(channel: RealtimeChannel): Promise<void> {
+function subscribe(channel: RealtimeChannel, onRejoin: () => void): Promise<void> {
+  let subscribed = false
   return new Promise((resolve, reject) => {
     channel.subscribe((status, error) => {
-      if (status === 'SUBSCRIBED')
+      if (status === 'SUBSCRIBED' && subscribed) {
+        onRejoin()
+      }
+      else if (status === 'SUBSCRIBED') {
+        subscribed = true
         resolve()
-      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
+      }
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         reject(error ?? new Error(status))
+      }
     })
   })
 }

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice } from './devices'
 
 async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{ camera: Page, viewer: Page }> {
   const camera = await openDevice(browser)
@@ -69,4 +69,42 @@ test('the viewer sees since when a camera that closed its page is offline', asyn
   const offline = viewer.getByText(/Camera soggiorno offline dalle \d\d:\d\d/)
   await expect(offline).toBeVisible()
   expect(clockTimes(droppedAt)).toContain((await offline.textContent())!.trim().slice(-5))
+})
+
+async function loseNetwork(camera: Page): Promise<void> {
+  await camera.context().setOffline(true)
+  // Offline emulation leaves established WebRTC media flowing: break it by hand.
+  await camera.evaluate(() => window.peerConnections.forEach(connection => connection.close()))
+}
+
+test('the viewer gets the video back after the camera briefly loses the network', async ({ browser }) => {
+  test.setTimeout(120_000)
+  const { camera, viewer } = await watchCamera(browser)
+  const offline = viewer.getByText(/Camera soggiorno offline dalle/)
+
+  await loseNetwork(camera)
+
+  await expect(offline).toBeVisible({ timeout: 30_000 })
+
+  await camera.context().setOffline(false)
+
+  await expect(offline).toBeHidden({ timeout: 60_000 })
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+})
+
+test('the viewer gets the video back after the camera drops out of the room for lack of network', async ({ browser }) => {
+  test.setTimeout(240_000)
+  const { camera, viewer } = await watchCamera(browser)
+  const offline = viewer.getByText(/Camera soggiorno offline dalle/)
+
+  await loseNetwork(camera)
+
+  await expect(members(viewer)).toHaveCount(1, { timeout: 120_000 })
+  await expect(offline).toBeVisible()
+
+  await camera.context().setOffline(false)
+
+  await expect(members(viewer)).toHaveCount(2, { timeout: 60_000 })
+  await expect(offline).toBeHidden({ timeout: 60_000 })
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
 })

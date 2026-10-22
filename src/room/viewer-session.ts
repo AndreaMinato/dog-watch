@@ -17,6 +17,9 @@ interface WatchedCamera extends CameraFeed {
   link: PeerLink | null
 }
 
+const RESTART_ICE_AFTER_MS = 5_000
+const RECONNECT_AFTER_MS = 10_000
+
 export function startViewerSession(room: RoomClient): ViewerSession {
   const cameras = new Map<string, WatchedCamera>()
   const listeners = new Set<(feeds: CameraFeed[]) => void>()
@@ -31,12 +34,38 @@ export function startViewerSession(room: RoomClient): ViewerSession {
         .forEach(previous => watched.stream.removeTrack(previous))
       watched.stream.addTrack(track)
     })
+    let recovery: ReturnType<typeof setTimeout> | undefined
+    const whileCurrent = (action: () => void) => () => {
+      if (watched.link === link)
+        action()
+    }
+    const reconnectUnlessConnected = () => {
+      recovery = setTimeout(whileCurrent(() => {
+        disconnect(watched)
+        connect(watched)
+      }), RECONNECT_AFTER_MS)
+    }
     link.connection.addEventListener('connectionstatechange', () => {
-      if (link.connection.connectionState === 'connected' && watched.offlineSince) {
-        watched.offlineSince = null
-        notify()
+      const state = link.connection.connectionState
+      if (state === 'connected') {
+        clearTimeout(recovery)
+        recovery = undefined
+        if (watched.offlineSince) {
+          watched.offlineSince = null
+          notify()
+        }
+      }
+      else if ((state === 'disconnected' || state === 'failed') && recovery === undefined) {
+        const droppedAt = new Date()
+        recovery = setTimeout(whileCurrent(() => {
+          watched.offlineSince ??= droppedAt
+          notify()
+          link.connection.restartIce()
+          reconnectUnlessConnected()
+        }), state === 'failed' ? 0 : RESTART_ICE_AFTER_MS)
       }
     })
+    reconnectUnlessConnected()
     link.connection.addTransceiver('video', { direction: 'recvonly' })
     link.connection.addTransceiver('audio', { direction: 'recvonly' })
     watched.link = link
