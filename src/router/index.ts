@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useRoom } from '../room/use-room'
 import CreateRoomView from '../views/CreateRoomView.vue'
 import HomeView from '../views/HomeView.vue'
+import HowItWorksView from '../views/HowItWorksView.vue'
 import JoinRoomView from '../views/JoinRoomView.vue'
 import RoomView from '../views/RoomView.vue'
 
@@ -11,6 +12,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
     { path: '/crea', name: 'create', component: CreateRoomView },
     { path: '/entra', name: 'join', component: JoinRoomView },
+    { path: '/come-funziona', name: 'how-it-works', component: HowItWorksView },
     {
       path: '/stanza',
       name: 'room',
