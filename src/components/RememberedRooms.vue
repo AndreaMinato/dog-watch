@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import type { RememberedRoom } from '../room/remembered-rooms'
-import type { Role } from '../room/room-client'
 import { onBeforeUnmount, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { joinErrorMessage } from '../room/messages'
+import { joinErrorMessage, roleLabels } from '../room/messages'
 import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
 import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
@@ -16,8 +15,6 @@ const pending = shallowRef(false)
 const failure = shallowRef<{ roomId: string, message: string } | null>(null)
 const askingKeyFor = shallowRef<string | null>(null)
 const newKey = shallowRef('')
-
-const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
 function forget(room: RememberedRoom) {
   forgetRoom(room.roomId)

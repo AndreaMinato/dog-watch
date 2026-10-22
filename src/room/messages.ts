@@ -1,5 +1,9 @@
-import type { Refusal } from './room-client'
+import type { Refusal, Role } from './room-client'
 import { InvalidKeyError, MEMBER_LIMITS, RoomRefusedError, TooManyAttemptsError } from './room-client'
+
+export const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
+
+export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 
 export const refusalMessages: Record<Refusal, string> = {
   cameras_full: `La Stanza ha già ${MEMBER_LIMITS.camera} Camere: non puoi entrare come Camera.`,
@@ -14,5 +18,5 @@ export function joinErrorMessage(cause: unknown): string {
     return 'Troppi tentativi, riprova più tardi.'
   if (cause instanceof RoomRefusedError)
     return refusalMessages[cause.refusal]
-  return 'Qualcosa è andato storto, riprova.'
+  return somethingWentWrong
 }

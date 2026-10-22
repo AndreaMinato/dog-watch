@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ControlEvent, Role } from '../room/room-client'
+import type { ControlEvent } from '../room/room-client'
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
@@ -9,15 +9,13 @@ import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
 import ViewerList from '../components/ViewerList.vue'
-import { refusalMessages } from '../room/messages'
+import { refusalMessages, roleLabels, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
 
 const resting = shallowRef(false)
-
-const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
 function endMessage(event: ControlEvent): string {
   switch (event.type) {
@@ -99,7 +97,7 @@ async function exit() {
           @confirm="run(closeRoom)"
         />
         <p v-if="error" role="alert">
-          Qualcosa è andato storto, riprova.
+          {{ somethingWentWrong }}
         </p>
       </template>
       <button type="button" @click="exit">
