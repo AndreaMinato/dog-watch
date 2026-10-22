@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, START_LOCATION } from 'vue-router'
+import { cameraRoomToReenter } from '../room/remembered-rooms'
 import { useRoom } from '../room/use-room'
 import CreateRoomView from '../views/CreateRoomView.vue'
 import HomeView from '../views/HomeView.vue'
@@ -20,6 +21,20 @@ const router = createRouter({
       beforeEnter: () => useRoom().room.value ? true : { name: 'home' },
     },
   ],
+})
+
+router.beforeEach(async (to, from) => {
+  const cameraRoom = from === START_LOCATION ? cameraRoomToReenter() : undefined
+  if (!cameraRoom)
+    return
+  try {
+    await useRoom().join(cameraRoom)
+  }
+  catch (error) {
+    console.error(error)
+    return
+  }
+  return to.name === 'room' ? undefined : { name: 'room' }
 })
 
 export default router

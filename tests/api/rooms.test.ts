@@ -32,6 +32,7 @@ describe('join room', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       roomId,
+      roomName: 'Casa al mare',
       topic: `room:${roomId}`,
       iceServers: expect.any(Array),
       iceServersTtl: expect.any(Number),
