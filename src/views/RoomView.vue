@@ -8,7 +8,6 @@ import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
-import ViewerList from '../components/ViewerList.vue'
 import { refusalMessages, roleLabels, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
@@ -62,7 +61,6 @@ async function exit() {
           Schermata a riposo
         </button>
         <JoinLink :room-key="room.key" />
-        <ViewerList :room="room" />
       </template>
       <template v-else>
         <CameraFeeds :room="room" />
@@ -116,7 +114,7 @@ async function exit() {
       </RouterLink>
     </template>
   </main>
-  <RestScreen v-if="resting && room" :room="room" @wake="resting = false" />
+  <RestScreen v-if="resting && room" @wake="resting = false" />
 </template>
 
 <style scoped>

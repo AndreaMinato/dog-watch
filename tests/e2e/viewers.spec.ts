@@ -11,7 +11,7 @@ test('the camera lists the nicknames of the connected viewers', async ({ browser
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
 
-  const viewers = camera.getByRole('list', { name: 'Spettatori' }).getByRole('listitem')
+  const viewers = members(camera).filter({ hasText: 'Spettatore' })
   await expect(viewers).toHaveCount(2)
   await expect(viewers.filter({ hasText: 'Andrea' })).toHaveCount(1)
   await expect(viewers.filter({ hasText: 'Giulia' })).toHaveCount(1)
@@ -26,12 +26,12 @@ test('the camera drops a viewer from the list when it leaves', async ({ browser 
   await joinAsViewer(andrea, key, 'Andrea')
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
-  const viewers = camera.getByRole('list', { name: 'Spettatori' }).getByRole('listitem')
+  const viewers = members(camera).filter({ hasText: 'Spettatore' })
   await expect(viewers).toHaveCount(2)
 
   await giulia.close()
 
-  await expect(viewers).toHaveText(['Andrea'])
+  await expect(viewers).toHaveText(['Spettatore: Andrea'])
 })
 
 test('a viewer is told when another viewer joins', async ({ browser }) => {
