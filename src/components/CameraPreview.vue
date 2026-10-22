@@ -29,6 +29,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <p>
+    Tieni il dispositivo in carica e questa pagina in primo piano: se lo schermo si spegne o passi a un'altra app, la Camera smette di trasmettere.
+  </p>
   <video
     v-if="session"
     class="preview"

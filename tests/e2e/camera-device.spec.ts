@@ -39,3 +39,15 @@ test('the camera films again for its viewers after losing the camera while hidde
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
   expect(await openPeerConnections(camera)).toBe(1)
 })
+
+test('the camera is reminded to stay plugged in and in the foreground', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+
+  await expect(camera.getByText('Tieni il dispositivo in carica e questa pagina in primo piano')).toBeVisible()
+  await expect(viewer.getByRole('list', { name: 'Nella Stanza' })).toBeVisible()
+  await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
+})
