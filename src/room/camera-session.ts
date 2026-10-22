@@ -4,19 +4,40 @@ import { createPeerLink } from './peer-link'
 
 export interface CameraSession {
   readonly preview: MediaStream
+  reacquire: () => Promise<void>
   close: () => void
 }
 
 const MAX_VIDEO_BITRATE = 1_500_000
 
-const constraints: MediaStreamConstraints = {
-  video: { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } },
-  audio: true,
-}
+const video: MediaTrackConstraints = { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } }
 
 export async function startCameraSession(room: RoomClient): Promise<CameraSession> {
-  const stream = await navigator.mediaDevices.getUserMedia(constraints)
+  const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true })
   const links = new Map<string, PeerLink>()
+
+  async function capture(constraints: MediaStreamConstraints) {
+    const captured = await navigator.mediaDevices.getUserMedia(constraints)
+    await Promise.all(captured.getTracks().map(swapTrack))
+  }
+
+  async function swapTrack(track: MediaStreamTrack) {
+    const previous = stream.getTracks().find(candidate => candidate.kind === track.kind)
+    if (previous) {
+      track.enabled = previous.enabled
+      previous.stop()
+      stream.removeTrack(previous)
+    }
+    stream.addTrack(track)
+    const senders = [...links.values()]
+      .flatMap(link => link.connection.getSenders())
+      .filter(sender => sender.track?.kind === track.kind)
+    await Promise.all(senders.map(sender => sender.replaceTrack(track)))
+  }
+
+  function ended(kind: string) {
+    return stream.getTracks().some(track => track.kind === kind && track.readyState === 'ended')
+  }
 
   async function sendStream(connection: RTCPeerConnection) {
     for (const transceiver of connection.getTransceivers()) {
@@ -57,6 +78,10 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
 
   return {
     preview: stream,
+    async reacquire() {
+      if (ended('video') || ended('audio'))
+        await capture({ video: ended('video') && video, audio: ended('audio') })
+    },
     close() {
       stopSignals()
       stopMembers()

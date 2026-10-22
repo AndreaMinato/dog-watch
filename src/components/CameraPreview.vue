@@ -13,11 +13,12 @@ let releaseDevice = () => {}
 
 onMounted(async () => {
   const started = await startCameraSession(room)
-  if (unmounted)
+  if (unmounted) {
     started.close()
-  else
-    session.value = started
-  releaseDevice = keepDevice()
+    return
+  }
+  session.value = started
+  releaseDevice = keepDevice(started)
 })
 
 onBeforeUnmount(() => {

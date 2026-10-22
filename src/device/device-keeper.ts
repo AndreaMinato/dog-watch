@@ -1,4 +1,6 @@
-export function keepDevice(): () => void {
+import type { CameraSession } from '../room/camera-session'
+
+export function keepDevice(session: Pick<CameraSession, 'reacquire'>): () => void {
   let wakeLock: Promise<WakeLockSentinel | null> = Promise.resolve(null)
   let stopped = false
 
@@ -12,8 +14,10 @@ export function keepDevice(): () => void {
   }
 
   function onVisibilityChange() {
-    if (document.visibilityState === 'visible')
-      holdScreen()
+    if (document.visibilityState !== 'visible')
+      return
+    holdScreen()
+    session.reacquire().catch(console.error)
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange)

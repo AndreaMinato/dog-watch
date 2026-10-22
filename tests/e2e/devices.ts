@@ -123,3 +123,11 @@ export async function hideAndShow(page: Page): Promise<void> {
     }, state)
   }
 }
+
+export async function expectFrozenVideo(video: Locator): Promise<void> {
+  await expect.poll(async () => {
+    const before = await captureFrame(video)
+    await video.page().waitForTimeout(1_000)
+    return before === await captureFrame(video)
+  }, { timeout: 15_000 }).toBe(true)
+}
