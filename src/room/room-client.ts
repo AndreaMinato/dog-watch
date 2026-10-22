@@ -35,6 +35,8 @@ type SignalListener = (from: string, signal: Signal) => void
 type ControlListener = (event: ControlEvent) => void
 
 export interface RoomClient {
+  readonly roomId: string
+  readonly roomName: string
   readonly key: string
   readonly self: Member
   readonly iceServers: RTCIceServer[]
@@ -80,6 +82,7 @@ interface IceServersGrant {
 
 interface JoinResponse extends IceServersGrant {
   roomId: string
+  roomName: string
   topic: string
   joinedAt: string
 }
@@ -126,7 +129,7 @@ function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<st
 }
 
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic, iceServers: joinedIceServers, iceServersTtl, joinedAt } = await invoke<JoinResponse>('join-room', { key, role, name })
+  const { roomId, roomName, topic, iceServers: joinedIceServers, iceServersTtl, joinedAt } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
       if (status === 403)
@@ -227,6 +230,8 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   let currentKey = key
 
   return {
+    roomId,
+    roomName,
     get key() {
       return currentKey
     },

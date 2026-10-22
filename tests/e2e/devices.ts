@@ -1,4 +1,4 @@
-import type { Browser, Locator, Page } from '@playwright/test'
+import type { Browser, BrowserContextOptions, Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
 declare global {
@@ -33,8 +33,8 @@ function recordWakeLocks() {
  * The local gateway is not behind Cloudflare: give each device its own client IP, as
  * Cloudflare would, so failed join attempts never pile up across tests and runs.
  */
-export async function openDevice(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({ permissions: ['screen-wake-lock'] })
+export async function openDevice(browser: Browser, storageState?: BrowserContextOptions['storageState']): Promise<Page> {
+  const context = await browser.newContext({ permissions: ['screen-wake-lock'], storageState })
   await context.addInitScript(recordPeerConnections)
   await context.addInitScript(recordWakeLocks)
   const ip = Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')

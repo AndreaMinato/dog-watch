@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import RememberedRooms from '../components/RememberedRooms.vue'
+</script>
+
 <template>
   <main>
     <h1>dog-watch</h1>
@@ -12,6 +16,7 @@
         Come funziona e cosa salviamo
       </RouterLink>
     </nav>
+    <RememberedRooms />
   </main>
 </template>
 

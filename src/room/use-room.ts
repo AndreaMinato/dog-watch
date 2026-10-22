@@ -1,10 +1,16 @@
 import type { ControlEvent, JoinRequest, Member, RoomClient } from './room-client'
 import { shallowReadonly, shallowRef, triggerRef } from 'vue'
+import { forgetRoom, rememberEnteredRoom, rememberLeftRoom } from './remembered-rooms'
 import { joinRoom } from './room-client'
 
 const room = shallowRef<RoomClient | null>(null)
 const members = shallowRef<readonly Member[]>([])
 const ended = shallowRef<ControlEvent | null>(null)
+
+function remember(client: RoomClient) {
+  const { roomId, roomName, key, self: { role, name } } = client
+  rememberEnteredRoom({ roomId, roomName, key, role, name })
+}
 
 export function useRoom() {
   async function join(request: JoinRequest) {
@@ -21,6 +27,7 @@ export function useRoom() {
         await client.leave()
     })
     room.value = client
+    remember(client)
   }
 
   function end(client: RoomClient, event: ControlEvent): boolean {
@@ -29,6 +36,10 @@ export function useRoom() {
     room.value = null
     members.value = []
     ended.value = event
+    if (event.type === 'room_closed')
+      forgetRoom(client.roomId)
+    else
+      rememberLeftRoom()
     return true
   }
 
@@ -36,11 +47,13 @@ export function useRoom() {
     const client = room.value
     room.value = null
     members.value = []
+    rememberLeftRoom()
     await client?.leave()
   }
 
   async function rotateKey() {
     await room.value!.rotateKey()
+    remember(room.value!)
     triggerRef(room)
   }
 
