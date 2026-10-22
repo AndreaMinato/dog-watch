@@ -59,3 +59,13 @@ export async function createRoom(name = 'Casa al mare') {
   const response = await invokeFunction('create-room', { user, body: { name } })
   return { response, ...(await response.json()) as { roomId: string, key: string } }
 }
+
+export async function channelStatus(user: SupabaseClient, topic: string): Promise<string> {
+  await user.realtime.setAuth()
+  const channel = user.channel(topic, { config: { private: true } })
+  const status = await new Promise<string>((resolve) => {
+    channel.subscribe(status => resolve(status))
+  })
+  await user.removeChannel(channel)
+  return status
+}
