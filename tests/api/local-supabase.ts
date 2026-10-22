@@ -18,10 +18,19 @@ const clientOptions = { auth: { persistSession: false, autoRefreshToken: false }
 interface InvokeOptions {
   user?: SupabaseClient
   body?: unknown
+  ip?: string
 }
 
-export async function invokeFunction(name: string, { user, body }: InvokeOptions = {}): Promise<Response> {
-  const headers: Record<string, string> = { apikey: status.PUBLISHABLE_KEY }
+export function randomIp(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')
+}
+
+/**
+ * The local gateway is not behind Cloudflare, so tests set its client IP header themselves.
+ * Each call gets its own IP by default, so failed attempts never leak between tests.
+ */
+export async function invokeFunction(name: string, { user, body, ip = randomIp() }: InvokeOptions = {}): Promise<Response> {
+  const headers: Record<string, string> = { 'apikey': status.PUBLISHABLE_KEY, 'cf-connecting-ip': ip }
   if (user) {
     const { data } = await user.auth.getSession()
     headers.Authorization = `Bearer ${data.session?.access_token}`
@@ -43,4 +52,20 @@ export async function signInAnonymously(): Promise<SupabaseClient> {
 
 export function createAdminClient(): SupabaseClient {
   return createClient(status.API_URL, status.SECRET_KEY, clientOptions)
+}
+
+export async function createRoom(name = 'Casa al mare') {
+  const user = await signInAnonymously()
+  const response = await invokeFunction('create-room', { user, body: { name } })
+  return { response, ...(await response.json()) as { roomId: string, key: string } }
+}
+
+export async function channelStatus(user: SupabaseClient, topic: string): Promise<string> {
+  await user.realtime.setAuth()
+  const channel = user.channel(topic, { config: { private: true } })
+  const status = await new Promise<string>((resolve) => {
+    channel.subscribe(status => resolve(status))
+  })
+  await user.removeChannel(channel)
+  return status
 }

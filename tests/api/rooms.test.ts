@@ -1,12 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, it } from 'vitest'
-import { createAdminClient, invokeFunction, signInAnonymously } from './local-supabase'
-
-async function createRoom(name = 'Casa al mare') {
-  const user = await signInAnonymously()
-  const response = await invokeFunction('create-room', { user, body: { name } })
-  return { response, ...(await response.json()) as { roomId: string, key: string } }
-}
+import { channelStatus, createAdminClient, createRoom, invokeFunction, signInAnonymously } from './local-supabase'
 
 describe('create room', () => {
   it('returns a four-word key and stores only its hash', async () => {
@@ -37,7 +30,26 @@ describe('join room', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ roomId, topic: `room:${roomId}` })
+    expect(await response.json()).toEqual({
+      roomId,
+      roomName: 'Casa al mare',
+      topic: `room:${roomId}`,
+      iceServers: expect.any(Array),
+      iceServersTtl: expect.any(Number),
+      joinedAt: expect.any(String),
+    })
+  })
+
+  it('returns the instant the member joined, by the server clock', async () => {
+    const { key } = await createRoom()
+    const user = await signInAnonymously()
+    const before = Date.now()
+
+    const response = await invokeFunction('join-room', { user, body: { key, role: 'viewer', name: 'Andrea' } })
+
+    const { joinedAt } = await response.json()
+    expect(Date.parse(joinedAt)).toBeGreaterThanOrEqual(before - 1000)
+    expect(Date.parse(joinedAt)).toBeLessThanOrEqual(Date.now() + 1000)
   })
 
   it('answers unknown and malformed keys identically', async () => {
@@ -57,16 +69,6 @@ describe('join room', () => {
 })
 
 describe('room channel', () => {
-  async function subscribe(user: SupabaseClient, topic: string) {
-    await user.realtime.setAuth()
-    const channel = user.channel(topic, { config: { private: true } })
-    const status = await new Promise<string>((resolve) => {
-      channel.subscribe(status => resolve(status))
-    })
-    await user.removeChannel(channel)
-    return status
-  }
-
   it('admits room members', async () => {
     const { key } = await createRoom()
     const member = await signInAnonymously()
@@ -75,14 +77,14 @@ describe('room channel', () => {
       body: { key, role: 'camera', name: 'soggiorno' },
     })).json()
 
-    expect(await subscribe(member, topic)).toBe('SUBSCRIBED')
+    expect(await channelStatus(member, topic)).toBe('SUBSCRIBED')
   })
 
   it('rejects anonymous users who are not members', async () => {
     const { roomId } = await createRoom()
     const outsider = await signInAnonymously()
 
-    expect(await subscribe(outsider, `room:${roomId}`)).toBe('CHANNEL_ERROR')
+    expect(await channelStatus(outsider, `room:${roomId}`)).toBe('CHANNEL_ERROR')
   })
 
   it('rejects members who left the room', async () => {
@@ -93,6 +95,6 @@ describe('room channel', () => {
     const response = await invokeFunction('leave-room', { user: member, body: { roomId } })
 
     expect(response.status).toBe(204)
-    expect(await subscribe(member, `room:${roomId}`)).toBe('CHANNEL_ERROR')
+    expect(await channelStatus(member, `room:${roomId}`)).toBe('CHANNEL_ERROR')
   })
 })
