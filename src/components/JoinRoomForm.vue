@@ -3,7 +3,7 @@ import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
-import { InvalidKeyError } from '../room/room-client'
+import { InvalidKeyError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
@@ -19,6 +19,14 @@ const error = shallowRef<string | null>(null)
 
 const nameLabel = computed(() => role.value === 'camera' ? 'Nome della Camera' : 'Soprannome')
 
+function errorMessage(cause: unknown): string {
+  if (cause instanceof InvalidKeyError)
+    return 'Chiave non valida'
+  if (cause instanceof TooManyAttemptsError)
+    return 'Troppi tentativi, riprova più tardi.'
+  return 'Qualcosa è andato storto, riprova.'
+}
+
 async function submit() {
   pending.value = true
   error.value = null
@@ -27,7 +35,7 @@ async function submit() {
     await router.push({ name: 'room' })
   }
   catch (cause) {
-    error.value = cause instanceof InvalidKeyError ? 'Chiave non valida' : 'Qualcosa è andato storto, riprova.'
+    error.value = errorMessage(cause)
   }
   finally {
     pending.value = false

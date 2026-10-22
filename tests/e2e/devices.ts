@@ -18,9 +18,16 @@ function recordPeerConnections() {
   }
 }
 
+/**
+ * The local gateway is not behind Cloudflare: give each device its own client IP, as
+ * Cloudflare would, so failed join attempts never pile up across tests and runs.
+ */
 export async function openDevice(browser: Browser): Promise<Page> {
   const context = await browser.newContext()
   await context.addInitScript(recordPeerConnections)
+  const ip = Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')
+  await context.route('**/functions/v1/**', route =>
+    route.continue({ headers: { ...route.request().headers(), 'cf-connecting-ip': ip } }))
   const page = await context.newPage()
   await page.goto('/')
   return page

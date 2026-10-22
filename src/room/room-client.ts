@@ -34,6 +34,8 @@ export interface RoomClient {
 
 export class InvalidKeyError extends Error {}
 
+export class TooManyAttemptsError extends Error {}
+
 async function invoke<T>(name: string, body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
   if (error)
@@ -60,7 +62,12 @@ interface SignalMessage {
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
   const { roomId, topic, iceServers } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
-      throw error instanceof FunctionsHttpError && error.context.status === 403 ? new InvalidKeyError() : error
+      const status = error instanceof FunctionsHttpError ? error.context.status : undefined
+      if (status === 403)
+        throw new InvalidKeyError()
+      if (status === 429)
+        throw new TooManyAttemptsError()
+      throw error
     })
   const { data: { session } } = await supabase.auth.getSession()
   const self: Member = { id: session!.user.id, role, name }
