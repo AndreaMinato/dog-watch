@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      alias:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.netlify.outputs.url }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - run: supabase db push --include-all --yes
+      - run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --use-api
+
+      - run: pnpm build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - id: netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          ALIAS: ${{ inputs.alias }}
+          MESSAGE: ${{ github.ref_name }} ${{ github.sha }}
+        run: |
+          if [ "$ENVIRONMENT" = production ]; then target=(--prod); else target=(--alias "$ALIAS"); fi
+          deploy=$(npx --yes netlify-cli@27.14.1 deploy --dir dist --no-build "${target[@]}" --message "$MESSAGE" --json)
+          echo "url=$(jq -r '.url // .deploy_url' <<<"$deploy")" >> "$GITHUB_OUTPUT"
