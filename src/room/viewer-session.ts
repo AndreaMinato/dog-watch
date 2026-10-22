@@ -5,6 +5,7 @@ import { createPeerLink } from './peer-link'
 export interface CameraFeed {
   camera: Member
   stream: MediaStream
+  offlineSince: Date | null
 }
 
 export interface ViewerSession {
@@ -12,28 +13,38 @@ export interface ViewerSession {
   close: () => void
 }
 
-interface ConnectedCamera extends CameraFeed {
-  link: PeerLink
+interface WatchedCamera extends CameraFeed {
+  link: PeerLink | null
 }
 
 export function startViewerSession(room: RoomClient): ViewerSession {
-  const cameras = new Map<string, ConnectedCamera>()
+  const cameras = new Map<string, WatchedCamera>()
   const listeners = new Set<(feeds: CameraFeed[]) => void>()
-  const feeds = (): CameraFeed[] => [...cameras.values()].map(({ camera, stream }) => ({ camera, stream }))
+  const feeds = (): CameraFeed[] => [...cameras.values()].map(({ camera, stream, offlineSince }) => ({ camera, stream, offlineSince }))
   const notify = () => listeners.forEach(listener => listener(feeds()))
 
-  function connect(camera: Member) {
-    const link = createPeerLink(room, camera.id, { polite: false })
-    const stream = new MediaStream()
-    link.connection.addEventListener('track', ({ track }) => stream.addTrack(track))
+  function connect(watched: WatchedCamera) {
+    const link = createPeerLink(room, watched.camera.id, { polite: false })
+    link.connection.addEventListener('track', ({ track }) => {
+      watched.stream.getTracks()
+        .filter(previous => previous.kind === track.kind)
+        .forEach(previous => watched.stream.removeTrack(previous))
+      watched.stream.addTrack(track)
+    })
+    link.connection.addEventListener('connectionstatechange', () => {
+      if (link.connection.connectionState === 'connected' && watched.offlineSince) {
+        watched.offlineSince = null
+        notify()
+      }
+    })
     link.connection.addTransceiver('video', { direction: 'recvonly' })
     link.connection.addTransceiver('audio', { direction: 'recvonly' })
-    cameras.set(camera.id, { camera, stream, link })
+    watched.link = link
   }
 
-  function disconnect(cameraId: string) {
-    cameras.get(cameraId)?.link.close()
-    cameras.delete(cameraId)
+  function disconnect(watched: WatchedCamera) {
+    watched.link?.close()
+    watched.link = null
   }
 
   const stopSignals = room.onSignal((from, signal) => {
@@ -44,15 +55,30 @@ export function startViewerSession(room: RoomClient): ViewerSession {
 
   const stopMembers = room.onMembersChange((members) => {
     const present = new Map(members.filter(member => member.role === 'camera').map(member => [member.id, member]))
-    const gone = [...cameras.keys()].filter(id => !present.has(id))
-    const arrived = [...present.values()].filter(camera => !cameras.has(camera.id))
-    const changed = [...cameras.values()].filter(({ camera }) => present.has(camera.id) && present.get(camera.id)!.status !== camera.status)
-    gone.forEach(disconnect)
-    arrived.forEach(connect)
-    changed.forEach((connected) => {
-      connected.camera = present.get(connected.camera.id)!
-    })
-    if (gone.length > 0 || arrived.length > 0 || changed.length > 0)
+    let changed = false
+    for (const watched of cameras.values()) {
+      const camera = present.get(watched.camera.id)
+      if (!camera && watched.link) {
+        disconnect(watched)
+        watched.offlineSince ??= new Date()
+        changed = true
+      }
+      else if (camera && (camera.status !== watched.camera.status || !watched.link)) {
+        watched.camera = camera
+        changed = true
+      }
+      if (camera && !watched.link)
+        connect(watched)
+    }
+    for (const camera of present.values()) {
+      if (cameras.has(camera.id))
+        continue
+      const watched: WatchedCamera = { camera, stream: new MediaStream(), offlineSince: null, link: null }
+      cameras.set(camera.id, watched)
+      connect(watched)
+      changed = true
+    }
+    if (changed)
       notify()
   })
 
@@ -65,7 +91,7 @@ export function startViewerSession(room: RoomClient): ViewerSession {
     close() {
       stopSignals()
       stopMembers()
-      ;[...cameras.keys()].forEach(disconnect)
+      cameras.forEach(disconnect)
       listeners.clear()
     },
   }

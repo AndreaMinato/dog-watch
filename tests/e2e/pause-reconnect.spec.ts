@@ -54,3 +54,19 @@ test('the viewer receives no audio while the camera is silenced', async ({ brows
 
   await expect.poll(() => audioEnergyGain(viewer)).toBeLessThan(0.000_01)
 })
+
+function clockTimes(around: number): string[] {
+  return [around - 60_000, around, around + 60_000]
+    .map(instant => new Date(instant).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }))
+}
+
+test('the viewer sees since when a camera that closed its page is offline', async ({ browser }) => {
+  const { camera, viewer } = await watchCamera(browser)
+
+  await camera.close()
+  const droppedAt = Date.now()
+
+  const offline = viewer.getByText(/Camera soggiorno offline dalle \d\d:\d\d/)
+  await expect(offline).toBeVisible()
+  expect(clockTimes(droppedAt)).toContain((await offline.textContent())!.trim().slice(-5))
+})

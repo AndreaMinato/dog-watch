@@ -6,6 +6,8 @@ const { feed } = defineProps<{ feed: CameraFeed }>()
 defineEmits<{ enlarge: [] }>()
 
 const muted = shallowRef(true)
+
+const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
 </script>
 
 <template>
@@ -18,7 +20,10 @@ const muted = shallowRef(true)
       playsinline
       @click="$emit('enlarge')"
     />
-    <p v-if="feed.camera.status === 'paused'" class="status">
+    <p v-if="feed.offlineSince" class="status">
+      Camera {{ feed.camera.name }} offline dalle {{ clock.format(feed.offlineSince) }}
+    </p>
+    <p v-else-if="feed.camera.status === 'paused'" class="status">
       Camera in pausa
     </p>
     <figcaption>
