@@ -8,15 +8,19 @@ export const iceServersTtl = 24 * 60 * 60
 
 export type TurnKey = { id: string, apiToken: string } | 'simulated'
 
-export function readTurnKey(env: (name: string) => string | undefined): TurnKey {
+const cloudflareStun: IceServer = { urls: 'stun:stun.cloudflare.com:3478' }
+
+export function readTurnKey(env: (name: string) => string | undefined): TurnKey | undefined {
   const id = env('CLOUDFLARE_TURN_KEY_ID')
   const apiToken = env('CLOUDFLARE_TURN_KEY_API_TOKEN')
   if (!id || !apiToken)
-    throw new Error('CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set')
+    return undefined
   return id === 'simulated' ? 'simulated' : { id, apiToken }
 }
 
-export async function createIceServers(turnKey: TurnKey): Promise<IceServer[]> {
+export async function createIceServers(turnKey: TurnKey | undefined): Promise<IceServer[]> {
+  if (!turnKey)
+    return [cloudflareStun]
   const { iceServers } = turnKey === 'simulated' ? simulateCloudflare() : await requestCloudflare(turnKey)
   return withoutPort53(iceServers)
 }
