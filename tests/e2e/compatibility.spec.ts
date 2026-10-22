@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { test } from './devices'
 
 test('a browser without WebRTC is told it is not supported', async ({ page }) => {
   await page.addInitScript(() => {
