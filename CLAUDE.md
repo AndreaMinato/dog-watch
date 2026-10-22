@@ -26,3 +26,9 @@ Label di default: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-hu
 ### Domain docs
 
 Single-context, glossario e ADR nella wiki GitHub (`../dog-watch.wiki`), non nel repo. See `docs/agents/domain.md`.
+
+## Ambiente
+
+- **Servizi esterni**: `gh`, `netlify` e `supabase` sono autenticati sulla macchina di Andrea. Configura tu GitHub, Netlify e Supabase con le CLI; a lui restano login, carta e segreti. Vedi ADR-0004 nella wiki.
+- **Più agenti in parallelo** che fanno girare test: ogni worktree prende uno slot. See `docs/agents/parallel-worktrees.md`.
+- **Standard di codice** applicati in review: `docs/agents/coding-standards.md`.
