@@ -8,6 +8,9 @@
       <RouterLink :to="{ name: 'join' }">
         Entra in una Stanza
       </RouterLink>
+      <RouterLink :to="{ name: 'how-it-works' }">
+        Come funziona e cosa salviamo
+      </RouterLink>
     </nav>
   </main>
 </template>

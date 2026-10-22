@@ -17,3 +17,17 @@ test('test browser provides a fake camera', async ({ page }) => {
 
   expect(videoTracks).toBe(1)
 })
+
+test('home links to what the app stores', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Come funziona e cosa salviamo' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Come funziona e cosa salviamo' })).toBeVisible()
+  for (const fact of [
+    'non viene registrato',
+    'come hash',
+    'dopo 30 giorni',
+    'Nessun cookie di tracciamento',
+  ])
+    await expect(page.getByText(fact)).toBeVisible()
+})
