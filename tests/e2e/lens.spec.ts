@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, openPeerConnections } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, openPeerConnections, test } from './devices'
 
 // Chromium's fake_device_1 films Y16 depth frames, which WebRTC cannot encode on Linux.
 test.use({
