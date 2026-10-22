@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, openPeerConnections, videoSenderMaxBitrate } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, videoSenderMaxBitrate } from './devices'
 
 test('the viewer watches the camera live', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -8,6 +8,19 @@ test('the viewer watches the camera live', async ({ browser }) => {
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
+
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+})
+
+test('the viewer starts watching a camera that joins after it', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+  await expect(members(viewer)).toHaveCount(1)
+
+  await joinAsCamera(camera, 'soggiorno')
 
   await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
 })
