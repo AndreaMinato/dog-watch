@@ -30,6 +30,8 @@ test('rotating the key expels the viewer, who re-enters with the new key', async
   const newKey = camera.getByRole('status', { name: 'Chiave della Stanza' })
   await expect(newKey).toHaveText(/^[a-z]+(?:-[a-z]+){3}$/)
   await expect(newKey).not.toHaveText(key)
+  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
+  await expect(camera.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${await newKey.textContent()}$`))
 
   await joinAsViewer(viewer, (await newKey.textContent())!, 'Andrea')
 
