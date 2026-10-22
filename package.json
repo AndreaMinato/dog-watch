@@ -17,6 +17,7 @@
     "test:unit": "vitest --project unit",
     "test:api": "vitest --project api",
     "test:e2e": "playwright test",
+    "wizard": "scripts/wizard.sh",
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
