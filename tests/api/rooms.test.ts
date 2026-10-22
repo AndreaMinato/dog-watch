@@ -37,7 +37,11 @@ describe('join room', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ roomId, topic: `room:${roomId}` })
+    expect(await response.json()).toEqual({
+      roomId,
+      topic: `room:${roomId}`,
+      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+    })
   })
 
   it('answers unknown and malformed keys identically', async () => {

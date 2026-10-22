@@ -37,6 +37,10 @@ export default {
     if (memberError)
       throw memberError
 
-    return Response.json({ roomId: room.id, topic: `room:${room.id}` })
+    return Response.json({
+      roomId: room.id,
+      topic: `room:${room.id}`,
+      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+    })
   }),
 }
