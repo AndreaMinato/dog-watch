@@ -1,5 +1,6 @@
 import { withSupabase } from '@supabase/server'
 import { hashClientIp } from '../_shared/client-ip.ts'
+import { createIceServers, iceServersTtl } from '../_shared/ice-servers.ts'
 import { parseName } from '../_shared/name.ts'
 import { hashRoomKey, normalizeRoomKey } from '../_shared/room-key.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
@@ -61,7 +62,8 @@ export default {
     return Response.json({
       roomId: room.id,
       topic: `room:${room.id}`,
-      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+      iceServers: await createIceServers(),
+      iceServersTtl,
     })
   }),
 }
