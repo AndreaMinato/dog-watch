@@ -102,7 +102,7 @@ export async function expectAdvancingVideo(video: Locator): Promise<void> {
     const before = await captureFrame(video)
     await video.page().waitForTimeout(300)
     return before !== await captureFrame(video)
-  }, { timeout: 15_000 }).toBe(true)
+  }).toBe(true)
 }
 
 export function openPeerConnections(page: Page): Promise<number> {
@@ -143,5 +143,5 @@ export async function expectFrozenVideo(video: Locator): Promise<void> {
     const before = await captureFrame(video)
     await video.page().waitForTimeout(1_000)
     return before === await captureFrame(video)
-  }, { timeout: 15_000 }).toBe(true)
+  }).toBe(true)
 }

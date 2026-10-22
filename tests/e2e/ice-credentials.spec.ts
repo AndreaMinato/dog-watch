@@ -30,6 +30,6 @@ test('the camera renews its TURN credentials before they expire', async ({ brows
   const joined = await turnUsername(camera)
 
   expect(joined).toBeDefined()
-  await expect.poll(() => turnUsername(camera), { timeout: 10_000 }).not.toBe(joined)
+  await expect.poll(() => turnUsername(camera)).not.toBe(joined)
   await expectAdvancingVideo(video)
 })
