@@ -24,6 +24,7 @@ export type Signal = { link: string } & (
 type SignalListener = (from: string, signal: Signal) => void
 
 export interface RoomClient {
+  readonly key: string
   readonly self: Member
   readonly iceServers: RTCIceServer[]
   onMembersChange: (listener: (members: Member[]) => void) => () => void
@@ -97,6 +98,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   await channel.track({ role, name })
 
   return {
+    key,
     self,
     iceServers,
     onMembersChange(listener) {
