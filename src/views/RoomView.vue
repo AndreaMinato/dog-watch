@@ -3,7 +3,9 @@ import type { Role } from '../room/room-client'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
+import NewViewerNotice from '../components/NewViewerNotice.vue'
 import { refusalMessages } from '../components/refusal-messages'
+import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
@@ -27,6 +29,8 @@ async function exit() {
       <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
       <CameraFeeds v-else :room="room" />
     </template>
+    <ViewerList v-if="room?.self.role === 'camera'" :room="room" />
+    <NewViewerNotice v-if="room?.self.role === 'viewer'" :room="room" />
     <h2 id="members-heading">
       Nella Stanza
     </h2>
