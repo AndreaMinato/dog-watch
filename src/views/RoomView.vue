@@ -4,13 +4,15 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
+import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
+import { refusalMessages } from '../components/refusal-messages'
 import RestScreen from '../components/RestScreen.vue'
 import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
-const { room, members, leave } = useRoom()
+const { room, members, refusal, leave } = useRoom()
 
 const resting = ref(false)
 
@@ -25,6 +27,9 @@ async function exit() {
 <template>
   <main v-show="!resting">
     <h1>Stanza</h1>
+    <p v-if="refusal" role="alert">
+      {{ refusalMessages[refusal] }}
+    </p>
     <template v-if="room">
       <template v-if="room.self.role === 'camera'">
         <CameraPreview :room="room" />
@@ -33,6 +38,7 @@ async function exit() {
         </button>
       </template>
       <CameraFeeds v-else :room="room" />
+      <JoinLink v-if="room.self.role === 'camera'" :room-key="room.key" />
     </template>
     <ViewerList v-if="room?.self.role === 'camera'" :room="room" />
     <NewViewerNotice v-if="room?.self.role === 'viewer'" :room="room" />

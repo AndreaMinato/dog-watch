@@ -3,8 +3,9 @@ import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
-import { InvalidKeyError, TooManyAttemptsError } from '../room/room-client'
+import { InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
+import { refusalMessages } from './refusal-messages'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
 
@@ -24,6 +25,8 @@ function errorMessage(cause: unknown): string {
     return 'Chiave non valida'
   if (cause instanceof TooManyAttemptsError)
     return 'Troppi tentativi, riprova più tardi.'
+  if (cause instanceof RoomRefusedError)
+    return refusalMessages[cause.refusal]
   return 'Qualcosa è andato storto, riprova.'
 }
 
