@@ -18,6 +18,7 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
   const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true })
   const links = new Map<string, PeerLink>()
   let cameraId: string | undefined
+  let closed = false
 
   function lens(): MediaTrackConstraints {
     return cameraId ? { ...video, deviceId: { exact: cameraId } } : video
@@ -25,6 +26,10 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
 
   async function capture(constraints: MediaStreamConstraints) {
     const captured = await navigator.mediaDevices.getUserMedia(constraints)
+    if (closed) {
+      captured.getTracks().forEach(track => track.stop())
+      return
+    }
     await Promise.all(captured.getTracks().map(swapTrack))
   }
 
@@ -100,6 +105,7 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
       await capture({ video: lens() })
     },
     close() {
+      closed = true
       stopSignals()
       stopMembers()
       ;[...links.keys()].forEach(closeLink)
