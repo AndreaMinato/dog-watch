@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks } from './devices'
+import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks } from './devices'
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -71,6 +71,22 @@ test('the camera rests on a black screen listing its viewers and wakes up on a t
 
   await expect(rest).toBeHidden()
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+})
+
+test('a resting camera shows that the room was closed', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const other = await openDevice(browser)
+  await joinAsCameraWithKey(other, key, 'cucina')
+  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeVisible()
+
+  await other.getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  await other.getByRole('dialog').getByRole('button', { name: 'Chiudi' }).click()
+
+  await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeHidden()
+  await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
 })
 
 test('a device with a single camera offers no lens choice', async ({ browser }) => {
