@@ -9,13 +9,11 @@ export const iceServersTtl = 24 * 60 * 60
 export type TurnKey = { id: string, apiToken: string } | 'simulated'
 
 export function readTurnKey(env: (name: string) => string | undefined): TurnKey {
-  if (env('CLOUDFLARE_TURN_SIMULATED') === 'true')
-    return 'simulated'
   const id = env('CLOUDFLARE_TURN_KEY_ID')
   const apiToken = env('CLOUDFLARE_TURN_KEY_API_TOKEN')
   if (!id || !apiToken)
     throw new Error('CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set')
-  return { id, apiToken }
+  return id === 'simulated' ? 'simulated' : { id, apiToken }
 }
 
 export async function createIceServers(turnKey: TurnKey): Promise<IceServer[]> {
