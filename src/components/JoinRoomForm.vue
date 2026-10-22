@@ -2,6 +2,7 @@
 import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
+import { compatibility } from '../device/compatibility'
 import { InvalidKeyError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 
@@ -50,9 +51,21 @@ async function submit() {
     </label>
     <fieldset class="roles">
       <legend>Ruolo</legend>
-      <label><input v-model="role" type="radio" value="camera"> Camera</label>
+      <label>
+        <input
+          v-model="role"
+          type="radio"
+          value="camera"
+          :disabled="!compatibility.camera"
+          :aria-describedby="compatibility.camera ? undefined : 'camera-unsupported'"
+        > Camera
+      </label>
       <label><input v-model="role" type="radio" value="viewer"> Spettatore</label>
     </fieldset>
+    <p v-if="!compatibility.camera" id="camera-unsupported">
+      Questo browser non può usare la fotocamera o tenere lo schermo acceso, quindi qui puoi entrare solo come Spettatore.
+      Per fare da Camera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
+    </p>
     <label class="field">
       {{ nameLabel }}
       <input v-model.trim="name" required maxlength="40">
