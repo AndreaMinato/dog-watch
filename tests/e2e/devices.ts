@@ -4,6 +4,7 @@ import { expect } from '@playwright/test'
 declare global {
   interface Window {
     peerConnections: RTCPeerConnection[]
+    wakeLocks: WakeLockSentinel[]
   }
 }
 
@@ -18,13 +19,24 @@ function recordPeerConnections() {
   }
 }
 
+function recordWakeLocks() {
+  const request = WakeLock.prototype.request
+  window.wakeLocks = []
+  WakeLock.prototype.request = async function (...args) {
+    const sentinel = await request.apply(this, args)
+    window.wakeLocks.push(sentinel)
+    return sentinel
+  }
+}
+
 /**
  * The local gateway is not behind Cloudflare: give each device its own client IP, as
  * Cloudflare would, so failed join attempts never pile up across tests and runs.
  */
 export async function openDevice(browser: Browser): Promise<Page> {
-  const context = await browser.newContext()
+  const context = await browser.newContext({ permissions: ['screen-wake-lock'] })
   await context.addInitScript(recordPeerConnections)
+  await context.addInitScript(recordWakeLocks)
   const ip = Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')
   await context.route('**/functions/v1/**', route =>
     route.continue({ headers: { ...route.request().headers(), 'cf-connecting-ip': ip } }))
@@ -96,4 +108,32 @@ export function videoSenderMaxBitrate(page: Page): Promise<number | undefined> {
     ?.getParameters()
     .encodings[0]
     ?.maxBitrate)
+}
+
+export function heldWakeLocks(page: Page): Promise<number> {
+  return page.evaluate(() => window.wakeLocks.filter(sentinel => !sentinel.released).length)
+}
+
+export function releaseWakeLocks(page: Page): Promise<void> {
+  return page.evaluate(async () => {
+    await Promise.all(window.wakeLocks.map(sentinel => sentinel.release()))
+  })
+}
+
+/** Headless pages are always visible: fake the visibility a phone goes through when it sleeps and wakes. */
+export async function hideAndShow(page: Page): Promise<void> {
+  for (const state of ['hidden', 'visible']) {
+    await page.evaluate((visibilityState) => {
+      Object.defineProperty(document, 'visibilityState', { value: visibilityState, configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+    }, state)
+  }
+}
+
+export async function expectFrozenVideo(video: Locator): Promise<void> {
+  await expect.poll(async () => {
+    const before = await captureFrame(video)
+    await video.page().waitForTimeout(1_000)
+    return before === await captureFrame(video)
+  }, { timeout: 15_000 }).toBe(true)
 }

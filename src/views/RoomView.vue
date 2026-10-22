@@ -8,11 +8,14 @@ import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import { refusalMessages } from '../components/refusal-messages'
+import RestScreen from '../components/RestScreen.vue'
 import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
+
+const resting = shallowRef(false)
 
 const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
@@ -52,11 +55,14 @@ async function exit() {
 </script>
 
 <template>
-  <main>
+  <main v-show="!resting || !room">
     <h1>Stanza</h1>
     <template v-if="room">
       <template v-if="room.self.role === 'camera'">
         <CameraPreview :room="room" />
+        <button type="button" @click="resting = true">
+          Schermata a riposo
+        </button>
         <JoinLink :room-key="room.key" />
         <ViewerList :room="room" />
       </template>
@@ -112,6 +118,7 @@ async function exit() {
       </RouterLink>
     </template>
   </main>
+  <RestScreen v-if="resting && room" :room="room" @wake="resting = false" />
 </template>
 
 <style scoped>
