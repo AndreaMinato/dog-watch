@@ -12,6 +12,11 @@ function remember(client: RoomClient) {
   rememberEnteredRoom({ roomId, roomName, key, role, memberName: name })
 }
 
+function reset() {
+  room.value = null
+  members.value = []
+}
+
 export function useRoom() {
   async function join(request: JoinRequest) {
     if (room.value)
@@ -34,8 +39,7 @@ export function useRoom() {
   function end(client: RoomClient, event: ControlEvent): boolean {
     if (room.value !== client)
       return false
-    room.value = null
-    members.value = []
+    reset()
     ended.value = event
     if (event.type === 'room_closed')
       forgetRoom(client.roomId)
@@ -46,8 +50,7 @@ export function useRoom() {
 
   async function leave() {
     const client = room.value
-    room.value = null
-    members.value = []
+    reset()
     rememberLeftRoom()
     await client?.leave()
   }
