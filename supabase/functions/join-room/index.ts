@@ -17,9 +17,11 @@ const turnKey = readTurnKey(name => Deno.env.get(name))
 const roles = ['camera', 'viewer']
 const maxFailedAttemptsPerHour = 10
 const hourInMs = 60 * 60 * 1000
+const invalidKeyResponseMs = 500
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
+    const receivedAt = Date.now()
     const { key, role, name } = await req.json()
     const memberName = parseName(name)
     if (!roles.includes(role) || !memberName)
@@ -52,6 +54,8 @@ export default {
       const { error: attemptError } = await ctx.supabaseAdmin.from('failed_join_attempts').insert({ ip_hash: ipHash })
       if (attemptError)
         throw attemptError
+      // Every invalid key answers after the same delay, whatever the verification took.
+      await new Promise(resolve => setTimeout(resolve, receivedAt + invalidKeyResponseMs - Date.now()))
       return Response.json({ error: 'invalid_key' }, { status: 403 })
     }
 
