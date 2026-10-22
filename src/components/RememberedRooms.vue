@@ -3,7 +3,7 @@ import type { RememberedRoom } from '../room/remembered-rooms'
 import type { Role } from '../room/room-client'
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { rememberedRooms } from '../room/remembered-rooms'
+import { forgetRoom, rememberedRooms } from '../room/remembered-rooms'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
@@ -13,6 +13,11 @@ const rooms = shallowRef(rememberedRooms())
 const pending = shallowRef(false)
 
 const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
+
+function forget(room: RememberedRoom) {
+  forgetRoom(room.roomId)
+  rooms.value = rememberedRooms()
+}
 
 async function enter(room: RememberedRoom) {
   pending.value = true
@@ -37,6 +42,9 @@ async function enter(room: RememberedRoom) {
           {{ room.roomName }}
         </button>
         {{ roleLabels[room.role] }}: {{ room.name }}
+        <button type="button" @click="forget(room)">
+          Dimentica questa Stanza
+        </button>
       </li>
     </ul>
   </section>
