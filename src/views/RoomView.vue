@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import type { Role } from '../room/room-client'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
+import RestScreen from '../components/RestScreen.vue'
 import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
 const { room, members, leave } = useRoom()
+
+const resting = ref(false)
 
 const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
@@ -19,10 +23,15 @@ async function exit() {
 </script>
 
 <template>
-  <main>
+  <main v-show="!resting">
     <h1>Stanza</h1>
     <template v-if="room">
-      <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
+      <template v-if="room.self.role === 'camera'">
+        <CameraPreview :room="room" />
+        <button type="button" @click="resting = true">
+          Schermata a riposo
+        </button>
+      </template>
       <CameraFeeds v-else :room="room" />
     </template>
     <ViewerList v-if="room?.self.role === 'camera'" :room="room" />
@@ -42,4 +51,5 @@ async function exit() {
       Esci
     </button>
   </main>
+  <RestScreen v-if="resting && room" :room="room" @wake="resting = false" />
 </template>

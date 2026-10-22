@@ -51,3 +51,24 @@ test('the camera is reminded to stay plugged in and in the foreground', async ({
   await expect(viewer.getByRole('list', { name: 'Nella Stanza' })).toBeVisible()
   await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
 })
+
+test('the camera rests on a black screen listing its viewers and wakes up on a tap', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+
+  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+
+  const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+  await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+  await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
+  await expect(camera.getByLabel('Anteprima')).toBeHidden()
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+
+  await rest.click()
+
+  await expect(rest).toBeHidden()
+  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+})
