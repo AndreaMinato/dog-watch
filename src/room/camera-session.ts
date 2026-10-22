@@ -36,7 +36,14 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
     links.delete(viewerId)
   }
 
+  // Viewers present when the key was rotated stay refused until they leave Presence: an
+  // honest one leaves at once and comes back with the new key, a rogue one keeps its cached
+  // channel access until its JWT is renewed but never gets the stream again.
+  let expelled = new Set<string>()
+
   const stopSignals = room.onSignal((from, signal) => {
+    if (expelled.has(from))
+      return
     if (links.get(from)?.id !== signal.link) {
       if (!('description' in signal) || signal.description.type !== 'offer')
         return
@@ -58,6 +65,14 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
         closeLink(viewerId)
     }
     present = viewers
+    expelled = new Set([...expelled].filter(viewerId => viewers.has(viewerId)))
+  })
+
+  const stopControl = room.onControl((event) => {
+    if (event.type !== 'key_rotated')
+      return
+    expelled = new Set([...present, ...links.keys()])
+    ;[...links.keys()].forEach(closeLink)
   })
 
   return {
@@ -65,6 +80,7 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
     close() {
       stopSignals()
       stopMembers()
+      stopControl()
       ;[...links.keys()].forEach(closeLink)
       stream.getTracks().forEach(track => track.stop())
     },

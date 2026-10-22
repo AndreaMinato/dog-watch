@@ -23,7 +23,10 @@ export type Signal = { link: string } & (
 
 export type Refusal = 'cameras_full' | 'viewers_full' | 'camera_name_taken'
 
-export interface ControlEvent { type: 'refused', refusal: Refusal }
+export type ControlEvent
+  = | { type: 'refused', refusal: Refusal }
+    | { type: 'key_rotated', by: string }
+    | { type: 'room_closed' }
 
 type SignalListener = (from: string, signal: Signal) => void
 type ControlListener = (event: ControlEvent) => void
@@ -38,6 +41,8 @@ export interface RoomClient {
   onSignal: (listener: SignalListener) => () => void
   sendControl: (to: string, event: ControlEvent) => void
   onControl: (listener: ControlListener) => () => void
+  rotateKey: () => Promise<void>
+  close: () => Promise<void>
   leave: () => Promise<void>
 }
 
@@ -186,15 +191,20 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     }, (expiresAt - Date.now()) / 2)
   }
 
-  channel.on<ControlMessage>('broadcast', { event: 'control' }, ({ payload }) => {
-    if (payload.to === undefined || payload.to === self.id)
-      controlListeners.forEach(listener => listener(payload.event))
+  const notifyControl = (event: ControlEvent) => controlListeners.forEach(listener => listener(event))
+  channel.on<ControlMessage>('broadcast', { event: 'control' }, ({ payload: { to, event } }) => {
+    if ((to === undefined || to === self.id) && !(event.type === 'key_rotated' && event.by === self.id))
+      notifyControl(event)
   })
 
-  async function leave() {
+  async function disconnect() {
     clearTimeout(renewal)
-    await invoke('leave-room', { roomId })
     await supabase.removeChannel(channel)
+  }
+
+  async function leave() {
+    await invoke('leave-room', { roomId })
+    await disconnect()
   }
 
   await subscribe(channel)
@@ -207,8 +217,12 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   admitted = true
   scheduleIceServersRenewal(Date.now() + iceServersTtl * 1000)
 
+  let currentKey = key
+
   return {
-    key,
+    get key() {
+      return currentKey
+    },
     self,
     get iceServers() {
       return iceServers
@@ -236,6 +250,15 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     onControl(listener) {
       controlListeners.add(listener)
       return () => controlListeners.delete(listener)
+    },
+    async rotateKey() {
+      currentKey = (await invoke<{ key: string }>('rotate-key', { roomId })).key
+      // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
+      notifyControl({ type: 'key_rotated', by: self.id })
+    },
+    async close() {
+      await invoke('close-room', { roomId })
+      await disconnect()
     },
     leave,
   }
