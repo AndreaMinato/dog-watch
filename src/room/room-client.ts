@@ -27,6 +27,7 @@ export interface RoomClient {
   readonly key: string
   readonly self: Member
   readonly iceServers: RTCIceServer[]
+  onIceServersChange: (listener: (iceServers: RTCIceServer[]) => void) => () => void
   onMembersChange: (listener: (members: Member[]) => void) => () => void
   sendSignal: (to: string, signal: Signal) => void
   onSignal: (listener: SignalListener) => () => void
@@ -48,10 +49,14 @@ export function createRoom(name: string): Promise<{ roomId: string, key: string 
   return invoke('create-room', { name })
 }
 
-interface JoinResponse {
+interface IceServersGrant {
+  iceServers: RTCIceServer[]
+  iceServersTtl: number
+}
+
+interface JoinResponse extends IceServersGrant {
   roomId: string
   topic: string
-  iceServers: RTCIceServer[]
 }
 
 interface SignalMessage {
@@ -61,7 +66,7 @@ interface SignalMessage {
 }
 
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic, iceServers } = await invoke<JoinResponse>('join-room', { key, role, name })
+  const { roomId, topic, iceServers: joinedIceServers, iceServersTtl } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
       if (status === 403)
@@ -94,13 +99,41 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     signalListeners.forEach(listener => listener(payload.from, payload.signal))
   })
 
+  let iceServers = joinedIceServers
+  const iceServersListeners = new Set<(iceServers: RTCIceServer[]) => void>()
+  let renewal: ReturnType<typeof setTimeout> | undefined
+  // TURN credentials expire: renew them halfway, and on failure retry halfway to the
+  // same expiry, so a transient error still leaves time for another attempt.
+  function scheduleIceServersRenewal(expiresAt: number) {
+    renewal = setTimeout(async () => {
+      try {
+        const grant = await invoke<IceServersGrant>('ice-credentials', { roomId })
+        iceServers = grant.iceServers
+        iceServersListeners.forEach(listener => listener(iceServers))
+        scheduleIceServersRenewal(Date.now() + grant.iceServersTtl * 1000)
+      }
+      catch (error) {
+        console.error(error)
+        if (Date.now() < expiresAt)
+          scheduleIceServersRenewal(expiresAt)
+      }
+    }, (expiresAt - Date.now()) / 2)
+  }
+
   await subscribe(channel)
   await channel.track({ role, name })
+  scheduleIceServersRenewal(Date.now() + iceServersTtl * 1000)
 
   return {
     key,
     self,
-    iceServers,
+    get iceServers() {
+      return iceServers
+    },
+    onIceServersChange(listener) {
+      iceServersListeners.add(listener)
+      return () => iceServersListeners.delete(listener)
+    },
     onMembersChange(listener) {
       memberListeners.add(listener)
       listener(members)
@@ -115,6 +148,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       return () => signalListeners.delete(listener)
     },
     async leave() {
+      clearTimeout(renewal)
       await invoke('leave-room', { roomId })
       await supabase.removeChannel(channel)
     },

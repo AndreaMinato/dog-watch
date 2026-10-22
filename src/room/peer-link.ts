@@ -19,6 +19,9 @@ interface PeerLinkOptions {
  */
 export function createPeerLink(room: RoomClient, peerId: string, { id = crypto.randomUUID(), polite, beforeAnswer }: PeerLinkOptions): PeerLink {
   const connection = new RTCPeerConnection({ iceServers: room.iceServers })
+  const stopIceServersRenewal = room.onIceServersChange((iceServers) => {
+    connection.setConfiguration({ ...connection.getConfiguration(), iceServers })
+  })
   let makingOffer = false
   let ignoreOffer = false
   let queue = Promise.resolve()
@@ -68,6 +71,7 @@ export function createPeerLink(room: RoomClient, peerId: string, { id = crypto.r
       queue = queue.then(() => handle(signal)).catch(console.error)
     },
     close() {
+      stopIceServersRenewal()
       connection.close()
     },
   }
