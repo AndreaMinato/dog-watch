@@ -50,7 +50,7 @@ export interface RoomClient {
   onControl: (listener: ControlListener) => () => void
   setStatus: (status: CameraStatus) => Promise<void>
   rotateKey: () => Promise<void>
-  close: () => Promise<void>
+  closeRoom: () => Promise<void>
   leave: () => Promise<void>
 }
 
@@ -294,7 +294,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
       notifyControl({ type: 'key_rotated', by: self.id })
     },
-    async close() {
+    async closeRoom() {
       await invoke('close-room', { roomId })
       await disconnect()
     },

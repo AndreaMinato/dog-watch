@@ -31,7 +31,7 @@ async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) 
   pending.value = true
   failure.value = null
   try {
-    await join({ key, role: room.role, name: room.name })
+    await join({ key, role: room.role, name: room.memberName })
     await router.push({ name: 'room' })
   }
   catch (cause) {
@@ -72,7 +72,7 @@ onBeforeUnmount(() => clearTimeout(retry))
         <button type="button" :disabled="pending" @click="enter(room)">
           {{ room.roomName }}
         </button>
-        {{ roleLabels[room.role] }}: {{ room.name }}
+        {{ roleLabels[room.role] }}: {{ room.memberName }}
         <button type="button" @click="forget(room)">
           Dimentica questa Stanza
         </button>

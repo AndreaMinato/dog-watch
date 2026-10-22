@@ -9,7 +9,7 @@ const ended = shallowRef<ControlEvent | null>(null)
 
 function remember(client: RoomClient) {
   const { roomId, roomName, key, self: { role, name } } = client
-  rememberEnteredRoom({ roomId, roomName, key, role, name })
+  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name })
 }
 
 export function useRoom() {
@@ -60,7 +60,7 @@ export function useRoom() {
 
   async function closeRoom() {
     const client = room.value!
-    await client.close()
+    await client.closeRoom()
     end(client, { type: 'room_closed' })
   }
 
