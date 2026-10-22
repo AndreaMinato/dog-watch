@@ -9,12 +9,18 @@ const ended = shallowRef<ControlEvent | null>(null)
 
 function remember(client: RoomClient) {
   const { roomId, roomName, key, self: { role, name } } = client
-  rememberEnteredRoom({ roomId, roomName, key, role, name })
+  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name })
+}
+
+function reset() {
+  room.value = null
+  members.value = []
 }
 
 export function useRoom() {
   async function join(request: JoinRequest) {
-    await leave()
+    if (room.value)
+      await leave()
     ended.value = null
     const client = await joinRoom(request)
     client.onMembersChange((current) => {
@@ -33,8 +39,7 @@ export function useRoom() {
   function end(client: RoomClient, event: ControlEvent): boolean {
     if (room.value !== client)
       return false
-    room.value = null
-    members.value = []
+    reset()
     ended.value = event
     if (event.type === 'room_closed')
       forgetRoom(client.roomId)
@@ -45,8 +50,7 @@ export function useRoom() {
 
   async function leave() {
     const client = room.value
-    room.value = null
-    members.value = []
+    reset()
     rememberLeftRoom()
     await client?.leave()
   }
@@ -59,7 +63,7 @@ export function useRoom() {
 
   async function closeRoom() {
     const client = room.value!
-    await client.close()
+    await client.closeRoom()
     end(client, { type: 'room_closed' })
   }
 

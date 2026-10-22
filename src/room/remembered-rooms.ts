@@ -5,7 +5,8 @@ export interface RememberedRoom {
   roomName: string
   key: string
   role: Role
-  name: string
+  /** The Camera's name or the Spettatore's soprannome in this room. */
+  memberName: string
 }
 
 const ROOMS = 'dog-watch:rooms'

@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect } from '@playwright/test'
 import jsQR from 'jsqr'
 import { PNG } from 'pngjs'
-import { createRoom, joinAsCamera, members, openDevice } from './devices'
+import { createRoom, joinAsCamera, members, openDevice, test } from './devices'
 
 async function decodeQr(page: Page): Promise<string | undefined> {
   const png = PNG.sync.read(await page.getByRole('img', { name: 'QR del link' }).screenshot())

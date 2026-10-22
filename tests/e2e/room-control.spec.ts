@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, test } from './devices'
 
 async function watchedRoom(browser: Browser, prepareViewer?: (viewer: Page) => Promise<void>) {
   const camera = await openDevice(browser)

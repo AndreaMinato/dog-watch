@@ -23,18 +23,10 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, from) => {
-  const cameraRoom = from === START_LOCATION ? cameraRoomToReenter() : undefined
-  if (!cameraRoom)
-    return
-  try {
-    await useRoom().join(cameraRoom)
-  }
-  catch (error) {
-    console.error(error)
-    return
-  }
-  return to.name === 'room' ? undefined : { name: 'room' }
+// The Stanze recenti on the home page take the Camera back into its room.
+router.beforeEach((to, from) => {
+  if (from === START_LOCATION && to.name !== 'home' && cameraRoomToReenter())
+    return { name: 'home' }
 })
 
 export default router

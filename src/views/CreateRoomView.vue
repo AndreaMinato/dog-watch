@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue'
 import JoinRoomForm from '../components/JoinRoomForm.vue'
+import { somethingWentWrong } from '../room/messages'
 import { createRoom } from '../room/room-client'
 
 const name = shallowRef('')
@@ -32,7 +33,7 @@ async function submit() {
         <input v-model.trim="name" required maxlength="40">
       </label>
       <p v-if="error" role="alert">
-        Qualcosa è andato storto, riprova.
+        {{ somethingWentWrong }}
       </p>
       <button type="submit" :disabled="pending">
         Crea

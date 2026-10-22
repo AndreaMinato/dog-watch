@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ControlEvent, Role } from '../room/room-client'
+import type { ControlEvent } from '../room/room-client'
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
@@ -7,17 +7,14 @@ import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
-import { refusalMessages } from '../components/refusal-messages'
 import RestScreen from '../components/RestScreen.vue'
-import ViewerList from '../components/ViewerList.vue'
+import { refusalMessages, roleLabels, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
 
 const resting = shallowRef(false)
-
-const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
 
 function endMessage(event: ControlEvent): string {
   switch (event.type) {
@@ -64,7 +61,6 @@ async function exit() {
           Schermata a riposo
         </button>
         <JoinLink :room-key="room.key" />
-        <ViewerList :room="room" />
       </template>
       <template v-else>
         <CameraFeeds :room="room" />
@@ -99,7 +95,7 @@ async function exit() {
           @confirm="run(closeRoom)"
         />
         <p v-if="error" role="alert">
-          Qualcosa è andato storto, riprova.
+          {{ somethingWentWrong }}
         </p>
       </template>
       <button type="button" @click="exit">
@@ -118,7 +114,7 @@ async function exit() {
       </RouterLink>
     </template>
   </main>
-  <RestScreen v-if="resting && room" :room="room" @wake="resting = false" />
+  <RestScreen v-if="resting && room" @wake="resting = false" />
 </template>
 
 <style scoped>

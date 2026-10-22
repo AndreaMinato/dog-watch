@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import type { RememberedRoom } from '../room/remembered-rooms'
-import type { Role } from '../room/room-client'
-import { shallowRef } from 'vue'
+import { onBeforeUnmount, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { forgetRoom, rememberedRooms } from '../room/remembered-rooms'
-import { InvalidKeyError } from '../room/room-client'
+import { joinErrorMessage, roleLabels } from '../room/messages'
+import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
+import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
-import { joinErrorMessage } from './join-error-message'
 
 const router = useRouter()
 const { join } = useRoom()
@@ -17,21 +16,33 @@ const failure = shallowRef<{ roomId: string, message: string } | null>(null)
 const askingKeyFor = shallowRef<string | null>(null)
 const newKey = shallowRef('')
 
-const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
-
 function forget(room: RememberedRoom) {
   forgetRoom(room.roomId)
   rooms.value = rememberedRooms()
 }
 
-async function enter(room: RememberedRoom, key = room.key) {
+const FIRST_RETRY_DELAY_MS = 1_000
+const MAX_RETRY_DELAY_MS = 30_000
+let retry: ReturnType<typeof setTimeout> | undefined
+
+/** With a retry delay, failures other than a definitive answer are retried with backoff. */
+async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) {
+  clearTimeout(retry)
   pending.value = true
   failure.value = null
   try {
-    await join({ key, role: room.role, name: room.name })
+    await join({ key, role: room.role, name: room.memberName })
     await router.push({ name: 'room' })
   }
   catch (cause) {
+    const definitive = cause instanceof InvalidKeyError || cause instanceof RoomRefusedError
+    if (retryDelay !== undefined && !definitive) {
+      console.error(cause)
+      retry = setTimeout(() => enter(room, key, Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS)), retryDelay)
+      return
+    }
+    if (retryDelay !== undefined)
+      rememberLeftRoom()
     const keyRejected = cause instanceof InvalidKeyError
     if (keyRejected)
       askingKeyFor.value = room.roomId
@@ -44,6 +55,11 @@ async function enter(room: RememberedRoom, key = room.key) {
     pending.value = false
   }
 }
+
+const cameraRoom = cameraRoomToReenter()
+if (cameraRoom)
+  enter(cameraRoom, cameraRoom.key, FIRST_RETRY_DELAY_MS)
+onBeforeUnmount(() => clearTimeout(retry))
 </script>
 
 <template>
@@ -56,7 +72,7 @@ async function enter(room: RememberedRoom, key = room.key) {
         <button type="button" :disabled="pending" @click="enter(room)">
           {{ room.roomName }}
         </button>
-        {{ roleLabels[room.role] }}: {{ room.name }}
+        {{ roleLabels[room.role] }}: {{ room.memberName }}
         <button type="button" @click="forget(room)">
           Dimentica questa Stanza
         </button>

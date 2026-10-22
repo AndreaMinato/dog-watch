@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openDevice, test } from './devices'
 
 test('a reloaded camera re-enters by itself and the viewer sees it again', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -30,6 +30,43 @@ test('a camera re-enters by itself after the browser restarts', async ({ browser
 
   await expect(restarted.getByLabel('Anteprima')).toBeVisible()
   await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+})
+
+test('a camera keeps trying to re-enter while joining fails, and gets back on air by itself', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  let failingJoins = 2
+  await camera.route('**/functions/v1/join-room', route => failingJoins-- > 0 ? route.abort() : route.fallback())
+
+  await camera.reload()
+
+  await expect(camera.getByLabel('Anteprima')).toBeVisible()
+  expect(failingJoins).toBe(-1)
+  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+})
+
+test('a camera stops re-entering when its remembered key no longer works', async ({ browser }) => {
+  const livingRoom = await openDevice(browser)
+  const key = await createRoom(livingRoom, 'Casa al mare')
+  await joinAsCamera(livingRoom, 'soggiorno')
+  const kitchen = await openDevice(browser)
+  await joinAsCameraWithKey(kitchen, key, 'cucina')
+  await expect(kitchen.getByLabel('Anteprima')).toBeVisible()
+  const storage = await kitchen.context().storageState()
+  await kitchen.context().close()
+  await livingRoom.getByRole('button', { name: 'Rigenera la Chiave' }).click()
+  await livingRoom.getByRole('dialog').getByRole('button', { name: 'Rigenera' }).click()
+  await expect(livingRoom.getByRole('status', { name: 'Chiave della Stanza' })).not.toHaveText(key)
+
+  const restarted = await openDevice(browser, storage)
+
+  const recent = restarted.getByRole('list', { name: 'Stanze recenti' }).getByRole('listitem')
+  await expect(recent.getByRole('alert')).toHaveText('La Chiave ricordata non funziona più: probabilmente è stata rigenerata. Inserisci la Chiave nuova.')
+  await expect(recent.getByLabel('Chiave nuova')).toBeVisible()
 })
 
 test('a viewer finds the room among the recent ones and re-enters with a tap', async ({ browser }) => {

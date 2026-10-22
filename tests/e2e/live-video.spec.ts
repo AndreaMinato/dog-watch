@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, videoSenderMaxBitrate } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, test, videoSenderMaxBitrate } from './devices'
 
 test('the viewer watches the camera live', async ({ browser }) => {
   const camera = await openDevice(browser)

@@ -111,6 +111,15 @@ export function startViewerSession(room: RoomClient): ViewerSession {
       notify()
   })
 
+  const stopDepartures = room.onDeparture(({ id }) => {
+    const watched = cameras.get(id)
+    if (!watched)
+      return
+    disconnect(watched)
+    cameras.delete(id)
+    notify()
+  })
+
   return {
     onFeedsChange(listener) {
       listeners.add(listener)
@@ -120,6 +129,7 @@ export function startViewerSession(room: RoomClient): ViewerSession {
     close() {
       stopSignals()
       stopMembers()
+      stopDepartures()
       cameras.forEach(disconnect)
       listeners.clear()
     },

@@ -42,13 +42,15 @@ export interface RoomClient {
   readonly iceServers: RTCIceServer[]
   onIceServersChange: (listener: (iceServers: RTCIceServer[]) => void) => () => void
   onMembersChange: (listener: (members: Member[]) => void) => () => void
+  /** A member left the room on purpose, as opposed to dropping out of it. */
+  onDeparture: (listener: (member: Member) => void) => () => void
   sendSignal: (to: string, signal: Signal) => void
   onSignal: (listener: SignalListener) => () => void
   sendControl: (to: string, event: ControlEvent) => void
   onControl: (listener: ControlListener) => () => void
   setStatus: (status: CameraStatus) => Promise<void>
   rotateKey: () => Promise<void>
-  close: () => Promise<void>
+  closeRoom: () => Promise<void>
   leave: () => Promise<void>
 }
 
@@ -62,7 +64,7 @@ export class RoomRefusedError extends Error {
   }
 }
 
-const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
+export const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
 
 async function invoke<T>(name: string, body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
@@ -91,6 +93,10 @@ interface SignalMessage {
   from: string
   to: string
   signal: Signal
+}
+
+interface DepartureMessage {
+  from: string
 }
 
 interface ControlMessage {
@@ -143,6 +149,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
 
   const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
   const memberListeners = new Set<(members: Member[]) => void>()
+  const departureListeners = new Set<(member: Member) => void>()
   const controlListeners = new Set<ControlListener>()
   let members: Member[] = []
   let admitted = false
@@ -150,11 +157,21 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   const verdict = new Promise<Refusal | undefined>((resolve) => {
     resolveVerdict = resolve
   })
+  // A member announces its departure before leaving Presence, so others can tell it
+  // apart from one whose connection dropped.
+  const departing = new Set<string>()
+  channel.on<DepartureMessage>('broadcast', { event: 'departure' }, ({ payload }) => {
+    departing.add(payload.from)
+  })
   channel.on('presence', { event: 'sync' }, () => {
     const present = Object.entries(channel.presenceState<Presence>())
       .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name, joinedAt: presence.joinedAt, status: presence.status }] : [])
+    const presentIds = new Set(present.map(member => member.id))
+    const departed = members.filter(member => departing.has(member.id) && !presentIds.has(member.id))
+    departing.forEach(id => presentIds.has(id) || departing.delete(id))
     const { admitted: current, refusals } = admit(present)
     members = current
+    departed.forEach(member => departureListeners.forEach(listener => listener(member)))
     memberListeners.forEach(listener => listener(members))
     const refusal = refusals.get(self.id)
     if (admitted && refusal) {
@@ -211,6 +228,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   }
 
   async function leave() {
+    channel.send({ type: 'broadcast', event: 'departure', payload: { from: self.id } satisfies DepartureMessage })
     await invoke('leave-room', { roomId })
     await disconnect()
   }
@@ -248,6 +266,10 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       listener(members)
       return () => memberListeners.delete(listener)
     },
+    onDeparture(listener) {
+      departureListeners.add(listener)
+      return () => departureListeners.delete(listener)
+    },
     sendSignal(to, signal) {
       channel.send({ type: 'broadcast', event: 'signal', payload: { from: self.id, to, signal } satisfies SignalMessage })
     },
@@ -272,7 +294,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
       notifyControl({ type: 'key_rotated', by: self.id })
     },
-    async close() {
+    async closeRoom() {
       await invoke('close-room', { roomId })
       await disconnect()
     },

@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, test } from './devices'
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, test } from './devices'
 
 async function shortenIceServersTtl(page: Page, seconds: number) {
   await page.route(/\/functions\/v1\/(?:join-room|ice-credentials)$/, async (route) => {
@@ -30,6 +30,6 @@ test('the camera renews its TURN credentials before they expire', async ({ brows
   const joined = await turnUsername(camera)
 
   expect(joined).toBeDefined()
-  await expect.poll(() => turnUsername(camera), { timeout: 10_000 }).not.toBe(joined)
+  await expect.poll(() => turnUsername(camera)).not.toBe(joined)
   await expectAdvancingVideo(video)
 })

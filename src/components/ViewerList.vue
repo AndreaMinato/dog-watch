@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import type { Member, RoomClient } from '../room/room-client'
-import { computed, onBeforeUnmount, shallowRef, useId } from 'vue'
+import { computed, useId } from 'vue'
+import { useRoom } from '../room/use-room'
 
-const { room } = defineProps<{ room: RoomClient }>()
-
-const members = shallowRef<Member[]>([])
-const stopWatching = room.onMembersChange((current) => {
-  members.value = current
-})
-onBeforeUnmount(stopWatching)
+const { members } = useRoom()
 
 const headingId = useId()
 const viewers = computed(() => members.value.filter(member => member.role === 'viewer'))

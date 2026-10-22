@@ -3,8 +3,8 @@ import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
+import { joinErrorMessage } from '../room/messages'
 import { useRoom } from '../room/use-room'
-import { joinErrorMessage } from './join-error-message'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
 
