@@ -1,6 +1,8 @@
 import { withSupabase } from '@supabase/server'
-import { createIceServers, iceServersTtl } from '../_shared/ice-servers.ts'
+import { createIceServers, iceServersTtl, readTurnKey } from '../_shared/ice-servers.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
+
+const turnKey = readTurnKey(name => Deno.env.get(name))
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
@@ -19,6 +21,6 @@ export default {
     if (!member)
       return Response.json({ error: 'not_a_member' }, { status: 403 })
 
-    return Response.json({ iceServers: await createIceServers(), iceServersTtl })
+    return Response.json({ iceServers: await createIceServers(turnKey), iceServersTtl })
   }),
 }

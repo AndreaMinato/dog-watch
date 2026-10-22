@@ -6,23 +6,29 @@ interface IceServer {
 
 export const iceServersTtl = 24 * 60 * 60
 
-const simulated = Deno.env.get('CLOUDFLARE_TURN_SIMULATED') === 'true'
-const turnKeyId = Deno.env.get('CLOUDFLARE_TURN_KEY_ID')
-const turnKeyApiToken = Deno.env.get('CLOUDFLARE_TURN_KEY_API_TOKEN')
-if (!simulated && (!turnKeyId || !turnKeyApiToken))
-  throw new Error('CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set')
+export type TurnKey = { id: string, apiToken: string } | 'simulated'
 
-export async function createIceServers(): Promise<IceServer[]> {
-  const { iceServers } = simulated ? simulateCloudflare() : await requestCloudflare()
+export function readTurnKey(env: (name: string) => string | undefined): TurnKey {
+  if (env('CLOUDFLARE_TURN_SIMULATED') === 'true')
+    return 'simulated'
+  const id = env('CLOUDFLARE_TURN_KEY_ID')
+  const apiToken = env('CLOUDFLARE_TURN_KEY_API_TOKEN')
+  if (!id || !apiToken)
+    throw new Error('CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set')
+  return { id, apiToken }
+}
+
+export async function createIceServers(turnKey: TurnKey): Promise<IceServer[]> {
+  const { iceServers } = turnKey === 'simulated' ? simulateCloudflare() : await requestCloudflare(turnKey)
   return withoutPort53(iceServers)
 }
 
-async function requestCloudflare(): Promise<{ iceServers: IceServer[] }> {
+async function requestCloudflare({ id, apiToken }: { id: string, apiToken: string }): Promise<{ iceServers: IceServer[] }> {
   const response = await fetch(
-    `https://rtc.live.cloudflare.com/v1/turn/keys/${turnKeyId}/credentials/generate-ice-servers`,
+    `https://rtc.live.cloudflare.com/v1/turn/keys/${id}/credentials/generate-ice-servers`,
     {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${turnKeyApiToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ttl: iceServersTtl }),
     },
   )
