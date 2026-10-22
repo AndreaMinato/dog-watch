@@ -23,12 +23,24 @@ export type Signal = { link: string } & (
 
 type SignalListener = (from: string, signal: Signal) => void
 
+export type ControlEvent = { type: 'key_rotated', by: string } | { type: 'room_closed' }
+
+type ControlListener = (event: ControlEvent) => void
+
+interface ControlMessage {
+  to?: string
+  event: ControlEvent
+}
+
 export interface RoomClient {
   readonly self: Member
   readonly iceServers: RTCIceServer[]
   onMembersChange: (listener: (members: Member[]) => void) => () => void
   sendSignal: (to: string, signal: Signal) => void
   onSignal: (listener: SignalListener) => () => void
+  onControl: (listener: ControlListener) => () => void
+  rotateKey: () => Promise<string>
+  close: () => Promise<void>
   leave: () => Promise<void>
 }
 
@@ -93,8 +105,18 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     signalListeners.forEach(listener => listener(payload.from, payload.signal))
   })
 
+  const controlListeners = new Set<ControlListener>()
+  const notifyControl = (event: ControlEvent) => controlListeners.forEach(listener => listener(event))
+  channel.on<ControlMessage>('broadcast', { event: 'control' }, ({ payload: { to, event } }) => {
+    if ((to && to !== self.id) || (event.type === 'key_rotated' && event.by === self.id))
+      return
+    notifyControl(event)
+  })
+
   await subscribe(channel)
   await channel.track({ role, name })
+
+  const disconnect = () => supabase.removeChannel(channel)
 
   return {
     self,
@@ -112,9 +134,23 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       pendingSignals.splice(0).forEach(({ from, signal }) => listener(from, signal))
       return () => signalListeners.delete(listener)
     },
+    onControl(listener) {
+      controlListeners.add(listener)
+      return () => controlListeners.delete(listener)
+    },
+    async rotateKey() {
+      const { key } = await invoke<{ key: string }>('rotate-key', { roomId })
+      // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
+      notifyControl({ type: 'key_rotated', by: self.id })
+      return key
+    },
+    async close() {
+      await invoke('close-room', { roomId })
+      await disconnect()
+    },
     async leave() {
       await invoke('leave-room', { roomId })
-      await supabase.removeChannel(channel)
+      await disconnect()
     },
   }
 }
