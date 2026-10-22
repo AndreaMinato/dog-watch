@@ -8,6 +8,7 @@ export interface CameraSession {
 }
 
 const MAX_VIDEO_BITRATE = 1_500_000
+const MAX_VIEWER_LINKS = 3
 
 const constraints: MediaStreamConstraints = {
   video: { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 } },
@@ -46,6 +47,10 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
     if (links.get(from)?.id !== signal.link) {
       if (!('description' in signal) || signal.description.type !== 'offer')
         return
+      if (!links.has(from) && links.size >= MAX_VIEWER_LINKS) {
+        room.sendControl(from, { type: 'refused', refusal: 'viewers_full' })
+        return
+      }
       closeLink(from)
       links.set(from, createPeerLink(room, from, { id: signal.link, polite: true, beforeAnswer: sendStream }))
     }

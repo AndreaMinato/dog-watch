@@ -2,40 +2,41 @@ import type { ControlEvent, JoinRequest, Member, RoomClient } from './room-clien
 import { shallowReadonly, shallowRef, triggerRef } from 'vue'
 import { joinRoom } from './room-client'
 
-export type RoomEnd = ControlEvent['type']
-
 const room = shallowRef<RoomClient | null>(null)
 const members = shallowRef<readonly Member[]>([])
-const ended = shallowRef<RoomEnd | null>(null)
+const ended = shallowRef<ControlEvent | null>(null)
 
 export function useRoom() {
   async function join(request: JoinRequest) {
     await leave()
+    ended.value = null
     const client = await joinRoom(request)
     client.onMembersChange((current) => {
       members.value = current
     })
-    client.onControl((event) => {
-      if ((event.type === 'room_closed' || event.by !== client.self.id) && end(client, event.type))
-        void client.leave()
+    client.onControl(async (event) => {
+      if (event.type === 'key_rotated' && event.by === client.self.id)
+        return
+      if (end(client, event))
+        await client.leave()
     })
-    ended.value = null
     room.value = client
   }
 
-  function end(client: RoomClient, reason: RoomEnd): boolean {
+  function end(client: RoomClient, event: ControlEvent): boolean {
     if (room.value !== client)
       return false
     room.value = null
     members.value = []
-    ended.value = reason
+    ended.value = event
     return true
   }
 
   async function leave() {
-    await room.value?.leave()
+    const client = room.value
     room.value = null
     members.value = []
+    await client?.leave()
   }
 
   async function rotateKey() {
@@ -46,7 +47,7 @@ export function useRoom() {
   async function closeRoom() {
     const client = room.value!
     await client.close()
-    end(client, 'room_closed')
+    end(client, { type: 'room_closed' })
   }
 
   return { room: shallowReadonly(room), members: shallowReadonly(members), ended: shallowReadonly(ended), join, leave, rotateKey, closeRoom }

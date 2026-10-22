@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Role } from '../room/room-client'
-import type { RoomEnd } from '../room/use-room'
+import type { ControlEvent, Role } from '../room/room-client'
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
@@ -8,6 +7,7 @@ import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
+import { refusalMessages } from '../components/refusal-messages'
 import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
@@ -15,9 +15,16 @@ const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
 
 const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spettatore' }
-const endMessages: Record<RoomEnd, string> = {
-  key_rotated: 'La Chiave è stata rigenerata: per rientrare serve la Chiave nuova.',
-  room_closed: 'Stanza chiusa',
+
+function endMessage(event: ControlEvent): string {
+  switch (event.type) {
+    case 'refused':
+      return refusalMessages[event.refusal]
+    case 'key_rotated':
+      return 'La Chiave è stata rigenerata: per rientrare serve la Chiave nuova.'
+    case 'room_closed':
+      return 'Stanza chiusa'
+  }
 }
 
 const rotated = shallowRef(false)
@@ -95,7 +102,7 @@ async function exit() {
     </template>
     <template v-else-if="ended">
       <p role="alert">
-        {{ endMessages[ended] }}
+        {{ endMessage(ended) }}
       </p>
       <RouterLink :to="{ name: 'join' }">
         Entra in una Stanza
