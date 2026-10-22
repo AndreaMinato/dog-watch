@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)

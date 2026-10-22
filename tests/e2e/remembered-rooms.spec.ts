@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
 
 test('a reloaded camera re-enters by itself and the viewer sees it again', async ({ browser }) => {
   const camera = await openDevice(browser)

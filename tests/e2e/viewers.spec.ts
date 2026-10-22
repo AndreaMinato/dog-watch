@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
 
 test('the camera lists the nicknames of the connected viewers', async ({ browser }) => {
   const camera = await openDevice(browser)

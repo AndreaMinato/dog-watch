@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice } from './devices'
+import { expect } from '@playwright/test'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, test } from './devices'
 
 async function shortenIceServersTtl(page: Page, seconds: number) {
   await page.route(/\/functions\/v1\/(?:join-room|ice-credentials)$/, async (route) => {

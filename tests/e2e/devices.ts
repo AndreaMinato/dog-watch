@@ -1,5 +1,5 @@
 import type { Browser, BrowserContextOptions, Locator, Page } from '@playwright/test'
-import { expect } from '@playwright/test'
+import { test as base, expect } from '@playwright/test'
 
 declare global {
   interface Window {
@@ -28,6 +28,14 @@ function recordWakeLocks() {
     return sentinel
   }
 }
+
+/** Every test closes the devices it opened, so they never pile up within a worker. */
+export const test = base.extend<{ closeDevices: void }>({
+  closeDevices: [async ({ browser }, use) => {
+    await use()
+    await Promise.all(browser.contexts().map(context => context.close()))
+  }, { auto: true }],
+})
 
 /**
  * The local gateway is not behind Cloudflare: give each device its own client IP, as
