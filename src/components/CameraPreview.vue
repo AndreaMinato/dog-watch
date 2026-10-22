@@ -2,12 +2,14 @@
 import type { CameraSession } from '../room/camera-session'
 import type { RoomClient } from '../room/room-client'
 import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
+import { keepDevice } from '../device/device-keeper'
 import { startCameraSession } from '../room/camera-session'
 
 const { room } = defineProps<{ room: RoomClient }>()
 
 const session = shallowRef<CameraSession | null>(null)
 let unmounted = false
+let releaseDevice = () => {}
 
 onMounted(async () => {
   const started = await startCameraSession(room)
@@ -15,10 +17,12 @@ onMounted(async () => {
     started.close()
   else
     session.value = started
+  releaseDevice = keepDevice()
 })
 
 onBeforeUnmount(() => {
   unmounted = true
+  releaseDevice()
   session.value?.close()
 })
 </script>
