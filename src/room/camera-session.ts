@@ -6,6 +6,8 @@ export interface CameraSession {
   readonly preview: MediaStream
   reacquire: () => Promise<void>
   useCamera: (deviceId: string) => Promise<void>
+  setPaused: (paused: boolean) => Promise<void>
+  setMuted: (muted: boolean) => void
   close: () => void
 }
 
@@ -118,6 +120,17 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
       // Phones often cannot open a second camera while the first one is still running.
       stream.getVideoTracks().forEach(track => track.stop())
       await capture({ video: lens() })
+    },
+    async setPaused(paused) {
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = !paused
+      })
+      await room.setStatus(paused ? 'paused' : 'live')
+    },
+    setMuted(muted) {
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = !muted
+      })
     },
     close() {
       closed = true

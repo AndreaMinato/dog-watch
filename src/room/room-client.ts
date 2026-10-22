@@ -4,10 +4,13 @@ import { supabase } from './supabase'
 
 export type Role = 'camera' | 'viewer'
 
+export type CameraStatus = 'live' | 'paused'
+
 export interface Member {
   id: string
   role: Role
   name: string
+  status: CameraStatus
 }
 
 export interface JoinRequest {
@@ -43,6 +46,7 @@ export interface RoomClient {
   onSignal: (listener: SignalListener) => () => void
   sendControl: (to: string, event: ControlEvent) => void
   onControl: (listener: ControlListener) => () => void
+  setStatus: (status: CameraStatus) => Promise<void>
   rotateKey: () => Promise<void>
   close: () => Promise<void>
   leave: () => Promise<void>
@@ -98,6 +102,7 @@ interface Presence {
   role: Role
   name: string
   joinedAt: string
+  status: CameraStatus
 }
 
 type PresentMember = Member & Pick<Presence, 'joinedAt'>
@@ -134,7 +139,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       throw error
     })
   const { data: { session } } = await supabase.auth.getSession()
-  const self: Member = { id: session!.user.id, role, name }
+  const self: Member = { id: session!.user.id, role, name, status: 'live' }
 
   const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
   const memberListeners = new Set<(members: Member[]) => void>()
@@ -147,7 +152,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   })
   channel.on('presence', { event: 'sync' }, () => {
     const present = Object.entries(channel.presenceState<Presence>())
-      .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name, joinedAt: presence.joinedAt }] : [])
+      .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name, joinedAt: presence.joinedAt, status: presence.status }] : [])
     const { admitted: current, refusals } = admit(present)
     members = current
     memberListeners.forEach(listener => listener(members))
@@ -210,8 +215,10 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     await disconnect()
   }
 
-  await subscribe(channel)
-  await channel.track({ role, name, joinedAt } satisfies Presence)
+  const presence: Presence = { role, name, joinedAt, status: 'live' }
+  // Realtime drops this Presence with the socket: track it again after every rejoin.
+  await subscribe(channel, () => channel.track(presence))
+  await channel.track(presence)
   const refusal = await verdict
   if (refusal) {
     await leave()
@@ -256,6 +263,10 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       controlListeners.add(listener)
       return () => controlListeners.delete(listener)
     },
+    async setStatus(status) {
+      presence.status = status
+      await channel.track(presence)
+    },
     async rotateKey() {
       currentKey = (await invoke<{ key: string }>('rotate-key', { roomId })).key
       // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
@@ -269,13 +280,20 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   }
 }
 
-function subscribe(channel: RealtimeChannel): Promise<void> {
+function subscribe(channel: RealtimeChannel, onRejoin: () => void): Promise<void> {
+  let subscribed = false
   return new Promise((resolve, reject) => {
     channel.subscribe((status, error) => {
-      if (status === 'SUBSCRIBED')
+      if (status === 'SUBSCRIBED' && subscribed) {
+        onRejoin()
+      }
+      else if (status === 'SUBSCRIBED') {
+        subscribed = true
         resolve()
-      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
+      }
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         reject(error ?? new Error(status))
+      }
     })
   })
 }

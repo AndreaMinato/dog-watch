@@ -9,6 +9,8 @@ import LensSelector from './LensSelector.vue'
 const { room } = defineProps<{ room: RoomClient }>()
 
 const session = shallowRef<CameraSession | null>(null)
+const paused = shallowRef(false)
+const muted = shallowRef(false)
 let unmounted = false
 let releaseDevice = () => {}
 
@@ -21,6 +23,16 @@ onMounted(async () => {
   session.value = started
   releaseDevice = keepDevice(started)
 })
+
+async function togglePause(session: CameraSession) {
+  paused.value = !paused.value
+  await session.setPaused(paused.value)
+}
+
+function toggleMute(session: CameraSession) {
+  muted.value = !muted.value
+  session.setMuted(muted.value)
+}
 
 onBeforeUnmount(() => {
   unmounted = true
@@ -42,7 +54,15 @@ onBeforeUnmount(() => {
     muted
     playsinline
   />
-  <LensSelector v-if="session" :session="session" />
+  <template v-if="session">
+    <button type="button" @click="togglePause(session)">
+      {{ paused ? 'Riprendi' : 'Metti in pausa' }}
+    </button>
+    <button type="button" @click="toggleMute(session)">
+      {{ muted ? 'Riattiva audio' : 'Silenzia' }}
+    </button>
+    <LensSelector :session="session" />
+  </template>
 </template>
 
 <style scoped>
