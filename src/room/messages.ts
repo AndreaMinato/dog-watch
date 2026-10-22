@@ -1,9 +1,9 @@
 import type { Refusal } from './room-client'
-import { InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from './room-client'
+import { InvalidKeyError, MEMBER_LIMITS, RoomRefusedError, TooManyAttemptsError } from './room-client'
 
 export const refusalMessages: Record<Refusal, string> = {
-  cameras_full: 'La Stanza ha già 4 Camere: non puoi entrare come Camera.',
-  viewers_full: 'La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.',
+  cameras_full: `La Stanza ha già ${MEMBER_LIMITS.camera} Camere: non puoi entrare come Camera.`,
+  viewers_full: `La Stanza ha già ${MEMBER_LIMITS.viewer} Spettatori: non puoi entrare come Spettatore.`,
   camera_name_taken: 'Nella Stanza c\'è già una Camera con questo nome: scegline un altro.',
 }
 

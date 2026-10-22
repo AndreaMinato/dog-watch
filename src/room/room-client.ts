@@ -64,7 +64,7 @@ export class RoomRefusedError extends Error {
   }
 }
 
-const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
+export const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
 
 async function invoke<T>(name: string, body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
