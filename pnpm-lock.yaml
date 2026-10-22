@@ -18,6 +18,9 @@ catalogs:
     '@types/node':
       specifier: ^24.19.2
       version: 24.19.2
+    '@types/pngjs':
+      specifier: ^6.0.5
+      version: 6.0.5
     '@vitejs/plugin-vue':
       specifier: ^6.0.10
       version: 6.0.10
@@ -36,12 +39,18 @@ catalogs:
     eslint-plugin-sonarjs:
       specifier: ^4.2.2
       version: 4.2.2
+    jsqr:
+      specifier: ^1.4.0
+      version: 1.4.0
     lint-staged:
       specifier: ^17.6.0
       version: 17.6.0
     npm-run-all2:
       specifier: ^9.0.3
       version: 9.0.3
+    pngjs:
+      specifier: ^7.0.0
+      version: 7.0.0
     simple-git-hooks:
       specifier: ^2.14.0
       version: 2.14.0
@@ -61,6 +70,9 @@ catalogs:
     '@supabase/supabase-js':
       specifier: ^2.118.0
       version: 2.118.0
+    lean-qr:
+      specifier: ^2.7.4
+      version: 2.7.4
     vue:
       specifier: ^3.5.44
       version: 3.5.44
@@ -75,6 +87,9 @@ importers:
       '@supabase/supabase-js':
         specifier: catalog:frontend
         version: 2.118.0
+      lean-qr:
+        specifier: catalog:frontend
+        version: 2.7.4
       vue:
         specifier: catalog:frontend
         version: 3.5.44(typescript@6.0.3)
@@ -94,6 +109,9 @@ importers:
       '@types/node':
         specifier: catalog:dev
         version: 24.19.2
+      '@types/pngjs':
+        specifier: catalog:dev
+        version: 6.0.5
       '@vitejs/plugin-vue':
         specifier: catalog:dev
         version: 6.0.10(vite@8.3.4(@types/node@24.19.2)(yaml@2.9.1))(vue@3.5.44(typescript@6.0.3))
@@ -112,12 +130,18 @@ importers:
       eslint-plugin-sonarjs:
         specifier: catalog:dev
         version: 4.2.2(eslint@10.13.0)
+      jsqr:
+        specifier: catalog:dev
+        version: 1.4.0
       lint-staged:
         specifier: catalog:dev
         version: 17.6.0
       npm-run-all2:
         specifier: catalog:dev
         version: 9.0.3
+      pngjs:
+        specifier: catalog:dev
+        version: 7.0.0
       simple-git-hooks:
         specifier: catalog:dev
         version: 2.14.0
@@ -711,6 +735,9 @@ packages:
 
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
+
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -1550,6 +1577,9 @@ packages:
     resolution: {integrity: sha512-hYTGkHGNRZnXOFZ1urhINADoqDrGfpy53cjw+dxk84QE0pUDujQzeUeamNs6Mz44/TKD49z2x6/GVSu4ZrtA+Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
+  jsqr@1.4.0:
+    resolution: {integrity: sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==}
+
   jsx-ast-utils-x@0.1.0:
     resolution: {integrity: sha512-eQQBjBnsVtGacsG9uJNB8qOr3yA8rga4wAaGG1qRcBzSIvfhERLrWxMAM1hp5fcS6Abo8M4+bUBTekYR0qTPQw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1560,6 +1590,10 @@ packages:
 
   keyv@5.6.0:
     resolution: {integrity: sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw==}
+
+  lean-qr@2.7.4:
+    resolution: {integrity: sha512-tlMPFfqhAAZN7+j/djRSvl/2+AYT2+7RRuyq8bvcbV8gMiENiscquQ9WTfCSyeEdxsVaEB+tU7e9nFZC63BFnQ==}
+    hasBin: true
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -1957,6 +1991,10 @@ packages:
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   pnpm-workspace-yaml@1.9.1:
     resolution: {integrity: sha512-Xj/T2X6DNAWbtk/9UQ0/TJRswltiHZevmcMjqoL7WrpJi67lu3qaslU4+I+zJ8wtwqmuvAE0KkB8rbv2ZdogBg==}
@@ -2855,6 +2893,10 @@ snapshots:
   '@types/node@24.19.2':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 24.19.2
 
   '@types/unist@3.0.3': {}
 
@@ -3760,6 +3802,8 @@ snapshots:
       eslint-visitor-keys: 5.0.1
       verkit: 0.3.2
 
+  jsqr@1.4.0: {}
+
   jsx-ast-utils-x@0.1.0: {}
 
   katex@0.16.47:
@@ -3769,6 +3813,8 @@ snapshots:
   keyv@5.6.0:
     dependencies:
       '@keyv/serialize': 1.1.1
+
+  lean-qr@2.7.4: {}
 
   levn@0.4.1:
     dependencies:
@@ -4353,6 +4399,8 @@ snapshots:
       playwright-core: 1.64.1
 
   pluralize@8.0.0: {}
+
+  pngjs@7.0.0: {}
 
   pnpm-workspace-yaml@1.9.1:
     dependencies:

@@ -3,6 +3,7 @@ import type { Role } from '../room/room-client'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
+import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
@@ -24,6 +25,7 @@ async function exit() {
     <template v-if="room">
       <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
       <CameraFeeds v-else :room="room" />
+      <JoinLink v-if="room.self.role === 'camera'" :room-key="room.key" />
     </template>
     <ViewerList v-if="room?.self.role === 'camera'" :room="room" />
     <NewViewerNotice v-if="room?.self.role === 'viewer'" :room="room" />
