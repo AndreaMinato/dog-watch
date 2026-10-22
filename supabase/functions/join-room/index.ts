@@ -1,5 +1,6 @@
 import { withSupabase } from '@supabase/server'
 import { hashClientIp } from '../_shared/client-ip.ts'
+import { createIceServers, iceServersTtl, readTurnKey } from '../_shared/ice-servers.ts'
 import { parseName } from '../_shared/name.ts'
 import { hashRoomKey, normalizeRoomKey } from '../_shared/room-key.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
@@ -10,6 +11,8 @@ if (!pepper)
 const ipHashSalt = Deno.env.get('IP_HASH_SALT')
 if (!ipHashSalt)
   throw new Error('IP_HASH_SALT is not set')
+
+const turnKey = readTurnKey(name => Deno.env.get(name))
 
 const roles = ['camera', 'viewer']
 const maxFailedAttemptsPerHour = 10
@@ -61,7 +64,8 @@ export default {
     return Response.json({
       roomId: room.id,
       topic: `room:${room.id}`,
-      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+      iceServers: await createIceServers(turnKey),
+      iceServersTtl,
     })
   }),
 }

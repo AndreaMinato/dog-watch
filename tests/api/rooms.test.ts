@@ -33,7 +33,8 @@ describe('join room', () => {
     expect(await response.json()).toEqual({
       roomId,
       topic: `room:${roomId}`,
-      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+      iceServers: expect.any(Array),
+      iceServersTtl: expect.any(Number),
     })
   })
 

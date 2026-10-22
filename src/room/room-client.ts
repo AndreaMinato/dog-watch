@@ -33,13 +33,15 @@ interface ControlMessage {
 }
 
 export interface RoomClient {
+  readonly key: string
   readonly self: Member
   readonly iceServers: RTCIceServer[]
+  onIceServersChange: (listener: (iceServers: RTCIceServer[]) => void) => () => void
   onMembersChange: (listener: (members: Member[]) => void) => () => void
   sendSignal: (to: string, signal: Signal) => void
   onSignal: (listener: SignalListener) => () => void
   onControl: (listener: ControlListener) => () => void
-  rotateKey: () => Promise<string>
+  rotateKey: () => Promise<void>
   close: () => Promise<void>
   leave: () => Promise<void>
 }
@@ -59,10 +61,14 @@ export function createRoom(name: string): Promise<{ roomId: string, key: string 
   return invoke('create-room', { name })
 }
 
-interface JoinResponse {
+interface IceServersGrant {
+  iceServers: RTCIceServer[]
+  iceServersTtl: number
+}
+
+interface JoinResponse extends IceServersGrant {
   roomId: string
   topic: string
-  iceServers: RTCIceServer[]
 }
 
 interface SignalMessage {
@@ -72,7 +78,7 @@ interface SignalMessage {
 }
 
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic, iceServers } = await invoke<JoinResponse>('join-room', { key, role, name })
+  const { roomId, topic, iceServers: joinedIceServers, iceServersTtl } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
       if (status === 403)
@@ -113,14 +119,50 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     notifyControl(event)
   })
 
+  let iceServers = joinedIceServers
+  const iceServersListeners = new Set<(iceServers: RTCIceServer[]) => void>()
+  let renewal: ReturnType<typeof setTimeout> | undefined
+  // TURN credentials expire: renew them halfway, and on failure retry halfway to the
+  // same expiry, so a transient error still leaves time for another attempt.
+  function scheduleIceServersRenewal(expiresAt: number) {
+    renewal = setTimeout(async () => {
+      try {
+        const grant = await invoke<IceServersGrant>('ice-credentials', { roomId })
+        iceServers = grant.iceServers
+        iceServersListeners.forEach(listener => listener(iceServers))
+        scheduleIceServersRenewal(Date.now() + grant.iceServersTtl * 1000)
+      }
+      catch (error) {
+        console.error(error)
+        if (Date.now() < expiresAt)
+          scheduleIceServersRenewal(expiresAt)
+      }
+    }, (expiresAt - Date.now()) / 2)
+  }
+
   await subscribe(channel)
   await channel.track({ role, name })
+  scheduleIceServersRenewal(Date.now() + iceServersTtl * 1000)
 
-  const disconnect = () => supabase.removeChannel(channel)
+  async function disconnect() {
+    clearTimeout(renewal)
+    await supabase.removeChannel(channel)
+  }
+
+  let currentKey = key
 
   return {
+    get key() {
+      return currentKey
+    },
     self,
-    iceServers,
+    get iceServers() {
+      return iceServers
+    },
+    onIceServersChange(listener) {
+      iceServersListeners.add(listener)
+      return () => iceServersListeners.delete(listener)
+    },
     onMembersChange(listener) {
       memberListeners.add(listener)
       listener(members)
@@ -139,10 +181,9 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       return () => controlListeners.delete(listener)
     },
     async rotateKey() {
-      const { key } = await invoke<{ key: string }>('rotate-key', { roomId })
+      currentKey = (await invoke<{ key: string }>('rotate-key', { roomId })).key
       // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
       notifyControl({ type: 'key_rotated', by: self.id })
-      return key
     },
     async close() {
       await invoke('close-room', { roomId })

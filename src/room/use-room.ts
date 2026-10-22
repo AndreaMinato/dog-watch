@@ -1,5 +1,5 @@
 import type { ControlEvent, JoinRequest, Member, RoomClient } from './room-client'
-import { shallowReadonly, shallowRef } from 'vue'
+import { shallowReadonly, shallowRef, triggerRef } from 'vue'
 import { joinRoom } from './room-client'
 
 export type RoomEnd = ControlEvent['type']
@@ -38,8 +38,9 @@ export function useRoom() {
     members.value = []
   }
 
-  async function rotateKey(): Promise<string> {
-    return room.value!.rotateKey()
+  async function rotateKey() {
+    await room.value!.rotateKey()
+    triggerRef(room)
   }
 
   async function closeRoom() {

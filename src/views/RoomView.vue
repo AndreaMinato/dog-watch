@@ -6,6 +6,9 @@ import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
+import JoinLink from '../components/JoinLink.vue'
+import NewViewerNotice from '../components/NewViewerNotice.vue'
+import ViewerList from '../components/ViewerList.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
@@ -17,7 +20,7 @@ const endMessages: Record<RoomEnd, string> = {
   room_closed: 'Stanza chiusa',
 }
 
-const newKey = shallowRef<string | null>(null)
+const rotated = shallowRef(false)
 const error = shallowRef(false)
 
 async function run(action: () => Promise<void>) {
@@ -30,6 +33,11 @@ async function run(action: () => Promise<void>) {
   }
 }
 
+async function rotate() {
+  await rotateKey()
+  rotated.value = true
+}
+
 async function exit() {
   await leave()
   await router.push({ name: 'home' })
@@ -40,8 +48,15 @@ async function exit() {
   <main>
     <h1>Stanza</h1>
     <template v-if="room">
-      <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
-      <CameraFeeds v-else :room="room" />
+      <template v-if="room.self.role === 'camera'">
+        <CameraPreview :room="room" />
+        <JoinLink :room-key="room.key" />
+        <ViewerList :room="room" />
+      </template>
+      <template v-else>
+        <CameraFeeds :room="room" />
+        <NewViewerNotice :room="room" />
+      </template>
       <h2 id="members-heading">
         Nella Stanza
       </h2>
@@ -54,15 +69,15 @@ async function exit() {
         </li>
       </ul>
       <template v-if="room.self.role === 'camera'">
-        <template v-if="newKey">
+        <template v-if="rotated">
           <p>Ecco la nuova Chiave della Stanza: dalla ai dispositivi fidati.</p>
-          <output class="room-key" aria-label="Chiave della Stanza">{{ newKey }}</output>
+          <output class="room-key" aria-label="Chiave della Stanza">{{ room.key }}</output>
         </template>
         <ConfirmButton
           label="Rigenera la Chiave"
           question="Rigenerare la Chiave? Tutti gli altri dispositivi verranno espulsi e dovranno rientrare con la Chiave nuova."
           confirm-label="Rigenera"
-          @confirm="run(async () => { newKey = await rotateKey() })"
+          @confirm="run(rotate)"
         />
         <ConfirmButton
           label="Chiudi la Stanza"
