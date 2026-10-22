@@ -66,6 +66,7 @@ export default {
       topic: `room:${room.id}`,
       iceServers: await createIceServers(turnKey),
       iceServersTtl,
+      joinedAt: now,
     })
   }),
 }

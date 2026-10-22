@@ -48,6 +48,12 @@ export async function joinAsCamera(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Entra' }).click()
 }
 
+export async function joinAsCameraWithKey(page: Page, key: string, name: string): Promise<void> {
+  await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
+  await page.getByLabel('Chiave').fill(key)
+  await joinAsCamera(page, name)
+}
+
 export async function joinAsViewer(page: Page, key: string, nickname: string): Promise<void> {
   await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await page.getByLabel('Chiave').fill(key)

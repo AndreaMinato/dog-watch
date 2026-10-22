@@ -21,7 +21,12 @@ export type Signal = { link: string } & (
   | { candidate: RTCIceCandidateInit }
 )
 
+export type Refusal = 'cameras_full' | 'viewers_full' | 'camera_name_taken'
+
+export interface ControlEvent { type: 'refused', refusal: Refusal }
+
 type SignalListener = (from: string, signal: Signal) => void
+type ControlListener = (event: ControlEvent) => void
 
 export interface RoomClient {
   readonly key: string
@@ -31,12 +36,22 @@ export interface RoomClient {
   onMembersChange: (listener: (members: Member[]) => void) => () => void
   sendSignal: (to: string, signal: Signal) => void
   onSignal: (listener: SignalListener) => () => void
+  sendControl: (to: string, event: ControlEvent) => void
+  onControl: (listener: ControlListener) => () => void
   leave: () => Promise<void>
 }
 
 export class InvalidKeyError extends Error {}
 
 export class TooManyAttemptsError extends Error {}
+
+export class RoomRefusedError extends Error {
+  constructor(readonly refusal: Refusal) {
+    super(refusal)
+  }
+}
+
+const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
 
 async function invoke<T>(name: string, body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
@@ -57,6 +72,7 @@ interface IceServersGrant {
 interface JoinResponse extends IceServersGrant {
   roomId: string
   topic: string
+  joinedAt: string
 }
 
 interface SignalMessage {
@@ -65,8 +81,42 @@ interface SignalMessage {
   signal: Signal
 }
 
+interface ControlMessage {
+  to?: string
+  event: ControlEvent
+}
+
+interface Presence {
+  role: Role
+  name: string
+  joinedAt: string
+}
+
+type PresentMember = Member & Pick<Presence, 'joinedAt'>
+
+function sameName(a: string, b: string): boolean {
+  return a.localeCompare(b, undefined, { sensitivity: 'base' }) === 0
+}
+
+/** Everyone applies the same limits to the same Presence state, so they all agree on who exceeds them: the latest to join. */
+function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<string, Refusal> } {
+  const admitted: Member[] = []
+  const refusals = new Map<string, Refusal>()
+  const byJoinOrder = [...present].sort((a, b) => Date.parse(a.joinedAt) - Date.parse(b.joinedAt) || a.id.localeCompare(b.id))
+  for (const { joinedAt: _, ...member } of byJoinOrder) {
+    const sameRole = admitted.filter(other => other.role === member.role)
+    if (sameRole.length >= MEMBER_LIMITS[member.role])
+      refusals.set(member.id, member.role === 'camera' ? 'cameras_full' : 'viewers_full')
+    else if (member.role === 'camera' && sameRole.some(other => sameName(other.name, member.name)))
+      refusals.set(member.id, 'camera_name_taken')
+    else
+      admitted.push(member)
+  }
+  return { admitted, refusals }
+}
+
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic, iceServers: joinedIceServers, iceServersTtl } = await invoke<JoinResponse>('join-room', { key, role, name })
+  const { roomId, topic, iceServers: joinedIceServers, iceServersTtl, joinedAt } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
       if (status === 403)
@@ -80,11 +130,27 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
 
   const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
   const memberListeners = new Set<(members: Member[]) => void>()
+  const controlListeners = new Set<ControlListener>()
   let members: Member[] = []
+  let admitted = false
+  let resolveVerdict: (refusal: Refusal | undefined) => void
+  const verdict = new Promise<Refusal | undefined>((resolve) => {
+    resolveVerdict = resolve
+  })
   channel.on('presence', { event: 'sync' }, () => {
-    members = Object.entries(channel.presenceState<Omit<Member, 'id'>>())
-      .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name }] : [])
+    const present = Object.entries(channel.presenceState<Presence>())
+      .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name, joinedAt: presence.joinedAt }] : [])
+    const { admitted: current, refusals } = admit(present)
+    members = current
     memberListeners.forEach(listener => listener(members))
+    const refusal = refusals.get(self.id)
+    if (admitted && refusal) {
+      admitted = false
+      controlListeners.forEach(listener => listener({ type: 'refused', refusal }))
+    }
+    else if (present.some(member => member.id === self.id)) {
+      resolveVerdict(refusal)
+    }
   })
 
   // Signals can arrive before a session starts listening (a Viewer offers as soon as it
@@ -120,8 +186,25 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     }, (expiresAt - Date.now()) / 2)
   }
 
+  channel.on<ControlMessage>('broadcast', { event: 'control' }, ({ payload }) => {
+    if (payload.to === undefined || payload.to === self.id)
+      controlListeners.forEach(listener => listener(payload.event))
+  })
+
+  async function leave() {
+    clearTimeout(renewal)
+    await invoke('leave-room', { roomId })
+    await supabase.removeChannel(channel)
+  }
+
   await subscribe(channel)
-  await channel.track({ role, name })
+  await channel.track({ role, name, joinedAt } satisfies Presence)
+  const refusal = await verdict
+  if (refusal) {
+    await leave()
+    throw new RoomRefusedError(refusal)
+  }
+  admitted = true
   scheduleIceServersRenewal(Date.now() + iceServersTtl * 1000)
 
   return {
@@ -147,11 +230,14 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       pendingSignals.splice(0).forEach(({ from, signal }) => listener(from, signal))
       return () => signalListeners.delete(listener)
     },
-    async leave() {
-      clearTimeout(renewal)
-      await invoke('leave-room', { roomId })
-      await supabase.removeChannel(channel)
+    sendControl(to, event) {
+      channel.send({ type: 'broadcast', event: 'control', payload: { to, event } satisfies ControlMessage })
     },
+    onControl(listener) {
+      controlListeners.add(listener)
+      return () => controlListeners.delete(listener)
+    },
+    leave,
   }
 }
 

@@ -36,7 +36,20 @@ describe('join room', () => {
       topic: `room:${roomId}`,
       iceServers: expect.any(Array),
       iceServersTtl: expect.any(Number),
+      joinedAt: expect.any(String),
     })
+  })
+
+  it('returns the instant the member joined, by the server clock', async () => {
+    const { key } = await createRoom()
+    const user = await signInAnonymously()
+    const before = Date.now()
+
+    const response = await invokeFunction('join-room', { user, body: { key, role: 'viewer', name: 'Andrea' } })
+
+    const { joinedAt } = await response.json()
+    expect(Date.parse(joinedAt)).toBeGreaterThanOrEqual(before - 1000)
+    expect(Date.parse(joinedAt)).toBeLessThanOrEqual(Date.now() + 1000)
   })
 
   it('answers unknown and malformed keys identically', async () => {

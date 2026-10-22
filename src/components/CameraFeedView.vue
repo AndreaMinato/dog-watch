@@ -3,6 +3,7 @@ import type { CameraFeed } from '../room/viewer-session'
 import { shallowRef } from 'vue'
 
 const { feed } = defineProps<{ feed: CameraFeed }>()
+defineEmits<{ enlarge: [] }>()
 
 const muted = shallowRef(true)
 </script>
@@ -15,6 +16,7 @@ const muted = shallowRef(true)
       :muted="muted"
       autoplay
       playsinline
+      @click="$emit('enlarge')"
     />
     <figcaption>
       {{ feed.camera.name }}
@@ -31,7 +33,6 @@ const muted = shallowRef(true)
 }
 .feed video {
   width: 100%;
-  max-width: 40rem;
   background: black;
 }
 </style>
