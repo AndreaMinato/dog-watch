@@ -3,9 +3,8 @@ import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
-import { InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
-import { refusalMessages } from './refusal-messages'
+import { joinErrorMessage } from './join-error-message'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
 
@@ -20,16 +19,6 @@ const error = shallowRef<string | null>(null)
 
 const nameLabel = computed(() => role.value === 'camera' ? 'Nome della Camera' : 'Soprannome')
 
-function errorMessage(cause: unknown): string {
-  if (cause instanceof InvalidKeyError)
-    return 'Chiave non valida'
-  if (cause instanceof TooManyAttemptsError)
-    return 'Troppi tentativi, riprova più tardi.'
-  if (cause instanceof RoomRefusedError)
-    return refusalMessages[cause.refusal]
-  return 'Qualcosa è andato storto, riprova.'
-}
-
 async function submit() {
   pending.value = true
   error.value = null
@@ -38,7 +27,7 @@ async function submit() {
     await router.push({ name: 'room' })
   }
   catch (cause) {
-    error.value = errorMessage(cause)
+    error.value = joinErrorMessage(cause)
   }
   finally {
     pending.value = false
