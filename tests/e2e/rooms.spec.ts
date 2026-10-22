@@ -1,8 +1,13 @@
 import type { Browser, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
+// The local gateway is not behind Cloudflare: give each device its own client IP, as
+// Cloudflare would, so failed join attempts never pile up across tests and runs.
 async function openDevice(browser: Browser): Promise<Page> {
   const context = await browser.newContext()
+  const ip = Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')
+  await context.route('**/functions/v1/**', route =>
+    route.continue({ headers: { ...route.request().headers(), 'cf-connecting-ip': ip } }))
   const page = await context.newPage()
   await page.goto('/')
   return page
@@ -48,13 +53,33 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   await expect(members(camera)).toContainText('soggiorno')
 })
 
-test('a wrong key is refused', async ({ browser }) => {
+async function tryWrongKey(page: Page) {
+  await page.getByLabel('Chiave').fill('abaco abete abisso zuppa')
+  await page.getByRole('button', { name: 'Entra' }).click()
+}
+
+async function openJoinForm(browser: Browser): Promise<Page> {
   const viewer = await openDevice(browser)
   await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
-  await viewer.getByLabel('Chiave').fill('abaco abete abisso zuppa')
   await viewer.getByLabel('Spettatore').check()
   await viewer.getByLabel('Soprannome').fill('Andrea')
-  await viewer.getByRole('button', { name: 'Entra' }).click()
+  return viewer
+}
+
+test('a wrong key is refused', async ({ browser }) => {
+  const viewer = await openJoinForm(browser)
+
+  await tryWrongKey(viewer)
 
   await expect(viewer.getByRole('alert')).toHaveText('Chiave non valida')
+})
+
+test('too many wrong keys ask to retry later', async ({ browser }) => {
+  const viewer = await openJoinForm(browser)
+  for (let attempt = 0; attempt < 10; attempt++)
+    await tryWrongKey(viewer)
+
+  await tryWrongKey(viewer)
+
+  await expect(viewer.getByRole('alert')).toHaveText('Troppi tentativi, riprova più tardi.')
 })
