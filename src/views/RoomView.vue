@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Role } from '../room/room-client'
 import { useRouter } from 'vue-router'
+import CameraFeeds from '../components/CameraFeeds.vue'
+import CameraPreview from '../components/CameraPreview.vue'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
@@ -17,13 +19,17 @@ async function exit() {
 <template>
   <main>
     <h1>Stanza</h1>
+    <template v-if="room">
+      <CameraPreview v-if="room.self.role === 'camera'" :room="room" />
+      <CameraFeeds v-else :room="room" />
+    </template>
     <h2 id="members-heading">
       Nella Stanza
     </h2>
     <ul aria-labelledby="members-heading">
       <li v-for="member in members" :key="member.id">
         {{ roleLabels[member.role] }}: {{ member.name }}
-        <template v-if="member.id === room?.selfId">
+        <template v-if="member.id === room?.self.id">
           (tu)
         </template>
       </li>

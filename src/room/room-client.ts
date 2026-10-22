@@ -16,13 +16,25 @@ export interface JoinRequest {
   name: string
 }
 
+export type Signal = { link: string } & (
+  | { description: RTCSessionDescriptionInit }
+  | { candidate: RTCIceCandidateInit }
+)
+
+type SignalListener = (from: string, signal: Signal) => void
+
 export interface RoomClient {
-  readonly selfId: string
-  onMembersChange: (listener: (members: Member[]) => void) => void
+  readonly self: Member
+  readonly iceServers: RTCIceServer[]
+  onMembersChange: (listener: (members: Member[]) => void) => () => void
+  sendSignal: (to: string, signal: Signal) => void
+  onSignal: (listener: SignalListener) => () => void
   leave: () => Promise<void>
 }
 
 export class InvalidKeyError extends Error {}
+
+export class TooManyAttemptsError extends Error {}
 
 async function invoke<T>(name: string, body: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
@@ -35,30 +47,70 @@ export function createRoom(name: string): Promise<{ roomId: string, key: string 
   return invoke('create-room', { name })
 }
 
+interface JoinResponse {
+  roomId: string
+  topic: string
+  iceServers: RTCIceServer[]
+}
+
+interface SignalMessage {
+  from: string
+  to: string
+  signal: Signal
+}
+
 export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
-  const { roomId, topic } = await invoke<{ roomId: string, topic: string }>('join-room', { key, role, name })
+  const { roomId, topic, iceServers } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
-      throw error instanceof FunctionsHttpError && error.context.status === 403 ? new InvalidKeyError() : error
+      const status = error instanceof FunctionsHttpError ? error.context.status : undefined
+      if (status === 403)
+        throw new InvalidKeyError()
+      if (status === 429)
+        throw new TooManyAttemptsError()
+      throw error
     })
   const { data: { session } } = await supabase.auth.getSession()
-  const selfId = session!.user.id
+  const self: Member = { id: session!.user.id, role, name }
 
-  const channel = supabase.channel(topic, { config: { private: true, presence: { key: selfId } } })
-  const listeners = new Set<(members: Member[]) => void>()
+  const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
+  const memberListeners = new Set<(members: Member[]) => void>()
   let members: Member[] = []
   channel.on('presence', { event: 'sync' }, () => {
     members = Object.entries(channel.presenceState<Omit<Member, 'id'>>())
       .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name }] : [])
-    listeners.forEach(listener => listener(members))
+    memberListeners.forEach(listener => listener(members))
   })
+
+  // Signals can arrive before a session starts listening (a Viewer offers as soon as it
+  // sees this Camera in Presence), so they wait here for the first listener.
+  const signalListeners = new Set<SignalListener>()
+  const pendingSignals: SignalMessage[] = []
+  channel.on<SignalMessage>('broadcast', { event: 'signal' }, ({ payload }) => {
+    if (payload.to !== self.id)
+      return
+    if (signalListeners.size === 0)
+      pendingSignals.push(payload)
+    signalListeners.forEach(listener => listener(payload.from, payload.signal))
+  })
+
   await subscribe(channel)
   await channel.track({ role, name })
 
   return {
-    selfId,
+    self,
+    iceServers,
     onMembersChange(listener) {
-      listeners.add(listener)
+      memberListeners.add(listener)
       listener(members)
+      return () => memberListeners.delete(listener)
+    },
+    sendSignal(to, signal) {
+      channel.send({ type: 'broadcast', event: 'signal', payload: { from: self.id, to, signal } satisfies SignalMessage })
+    },
+    onSignal(listener) {
+      signalListeners.add(listener)
+      pendingSignals.splice(0).forEach(({ from, signal }) => listener(from, signal))
+      return () => signalListeners.delete(listener)
     },
     async leave() {
       await invoke('leave-room', { roomId })

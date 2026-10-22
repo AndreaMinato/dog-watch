@@ -1,5 +1,5 @@
 import type { JoinRequest, Member, RoomClient } from './room-client'
-import { readonly, shallowRef } from 'vue'
+import { shallowReadonly, shallowRef } from 'vue'
 import { joinRoom } from './room-client'
 
 const room = shallowRef<RoomClient | null>(null)
@@ -21,5 +21,5 @@ export function useRoom() {
     members.value = []
   }
 
-  return { room: readonly(room), members: readonly(members), join, leave }
+  return { room: shallowReadonly(room), members: shallowReadonly(members), join, leave }
 }

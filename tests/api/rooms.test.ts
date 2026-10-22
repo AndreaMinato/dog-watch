@@ -1,12 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, it } from 'vitest'
-import { createAdminClient, invokeFunction, signInAnonymously } from './local-supabase'
-
-async function createRoom(name = 'Casa al mare') {
-  const user = await signInAnonymously()
-  const response = await invokeFunction('create-room', { user, body: { name } })
-  return { response, ...(await response.json()) as { roomId: string, key: string } }
-}
+import { createAdminClient, createRoom, invokeFunction, signInAnonymously } from './local-supabase'
 
 describe('create room', () => {
   it('returns a four-word key and stores only its hash', async () => {
@@ -37,7 +31,11 @@ describe('join room', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ roomId, topic: `room:${roomId}` })
+    expect(await response.json()).toEqual({
+      roomId,
+      topic: `room:${roomId}`,
+      iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }],
+    })
   })
 
   it('answers unknown and malformed keys identically', async () => {

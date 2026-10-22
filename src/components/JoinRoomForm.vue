@@ -2,7 +2,8 @@
 import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
-import { InvalidKeyError } from '../room/room-client'
+import { compatibility } from '../device/compatibility'
+import { InvalidKeyError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
@@ -18,6 +19,14 @@ const error = shallowRef<string | null>(null)
 
 const nameLabel = computed(() => role.value === 'camera' ? 'Nome della Camera' : 'Soprannome')
 
+function errorMessage(cause: unknown): string {
+  if (cause instanceof InvalidKeyError)
+    return 'Chiave non valida'
+  if (cause instanceof TooManyAttemptsError)
+    return 'Troppi tentativi, riprova più tardi.'
+  return 'Qualcosa è andato storto, riprova.'
+}
+
 async function submit() {
   pending.value = true
   error.value = null
@@ -26,7 +35,7 @@ async function submit() {
     await router.push({ name: 'room' })
   }
   catch (cause) {
-    error.value = cause instanceof InvalidKeyError ? 'Chiave non valida' : 'Qualcosa è andato storto, riprova.'
+    error.value = errorMessage(cause)
   }
   finally {
     pending.value = false
@@ -42,9 +51,21 @@ async function submit() {
     </label>
     <fieldset class="roles">
       <legend>Ruolo</legend>
-      <label><input v-model="role" type="radio" value="camera"> Camera</label>
+      <label>
+        <input
+          v-model="role"
+          type="radio"
+          value="camera"
+          :disabled="!compatibility.camera"
+          :aria-describedby="compatibility.camera ? undefined : 'camera-unsupported'"
+        > Camera
+      </label>
       <label><input v-model="role" type="radio" value="viewer"> Spettatore</label>
     </fieldset>
+    <p v-if="!compatibility.camera" id="camera-unsupported">
+      Questo browser non può usare la fotocamera o tenere lo schermo acceso, quindi qui puoi entrare solo come Spettatore.
+      Per fare da Camera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
+    </p>
     <label class="field">
       {{ nameLabel }}
       <input v-model.trim="name" required maxlength="40">
