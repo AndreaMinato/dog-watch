@@ -12,6 +12,23 @@ test('the viewer watches the camera live', async ({ browser }) => {
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
+test('"In diretta" is the same apricot pill for the camera and the viewer, by day and by night', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+
+  for (const colorScheme of ['light', 'dark'] as const) {
+    for (const page of [camera, viewer]) {
+      await page.emulateMedia({ colorScheme })
+      const live = page.getByText('In diretta', { exact: true })
+      await expect(live).toHaveCSS('background-color', 'rgb(241, 176, 124)')
+      await expect(live).toHaveCSS('color', 'rgb(38, 48, 92)')
+    }
+  }
+})
+
 test('the viewer starts watching a camera that joins after it', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')

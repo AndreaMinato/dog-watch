@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CameraFeed } from '../room/viewer-session'
 import { shallowRef } from 'vue'
+import StatusPill from './StatusPill.vue'
 
 const { feed } = defineProps<{ feed: CameraFeed }>()
 defineEmits<{ enlarge: [] }>()
@@ -20,12 +21,10 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
       playsinline
       @click="$emit('enlarge')"
     />
-    <p v-if="feed.offlineSince" class="status">
+    <p v-if="feed.offlineSince" class="status offline">
       Telecamera {{ feed.camera.name }} offline dalle {{ clock.format(feed.offlineSince) }}
     </p>
-    <p v-else-if="feed.camera.status === 'paused'" class="status">
-      Telecamera in pausa
-    </p>
+    <StatusPill v-else class="status" :status="feed.camera.status" />
     <figcaption>
       {{ feed.camera.name }}
       <button type="button" @click="muted = !muted">
@@ -42,10 +41,14 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
 }
 .status {
   position: absolute;
-  inset: 0 0 auto;
+  top: 0.5rem;
+  left: 0.5rem;
   margin: 0;
+}
+.offline {
+  right: 0.5rem;
   padding: 0.5rem;
-  border-radius: 0.5rem 0.5rem 0 0;
+  border-radius: 0.5rem;
   background: var(--surface);
 }
 .feed video {

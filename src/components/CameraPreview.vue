@@ -5,6 +5,7 @@ import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
 import { startCameraSession } from '../room/camera-session'
 import LensSelector from './LensSelector.vue'
+import StatusPill from './StatusPill.vue'
 
 const { room } = defineProps<{ room: RoomClient }>()
 const emit = defineEmits<{ rest: [], screenKeptOn: [keptOn: boolean] }>()
@@ -46,15 +47,17 @@ onBeforeUnmount(() => {
   <p>
     Tieni il dispositivo in carica e questa pagina in primo piano: se lo schermo si spegne o passi a un'altra app, la telecamera smette di trasmettere.
   </p>
-  <video
-    v-if="session"
-    class="preview"
-    aria-label="Anteprima"
-    :srcObject="session.preview"
-    autoplay
-    muted
-    playsinline
-  />
+  <div v-if="session" class="stage">
+    <video
+      class="preview"
+      aria-label="Anteprima"
+      :srcObject="session.preview"
+      autoplay
+      muted
+      playsinline
+    />
+    <StatusPill class="status" :status="paused ? 'paused' : 'live'" />
+  </div>
   <div class="controls">
     <template v-if="session">
       <button type="button" @click="togglePause(session)">
@@ -72,6 +75,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.stage {
+  position: relative;
+}
+.status {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+}
 .preview {
   display: block;
   width: 100%;

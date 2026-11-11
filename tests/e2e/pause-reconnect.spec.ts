@@ -12,16 +12,22 @@ async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{
   return { camera, viewer }
 }
 
-test('the viewer sees the camera paused, then live again when it resumes', async ({ browser }) => {
+test('the camera and the viewer see the camera paused, then live again when it resumes', async ({ browser }) => {
   const { camera, viewer } = await watchCamera(browser)
 
   await camera.getByRole('button', { name: 'Metti in pausa' }).click()
 
-  await expect(viewer.getByText('Telecamera in pausa')).toBeVisible()
+  for (const page of [camera, viewer]) {
+    await expect(page.getByText('In pausa', { exact: true })).toBeVisible()
+    await expect(page.getByText('In diretta', { exact: true })).toBeHidden()
+  }
 
   await camera.getByRole('button', { name: 'Riprendi' }).click()
 
-  await expect(viewer.getByText('Telecamera in pausa')).toBeHidden()
+  for (const page of [camera, viewer]) {
+    await expect(page.getByText('In diretta', { exact: true })).toBeVisible()
+    await expect(page.getByText('In pausa', { exact: true })).toBeHidden()
+  }
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
