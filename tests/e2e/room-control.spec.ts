@@ -34,6 +34,7 @@ test('rotating the key expels the viewer, who re-enters with the new key', async
   const sheet = await openInviteSheet(camera)
   await expect(sheet.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${newKeyText}$`))
 
+  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await joinAsViewer(viewer, newKeyText, 'Andrea')
 
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
@@ -81,6 +82,7 @@ test('closing the room tells the viewer and the key stops working', async ({ bro
   await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
   await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
 
+  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await joinAsViewer(viewer, key, 'Andrea')
 
   await expect(viewer.getByRole('alert')).toHaveText('Chiave non valida')

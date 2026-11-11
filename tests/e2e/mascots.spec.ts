@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, test } from './devices'
 
 function mascotOf(page: Page, memberName: string) {
   return members(page).filter({ hasText: memberName }).getByRole('img')
@@ -38,14 +38,15 @@ test('a device that keeps the proposed animal enters with it', async ({ browser 
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
-  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Hai la Chiave della Stanza?').fill(key)
+  await next(viewer)
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
   const proposed = viewer.getByRole('group', { name: 'Animale' }).getByRole('radio', { checked: true })
   const animal = await proposed.evaluate((input: HTMLInputElement) => input.labels![0]!.textContent!.trim())
 
-  await viewer.getByLabel('Chiave').fill(key)
-  await viewer.getByLabel('Spettatore').check()
-  await viewer.getByLabel('Soprannome').fill('Andrea')
-  await viewer.getByRole('button', { name: 'Entra' }).click()
+  await enter(viewer)
 
   await expect(mascotOf(camera, 'Andrea')).toHaveAccessibleName(`${animal} affacciato`)
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import JoinRoomForm from '../components/JoinRoomForm.vue'
+import JoinQuestions from '../components/JoinQuestions.vue'
 
 const roomKey = useRoute().hash.slice(1) || undefined
 
@@ -11,7 +11,6 @@ if (roomKey)
 
 <template>
   <main>
-    <h1>Entra in una Stanza</h1>
-    <JoinRoomForm :room-key="roomKey" />
+    <JoinQuestions :invitation-key="roomKey" />
   </main>
 </template>

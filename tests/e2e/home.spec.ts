@@ -6,7 +6,7 @@ test('home page opens in Italian under the app name', async ({ page }) => {
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'it')
   await expect(page).toHaveTitle('Veglia')
-  await expect(page.getByRole('heading', { level: 1, name: 'Veglia' })).toBeVisible()
+  await expect(page.getByText('Veglia', { exact: true })).toBeVisible()
 })
 
 test('test browser provides a fake camera', async ({ page }) => {

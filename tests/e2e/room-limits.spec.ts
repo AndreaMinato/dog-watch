@@ -36,6 +36,7 @@ test('a camera named like one already in the room is refused', async ({ browser 
   await joinAsCameraWithKey(second, key, 'Soggiorno')
 
   await expect(second.getByRole('alert')).toHaveText('Nella Stanza c\'è già una telecamera con questo nome: scegline un altro.')
+  await expect(second.getByLabel('Che stanza riprende?')).toHaveValue('Soggiorno')
   await expect(members(first)).toHaveCount(1)
 })
 
@@ -51,6 +52,7 @@ test('a fifth camera is refused', async ({ browser }) => {
   await joinAsCameraWithKey(fifth, key, 'camera 5')
 
   await expect(fifth.getByRole('alert')).toHaveText('La Stanza ha già 4 telecamere: non puoi entrare come telecamera.')
+  await expect(fifth.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
   await expect(members(host)).toHaveCount(4)
 })
 
@@ -66,6 +68,7 @@ test('a fourth viewer is refused', async ({ browser }) => {
   await joinAsViewer(fourth, key, 'Dario')
 
   await expect(fourth.getByRole('alert')).toHaveText('La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.')
+  await expect(fourth.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
   await expect(members(camera)).toHaveCount(4)
 })
 
