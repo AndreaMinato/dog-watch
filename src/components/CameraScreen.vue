@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CameraSession } from '../room/camera-session'
 import type { RoomClient } from '../room/room-client'
-import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
+import { onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
 import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
 import { rolePoses } from '../mascot/mascot'
 import { startCameraSession } from '../room/camera-session'
@@ -21,14 +21,32 @@ const { room, roomKey } = defineProps<{
 }>()
 defineEmits<{ exit: [] }>()
 
+const IDLE_BEFORE_RESTING_MS = 120_000
+
+const screen = useTemplateRef('screen')
 const session = shallowRef<CameraSession | null>(null)
 const paused = shallowRef(false)
 const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
 let unmounted = false
 let releaseScreenAndCamera = () => {}
+let idle: ReturnType<typeof setTimeout> | undefined
+
+function rest() {
+  // An open sheet is modal: it would leave the rest screen deaf to the tap that wakes it.
+  screen.value?.querySelectorAll('dialog').forEach(dialog => dialog.close())
+  resting.value = true
+}
+
+function restartIdle() {
+  clearTimeout(idle)
+  idle = setTimeout(rest, IDLE_BEFORE_RESTING_MS)
+}
 
 onMounted(async () => {
+  restartIdle()
+  window.addEventListener('pointerdown', restartIdle)
+  window.addEventListener('keydown', restartIdle)
   const started = await startCameraSession(room)
   if (unmounted) {
     started.close()
@@ -42,13 +60,16 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   unmounted = true
+  clearTimeout(idle)
+  window.removeEventListener('pointerdown', restartIdle)
+  window.removeEventListener('keydown', restartIdle)
   releaseScreenAndCamera()
   session.value?.close()
 })
 </script>
 
 <template>
-  <main v-show="!resting" class="camera-screen">
+  <main v-show="!resting" ref="screen" class="camera-screen">
     <video
       v-if="session"
       class="mirror"
