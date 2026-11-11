@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.1.0...dog-watch-v1.1.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* refuse the key of an expired room before the cleanup runs ([#40](https://github.com/AndreaMinato/dog-watch/issues/40)) ([f7fd1ef](https://github.com/AndreaMinato/dog-watch/commit/f7fd1ef075ae2348e8d33a9fe24ef05c2aa54980)), closes [#27](https://github.com/AndreaMinato/dog-watch/issues/27)
+
 ## [1.1.0](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.0.0...dog-watch-v1.1.0) (2026-11-11)
 
 
