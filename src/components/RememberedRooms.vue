@@ -101,6 +101,14 @@ onBeforeUnmount(() => clearTimeout(retry))
   padding: 0;
   list-style: none;
 }
+.room {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
 .new-key,
 .field {
   display: flex;

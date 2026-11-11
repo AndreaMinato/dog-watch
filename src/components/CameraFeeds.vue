@@ -24,14 +24,14 @@ onBeforeUnmount(() => session.close())
 </script>
 
 <template>
-  <section aria-label="Camere">
+  <section class="feeds" :class="{ enlarged }" aria-label="Camere">
     <p v-if="noCameraPresent">
       Nessuna Camera nella Stanza
     </p>
     <button v-if="enlarged" type="button" @click="enlargedId = null">
       Torna alla griglia
     </button>
-    <div class="grid" :class="{ enlarged }">
+    <div class="grid">
       <CameraFeedView
         v-for="feed in feeds"
         v-show="!enlarged || feed === enlarged"
@@ -46,10 +46,33 @@ onBeforeUnmount(() => session.close())
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
   gap: 0.5rem;
 }
-.grid.enlarged {
-  grid-template-columns: 1fr;
+.enlarged {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: black;
+  color: white;
+}
+.enlarged .grid {
+  flex: 1;
+  min-height: 0;
+  grid-template: minmax(0, 1fr) / 1fr;
+}
+.enlarged .grid > :deep(.feed) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.enlarged :deep(video) {
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
 }
 </style>

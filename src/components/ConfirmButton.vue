@@ -18,11 +18,13 @@ function confirm() {
   </button>
   <dialog ref="dialog">
     <p>{{ question }}</p>
-    <button type="button" @click="confirm">
-      {{ confirmLabel }}
-    </button>
-    <button type="button" @click="dialog?.close()">
-      Annulla
-    </button>
+    <div class="controls">
+      <button type="button" @click="confirm">
+        {{ confirmLabel }}
+      </button>
+      <button type="button" @click="dialog?.close()">
+        Annulla
+      </button>
+    </div>
   </dialog>
 </template>

@@ -57,9 +57,6 @@ async function submit() {
   gap: 0.5rem;
 }
 .room-key {
-  display: block;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
 }
 </style>

@@ -80,6 +80,19 @@ async function submit() {
 }
 .roles {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.roles legend {
+  padding: 0;
+}
+.roles label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--touch);
 }
 </style>
