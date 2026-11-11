@@ -26,7 +26,7 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
     </p>
     <StatusPill v-else class="status" :status="feed.camera.status" />
     <figcaption>
-      {{ feed.camera.name }}
+      <span class="name">{{ feed.camera.name }}</span>
       <button type="button" @click="muted = !muted">
         {{ muted ? 'Attiva audio' : 'Disattiva audio' }}
       </button>
@@ -56,6 +56,10 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
   width: 100%;
   border-radius: 0.5rem;
   background: var(--surface);
+}
+.name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
 }
 figcaption {
   display: flex;
