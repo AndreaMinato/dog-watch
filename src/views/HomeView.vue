@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { appName } from '../brand'
 import RememberedRooms from '../components/RememberedRooms.vue'
 </script>
 
 <template>
   <main>
-    <h1>dog-watch</h1>
+    <h1>{{ appName }}</h1>
     <nav class="actions">
       <RouterLink class="button primary" :to="{ name: 'create' }">
         Crea una Stanza
