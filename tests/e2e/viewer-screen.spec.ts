@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, test } from './devices'
+import { cameraThumbnails, createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openCameraMenu, openDevice, openPeerConnections, test } from './devices'
 
 test('the viewer watches the first camera big and brings another one there with a tap on its thumbnail', async ({ browser }) => {
   const livingRoom = await openDevice(browser)
@@ -30,7 +30,7 @@ test('the viewer starts on the first camera that is live', async ({ browser }) =
   const livingRoom = await openDevice(browser)
   const key = await createRoom(livingRoom, 'Casa al mare')
   await joinAsCamera(livingRoom, 'soggiorno')
-  await livingRoom.getByRole('button', { name: 'Metti in pausa' }).click()
+  await (await openCameraMenu(livingRoom)).getByRole('button', { name: 'Metti in pausa' }).click()
   const kitchen = await openDevice(browser)
   await joinAsCameraWithKey(kitchen, key, 'cucina')
 
@@ -86,7 +86,7 @@ test('each thumbnail tells the state of its camera', async ({ browser }) => {
   await expect(livingRoomThumbnail).toHaveAccessibleName('soggiorno, in diretta')
   await expect(kitchenThumbnail).toHaveAccessibleName('cucina, in diretta')
 
-  await kitchen.getByRole('button', { name: 'Metti in pausa' }).click()
+  await (await openCameraMenu(kitchen)).getByRole('button', { name: 'Metti in pausa' }).click()
   await livingRoom.close()
 
   await expect(livingRoomThumbnail).toHaveAccessibleName(/^soggiorno, scollegata dalle \d\d:\d\d$/)
@@ -121,13 +121,13 @@ test('a camera that leaves the room disappears from the viewer\'s screen', async
   await cameraThumbnails(viewer).filter({ hasText: 'cucina' }).click()
   await expectAdvancingVideo(viewer.getByLabel('Telecamera cucina'))
 
-  await kitchen.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(kitchen)).getByRole('button', { name: 'Esci' }).click()
 
   await expect(cameraThumbnails(viewer)).toHaveCount(1)
   await expect(viewer.getByText(/scollegata/)).toHaveCount(0)
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
-  await livingRoom.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(livingRoom)).getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera' })).toBeVisible()
   await expect(cameraThumbnails(viewer)).toHaveCount(0)

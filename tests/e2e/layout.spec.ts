@@ -158,7 +158,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const page = await openDevice(browser)
       await createRoom(page, 'Casa al mare')
       await joinAsCamera(page, 'soggiorno')
-      await page.getByRole('button', { name: 'Esci' }).click()
+      await (await openCameraMenu(page)).getByRole('button', { name: 'Esci' }).click()
       await expect(page.getByRole('heading', { name: 'Le tue Stanze' })).toBeVisible()
       await expectUsable(page)
 

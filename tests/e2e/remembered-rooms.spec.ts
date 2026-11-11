@@ -145,7 +145,7 @@ test('a device with recent rooms answers the questions only to use another room,
   const device = await openDevice(browser)
   await createRoom(device, 'Casa al mare')
   await joinAsCamera(device, 'soggiorno')
-  await device.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(device)).getByRole('button', { name: 'Esci' }).click()
   await expect(recentRooms(device)).toHaveCount(1)
   await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toHaveCount(0)
 
@@ -157,7 +157,7 @@ test('a device with recent rooms answers the questions only to use another room,
   await device.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
   await createRoom(device, 'Ufficio')
   await joinAsCamera(device, 'scrivania')
-  await device.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(device)).getByRole('button', { name: 'Esci' }).click()
 
   await expect(recentRooms(device).getByRole('button', { name: /^Casa al mare$|^Ufficio$/ })).toHaveText([/Ufficio/, /Casa al mare/])
 })
