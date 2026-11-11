@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, enter, joinAsCamera, members, next, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, next, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
 
 async function invitationLink(camera: Page): Promise<string> {
   await openCameraMenu(camera)
@@ -26,7 +26,7 @@ test('opening the join link skips the key: three questions and the device is in'
   await next(viewer)
   await expect(viewer.getByText('3 di 3')).toBeVisible()
   await enter(viewer)
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
 })
 
 test('a link with a key that no longer works leads to the key question, with the link\'s key to correct', async ({ browser }) => {

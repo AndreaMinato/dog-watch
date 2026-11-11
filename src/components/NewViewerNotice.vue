@@ -28,7 +28,7 @@ function dismiss() {
 </script>
 
 <template>
-  <div>
+  <div class="notice" :class="{ shown: newcomers.length > 0 }">
     <div role="status">
       <p v-for="(newcomer, index) in newcomers" :key="index">
         Nuovo Spettatore: {{ newcomer.name }}
@@ -39,3 +39,26 @@ function dismiss() {
     </button>
   </div>
 </template>
+
+<style scoped>
+.notice {
+  position: fixed;
+  inset: 1rem 1rem auto;
+  z-index: 1;
+  max-width: 30rem;
+  margin-inline: auto;
+}
+.shown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: 0 0.25rem 1rem var(--scrim);
+}
+p {
+  margin: 0;
+}
+</style>

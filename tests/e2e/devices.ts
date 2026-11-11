@@ -103,8 +103,9 @@ export async function joinAsViewer(page: Page, key: string, nickname: string, an
   await enter(page, animal)
 }
 
-export function members(page: Page) {
-  return page.getByRole('list', { name: 'Nella Stanza' }).getByRole('listitem')
+/** What a viewer sees of the cameras: a thumbnail each, named after the camera and its state ("soggiorno, in diretta"). */
+export function cameraThumbnails(page: Page) {
+  return page.getByRole('list', { name: 'Telecamere' }).getByRole('button')
 }
 
 /** The camera's menu: pause, mute, invite, close the room, leave. */

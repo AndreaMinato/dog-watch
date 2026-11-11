@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openDevice, openPeerConnections, openWatchers, test, watchers } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, openWatchers, test, watchers } from './devices'
 
 type PresenceEntries = Record<string, { metas: { name: string }[] }>
 
@@ -95,7 +95,7 @@ test('of two viewers joining together for the last place, the later one leaves e
 
   const later = await openDevice(browser)
   await joinAsViewer(later, key, 'Dario')
-  await expect(members(later)).toHaveCount(4)
+  await expect(later.getByText('Con te: Andrea e Bea')).toBeVisible()
 
   releaseSlowNetwork()
 

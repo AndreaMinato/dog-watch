@@ -2,7 +2,7 @@ import type { Locator } from '@playwright/test'
 import { expect } from '@playwright/test'
 import jsQR from 'jsqr'
 import { PNG } from 'pngjs'
-import { createRoom, joinAsCamera, joinAsViewer, members, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, joinAsCamera, joinAsViewer, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
 
 declare global {
   interface Window {
@@ -38,7 +38,7 @@ test('the viewer invites with the same sheet', async ({ browser }) => {
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
 
   await expectInvitationTo(await openInviteSheet(viewer), key)
 })

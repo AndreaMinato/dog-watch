@@ -10,6 +10,8 @@ export interface RememberedRoom {
   /** The Camera's name or the Spettatore's soprannome in this room. */
   memberName: string
   mascot: Species
+  /** ISO date of the last time this device entered; rooms remembered before it was saved have none. */
+  lastVisit?: string
 }
 
 const ROOMS = 'dog-watch:rooms'
@@ -43,8 +45,9 @@ export function rememberedRooms(): RememberedRoom[] {
   return read<RememberedRoom[]>(ROOMS, []).map(room => ({ ...room, mascot: speciesOrDefault(room.mascot) }))
 }
 
-export function rememberEnteredRoom(room: RememberedRoom) {
-  write(ROOMS, [room, ...rememberedRooms().filter(other => other.roomId !== room.roomId)])
+export function rememberEnteredRoom(room: Omit<RememberedRoom, 'lastVisit'>) {
+  const visited = { ...room, lastVisit: new Date().toISOString() }
+  write(ROOMS, [visited, ...rememberedRooms().filter(other => other.roomId !== room.roomId)])
   write(CAMERA_ROOM, room.role === 'camera' ? room.roomId : null)
 }
 

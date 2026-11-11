@@ -1,10 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, openWatchers, test, watchers } from './devices'
-
-function mascotOf(page: Page, memberName: string) {
-  return members(page).filter({ hasText: memberName }).getByRole('img')
-}
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, next, openDevice, openWatchers, test, watchers } from './devices'
 
 function watcherMascot(camera: Page, viewerName: string) {
   return watchers(camera).filter({ hasText: viewerName }).getByRole('img')
@@ -17,25 +13,26 @@ test('each device sees the other\'s animal in the pose of its role', async ({ br
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea', 'Coniglio')
 
-  await expect(mascotOf(viewer, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
-  await expect(mascotOf(viewer, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
+  await expect(cameraThumbnails(viewer).getByRole('img')).toHaveAccessibleName('Gatto seduto')
   await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
   await openWatchers(camera)
   await expect(watcherMascot(camera, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
 })
 
-test('the viewer sees the camera\'s animal on its video, asleep once the camera drops out', async ({ browser }) => {
+test('the viewer sees the camera\'s animal on its video and its thumbnail, asleep once the camera drops out', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno', 'Gatto')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const feedMascot = viewer.getByRole('region', { name: 'Telecamere' }).getByRole('img')
-  await expect(feedMascot).toHaveAccessibleName('Gatto seduto')
+  const mascots = [viewer.getByRole('region', { name: 'soggiorno' }).getByRole('img'), cameraThumbnails(viewer).getByRole('img')]
+  for (const mascot of mascots)
+    await expect(mascot).toHaveAccessibleName('Gatto seduto')
 
   await camera.close()
 
-  await expect(feedMascot).toHaveAccessibleName('Gatto seduto che dorme')
+  for (const mascot of mascots)
+    await expect(mascot).toHaveAccessibleName('Gatto seduto che dorme')
 })
 
 test('a device that keeps the proposed animal enters with it', async ({ browser }) => {
@@ -100,12 +97,10 @@ test('a device re-entering a recent room comes back with the same animal', async
   await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
 
   await viewer.reload()
-  await viewer.getByRole('list', { name: 'Stanze recenti' }).getByRole('button', { name: 'Casa al mare' }).click()
+  await viewer.getByRole('list', { name: 'Le tue Stanze' }).getByRole('button', { name: 'Casa al mare', exact: true }).click()
   await camera.reload()
 
-  await expect(members(viewer)).toHaveCount(2)
-  await expect(mascotOf(viewer, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
-  await expect(mascotOf(viewer, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
+  await expect(cameraThumbnails(viewer).getByRole('img')).toHaveAccessibleName('Gatto seduto')
   await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
   await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
   await openWatchers(camera)

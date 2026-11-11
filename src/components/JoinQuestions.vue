@@ -11,12 +11,16 @@ import { createRoom, InvalidKeyError, RoomRefusedError, TooManyAttemptsError } f
 import { useRoom } from '../room/use-room'
 import MascotFigure from './MascotFigure.vue'
 
-const { invitationKey, creating = false } = defineProps<{
+const { invitationKey, creating = false, exitLabel } = defineProps<{
   /** From an invitation link: the device skips the key question. */
   invitationKey?: string
   /** Starts at the room to create, as a future camera. */
   creating?: boolean
+  /** Where the first question leads back to, instead of the app name. */
+  exitLabel?: string
 }>()
+
+const emit = defineEmits<{ exit: [] }>()
 
 type Step = 'role' | 'key' | 'create' | 'name' | 'animal'
 
@@ -142,6 +146,9 @@ const submitLabel = computed(() => {
     <header class="bar">
       <button v-if="at > 0" type="button" class="back" @click="back">
         <span aria-hidden="true">←</span> Indietro
+      </button>
+      <button v-else-if="exitLabel" type="button" class="back" @click="emit('exit')">
+        <span aria-hidden="true">←</span> {{ exitLabel }}
       </button>
       <p v-else class="brand">
         {{ appName }}
@@ -308,6 +315,7 @@ const submitLabel = computed(() => {
   font-size: 1.375rem;
 }
 .back {
+  gap: 0.375rem;
   padding-inline: 0.5rem;
   border: none;
 }

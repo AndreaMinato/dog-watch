@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, openWatchers, test, watchers } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, next, openDevice, openWatchers, test, watchers } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -9,9 +9,7 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key.toUpperCase().replaceAll('-', ' '), 'Andrea')
 
-  await expect(members(viewer)).toHaveCount(2)
-  await expect(members(viewer).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
-  await expect(members(viewer).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
+  await expect(cameraThumbnails(viewer)).toHaveAccessibleName('soggiorno, in diretta')
   await openWatchers(camera)
   await expect(watchers(camera)).toHaveText([/^Andrea /])
 

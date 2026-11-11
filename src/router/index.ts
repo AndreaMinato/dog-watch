@@ -23,7 +23,7 @@ const router = createRouter({
   ],
 })
 
-// The Stanze recenti on the home page take the Camera back into its room.
+// The home page takes the Camera back into its room.
 router.beforeEach((to, from) => {
   if (from === START_LOCATION && to.name !== 'home' && cameraRoomToReenter())
     return { name: 'home' }
