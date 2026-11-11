@@ -22,7 +22,7 @@ function announce(name: string) {
 
 <template>
   <div role="status" class="arrivals">
-    <p v-for="arrival in arrivals" :key="arrival.id" class="arrival">
+    <p v-for="arrival in arrivals" :key="arrival.id" class="notice">
       {{ arrival.name }} sta guardando.
     </p>
   </div>
@@ -32,12 +32,5 @@ function announce(name: string) {
 .arrivals {
   display: grid;
   gap: 0.5rem;
-}
-.arrival {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  background: var(--surface);
-  font-size: 0.875rem;
 }
 </style>

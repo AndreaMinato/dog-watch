@@ -76,7 +76,7 @@ defineExpose({ open })
         </p>
       </div>
     </div>
-    <div class="key">
+    <div class="inset">
       <p>Oppure detta la Chiave</p>
       <RoomKeyWords :room-key="roomKey" />
     </div>
@@ -110,15 +110,5 @@ defineExpose({ open })
   font-size: 0.875rem;
   color: var(--text-muted);
   overflow-wrap: anywhere;
-}
-.key {
-  display: grid;
-  gap: 0.5rem;
-  padding: 0.875rem;
-  border-radius: 1.25rem;
-  background: var(--background);
-}
-.key p {
-  margin: 0;
 }
 </style>

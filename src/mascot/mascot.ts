@@ -18,7 +18,7 @@ export function randomSpecies(): Species {
   return SPECIES[Math.floor(Math.random() * SPECIES.length)]!
 }
 
-/** A device on an older version sends no animal, a newer one may send one this version can't draw. */
+/** A device on an older version sends no animal. */
 export function speciesOrDefault(value: unknown): Species {
   return SPECIES.find(species => species === value) ?? 'dog'
 }

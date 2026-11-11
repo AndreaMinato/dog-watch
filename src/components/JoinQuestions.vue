@@ -10,6 +10,7 @@ import { installedCameraNeedsIos184, joinErrorMessage, speciesLabels } from '../
 import { createRoom, InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 import MascotFigure from './MascotFigure.vue'
+import RoomKeyWords from './RoomKeyWords.vue'
 
 const { invitationKey, invitationRoomName, creating = false, exitLabel } = defineProps<{
   /** From an invitation link: the device skips the key question. */
@@ -47,6 +48,7 @@ const order = computed<Step[]>(() => invited.value
   : ['role', creatingRoom.value ? 'create' : 'key', 'name', 'animal'])
 const at = shallowRef(startsCreating ? 1 : 0)
 const step = computed(() => order.value[at.value]!)
+const namingRoom = computed(() => step.value === 'create' && createdKey.value === null)
 
 const placeSuggestions = ['Soggiorno', 'Cucina', 'Camera da letto', 'Studio', 'Giardino']
 
@@ -129,7 +131,7 @@ async function enter() {
 }
 
 function answer() {
-  if (step.value === 'create' && createdKey.value === null)
+  if (namingRoom.value)
     return create()
   if (step.value === 'animal')
     return enter()
@@ -139,7 +141,7 @@ function answer() {
 const submitLabel = computed(() => {
   if (step.value === 'animal')
     return 'Entra'
-  return step.value === 'create' && createdKey.value === null ? 'Crea' : 'Avanti'
+  return namingRoom.value ? 'Crea' : 'Avanti'
 })
 </script>
 
@@ -170,7 +172,7 @@ const submitLabel = computed(() => {
     </p>
 
     <section v-if="step === 'role'" class="question">
-      <h1 tabindex="-1">
+      <h1 class="title" tabindex="-1">
         Cosa farà questo dispositivo?
       </h1>
       <div class="choices">
@@ -210,7 +212,7 @@ const submitLabel = computed(() => {
 
     <form v-else class="question" @submit.prevent="answer">
       <template v-if="step === 'key'">
-        <h1>
+        <h1 class="title">
           <label :for="`${id}-field`">Hai la Chiave della Stanza?</label>
         </h1>
         <input
@@ -227,8 +229,8 @@ const submitLabel = computed(() => {
         </p>
       </template>
 
-      <template v-else-if="step === 'create' && createdKey === null">
-        <h1>
+      <template v-else-if="namingRoom">
+        <h1 class="title">
           <label :for="`${id}-field`">Come si chiama la Stanza?</label>
         </h1>
         <input :id="`${id}-field`" v-model.trim="roomName" required maxlength="40" :aria-describedby="`${id}-hint`">
@@ -238,21 +240,17 @@ const submitLabel = computed(() => {
       </template>
 
       <template v-else-if="step === 'create'">
-        <h1 tabindex="-1">
+        <h1 class="title" tabindex="-1">
           Ecco la Chiave della Stanza
         </h1>
-        <ol class="words" aria-label="Chiave della Stanza">
-          <li v-for="(word, index) in createdKey!.split('-')" :key="index">
-            {{ word }}
-          </li>
-        </ol>
+        <RoomKeyWords :room-key="createdKey!" />
         <p class="hint">
           È l'unico modo per entrare in {{ roomName }}: tienila da parte. La ritrovi dentro la Stanza, con il link e il QR.
         </p>
       </template>
 
       <template v-else-if="step === 'name'">
-        <h1>
+        <h1 class="title">
           <label :for="`${id}-field`">{{ role === 'camera' ? 'Che stanza riprende?' : 'Come ti chiami?' }}</label>
         </h1>
         <input
@@ -274,7 +272,7 @@ const submitLabel = computed(() => {
 
       <fieldset v-else class="animals">
         <legend>
-          <h1 tabindex="-1">
+          <h1 class="title" tabindex="-1">
             Scegli il tuo animale
           </h1>
         </legend>
@@ -317,10 +315,6 @@ const submitLabel = computed(() => {
 .bar p {
   margin: 0;
 }
-.brand {
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-}
 .back {
   gap: 0.375rem;
   padding-inline: 0.5rem;
@@ -337,10 +331,6 @@ const submitLabel = computed(() => {
 .question {
   display: grid;
   gap: 1rem;
-}
-.question h1 {
-  margin: 0;
-  font-size: 2rem;
 }
 .hint {
   margin: 0;
@@ -377,21 +367,6 @@ const submitLabel = computed(() => {
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--text-muted);
-}
-.words {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.words li {
-  padding: 0.25rem 0.875rem;
-  border-radius: 0.75rem;
-  background: var(--surface);
-  font-family: var(--font-display);
-  font-size: 1.75rem;
 }
 .suggestions {
   display: flex;
@@ -439,9 +414,6 @@ const submitLabel = computed(() => {
   width: 4.5rem;
 }
 @media (min-width: 700px) {
-  .question h1 {
-    font-size: 2.75rem;
-  }
   .choices {
     grid-template-columns: 1fr 1fr;
   }

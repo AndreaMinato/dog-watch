@@ -39,7 +39,7 @@ async function toggleFullscreen() {
 
 <template>
   <section ref="stage" class="stage" :aria-label="feed.camera.name">
-    <div class="screen">
+    <div class="screen surface">
       <video
         ref="video"
         :aria-label="`Telecamera ${feed.camera.name}`"
@@ -98,8 +98,6 @@ async function toggleFullscreen() {
 .screen {
   position: relative;
   overflow: hidden;
-  border-radius: 1.25rem;
-  background: var(--surface);
 }
 video {
   display: block;
@@ -140,14 +138,6 @@ video {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.75rem;
-}
-.chip {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
-  border-radius: 999px;
-  background: var(--surface);
 }
 .avatar {
   flex: none;

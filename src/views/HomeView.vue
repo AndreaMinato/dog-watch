@@ -7,7 +7,7 @@ import InstallApp from '../components/InstallApp.vue'
 import JoinQuestions from '../components/JoinQuestions.vue'
 import MascotFigure from '../components/MascotFigure.vue'
 import { rolePoses } from '../mascot/mascot'
-import { joinErrorMessage, roleLabels } from '../room/messages'
+import { daysSince, joinErrorMessage, roleLabels } from '../room/messages'
 import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
 import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
 import { nextRetryDelay } from '../room/supabase'
@@ -35,15 +35,6 @@ watch(showsQuestions, async () => {
 /** "Telecamera soggiorno", "Spettatore · Andrea". */
 function howEntered(room: RememberedRoom): string {
   return room.role === 'camera' ? `${roleLabels.camera} ${room.memberName}` : `${roleLabels.viewer} · ${room.memberName}`
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000
-const relativeDays = new Intl.RelativeTimeFormat('it', { numeric: 'auto' })
-
-/** "oggi", "ieri", "3 giorni fa", counted in calendar days. */
-function daysSince(isoDate: string): string {
-  const calendarDay = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  return relativeDays.format((calendarDay(new Date(isoDate)) - calendarDay(new Date())) / DAY_MS, 'day')
 }
 
 function forget(room: RememberedRoom) {
@@ -102,7 +93,7 @@ onBeforeUnmount(() => clearTimeout(retry))
       <p class="brand">
         {{ appName }}
       </p>
-      <h1 :id="`${id}-heading`" tabindex="-1">
+      <h1 :id="`${id}-heading`" class="title" tabindex="-1">
         Le tue Stanze
       </h1>
       <ul :aria-labelledby="`${id}-heading`" class="cards">
@@ -164,18 +155,6 @@ onBeforeUnmount(() => clearTimeout(retry))
 .rooms {
   display: grid;
   gap: 1.25rem;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  min-height: var(--touch);
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-}
-.rooms h1 {
-  margin: 0;
-  font-size: 2rem;
 }
 .cards {
   display: grid;
@@ -241,10 +220,5 @@ onBeforeUnmount(() => clearTimeout(retry))
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-@media (min-width: 700px) {
-  .rooms h1 {
-    font-size: 2.75rem;
-  }
 }
 </style>

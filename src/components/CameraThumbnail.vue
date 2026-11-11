@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CameraFeed } from '../room/viewer-session'
+import type { CameraFeed, FeedState } from '../room/viewer-session'
 import { computed } from 'vue'
 import { missingVideoMascots, rolePoses } from '../mascot/mascot'
 import { offlineSinceLabel } from '../room/messages'
@@ -8,17 +8,22 @@ import MascotFigure from './MascotFigure.vue'
 
 const { feed, picked } = defineProps<{ feed: CameraFeed, picked: boolean }>()
 
-function describe({ camera, offlineSince, connecting }: CameraFeed): string {
-  if (offlineSince)
-    return offlineSinceLabel(offlineSince)
-  if (connecting)
-    return 'collegamento in corso'
-  return camera.status === 'live' ? 'in diretta' : 'in pausa'
+function describe(state: FeedState): string {
+  switch (state) {
+    case 'offline':
+      return offlineSinceLabel(feed.offlineSince!)
+    case 'connecting':
+      return 'collegamento in corso'
+    case 'live':
+      return 'in diretta'
+    case 'paused':
+      return 'in pausa'
+  }
 }
 
 const state = computed(() => feedState(feed))
 const cover = computed(() => missingVideoMascots[state.value])
-const label = computed(() => `${feed.camera.name}, ${describe(feed)}`)
+const label = computed(() => `${feed.camera.name}, ${describe(state.value)}`)
 </script>
 
 <template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, shallowRef, useId, useTemplateRef } from 'vue'
 import { rolePoses } from '../mascot/mascot'
-import { somethingWentWrong } from '../room/messages'
+import { somethingWentWrong, watchingFor } from '../room/messages'
 import { useRoom } from '../room/use-room'
 import BottomSheet from './BottomSheet.vue'
 import ConfirmButton from './ConfirmButton.vue'
@@ -33,18 +33,6 @@ const watching = computed(() => {
       return `${viewers.value.length} persone guardano`
   }
 })
-
-const minutes = new Intl.NumberFormat('it-IT', { style: 'unit', unit: 'minute', unitDisplay: 'long' })
-const hours = new Intl.NumberFormat('it-IT', { style: 'unit', unit: 'hour', unitDisplay: 'long' })
-
-function watchingFor(joinedAt: string): string {
-  const elapsed = Math.floor((now.value - Date.parse(joinedAt)) / 60_000)
-  if (elapsed < 1)
-    return 'da meno di un minuto'
-  if (elapsed < 60)
-    return `da ${minutes.format(elapsed)}`
-  return `da ${hours.format(Math.floor(elapsed / 60))}`
-}
 
 function open() {
   now.value = Date.now()
@@ -96,19 +84,19 @@ async function rotate() {
     <ul v-if="viewers.length > 0" class="list" :aria-labelledby="titleId">
       <li v-for="viewer in viewers" :key="viewer.id" class="viewer">
         <MascotFigure class="avatar" :species="viewer.mascot" :pose="rolePoses.viewer" crop />
-        <span class="name">{{ viewer.name }}</span> <span class="since">{{ watchingFor(viewer.joinedAt) }}</span>
+        <span class="name">{{ viewer.name }}</span> <span class="since">{{ watchingFor(viewer.joinedAt, now) }}</span>
       </li>
     </ul>
     <p v-else>
       Nessuno, per ora.
     </p>
-    <div v-if="rotated" class="stranger">
+    <div v-if="rotated" class="inset">
       <p ref="newKeyNote" tabindex="-1">
         Tutti gli altri sono usciti dalla Stanza. Ecco la Chiave nuova: dalla solo a chi deve guardare.
       </p>
       <RoomKeyWords :room-key="roomKey" />
     </div>
-    <div v-else class="stranger">
+    <div v-else class="inset">
       <p>Qualcuno che non conosci?</p>
       <ConfirmButton
         label="Rigenera la Chiave"
@@ -171,15 +159,5 @@ async function rotate() {
   margin-left: auto;
   color: var(--text-muted);
   font-size: 0.875rem;
-}
-.stranger {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  border-radius: 1.25rem;
-  background: var(--background);
-}
-.stranger p {
-  margin: 0;
 }
 </style>

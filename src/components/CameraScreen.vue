@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
       playsinline
     />
     <div class="top">
-      <div class="self">
+      <div class="chip self">
         <MascotFigure class="avatar" :species="room.self.mascot" :pose="rolePoses.camera" crop />
         <h1 class="name">
           {{ room.self.name }}
@@ -162,13 +162,7 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
 }
 .self {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   min-height: var(--touch);
-  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
-  border-radius: 999px;
-  background: var(--surface);
 }
 .avatar {
   flex: none;
@@ -183,13 +177,6 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 0.5rem;
   max-width: 28rem;
-}
-.notice {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  background: var(--surface);
-  font-size: 0.875rem;
 }
 .first-start {
   display: grid;
