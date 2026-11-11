@@ -1,17 +1,13 @@
+import type { SupabaseContext } from '@supabase/server'
 import { withSupabase } from '@supabase/server'
-import { generateRoomKey, hashRoomKey } from '../_shared/room-key.ts'
+import { generateRoomKey, hashRoomKey, readRoomKeyPepper } from '../_shared/room-key.ts'
+import { withRoomId } from '../_shared/room-request.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
 
-const pepper = Deno.env.get('ROOM_KEY_PEPPER')
-if (!pepper)
-  throw new Error('ROOM_KEY_PEPPER is not set')
+const pepper = readRoomKeyPepper(name => Deno.env.get(name))
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
-    const { roomId } = await req.json()
-    if (typeof roomId !== 'string')
-      return Response.json({ error: 'invalid_request' }, { status: 400 })
-
+  fetch: withSupabase({ auth: 'user' }, withRoomId<SupabaseContext>(async (roomId, ctx) => {
     const key = generateRoomKey()
     const { data: rotated, error } = await ctx.supabaseAdmin.rpc('rotate_room_key', {
       target_room: roomId,
@@ -24,5 +20,5 @@ export default {
       return Response.json({ error: 'not_a_camera' }, { status: 403 })
 
     return Response.json({ key })
-  }),
+  })),
 }

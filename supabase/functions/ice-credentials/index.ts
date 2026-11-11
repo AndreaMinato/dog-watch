@@ -1,15 +1,13 @@
+import type { SupabaseContext } from '@supabase/server'
 import { withSupabase } from '@supabase/server'
 import { createIceServers, iceServersTtl, readTurnKey } from '../_shared/ice-servers.ts'
+import { withRoomId } from '../_shared/room-request.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
 
 const turnKey = readTurnKey(name => Deno.env.get(name))
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
-    const { roomId } = await req.json()
-    if (typeof roomId !== 'string')
-      return Response.json({ error: 'invalid_request' }, { status: 400 })
-
+  fetch: withSupabase({ auth: 'user' }, withRoomId<SupabaseContext>(async (roomId, ctx) => {
     const { data: member, error } = await ctx.supabaseAdmin
       .from('room_members')
       .select('user_id')
@@ -22,5 +20,5 @@ export default {
       return Response.json({ error: 'not_a_member' }, { status: 403 })
 
     return Response.json({ iceServers: await createIceServers(turnKey), iceServersTtl })
-  }),
+  })),
 }

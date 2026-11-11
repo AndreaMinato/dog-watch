@@ -1,5 +1,6 @@
 import type { PeerLink } from './peer-link'
 import type { Member, RoomClient } from './room-client'
+import { createListeners } from './listeners'
 import { createPeerLink } from './peer-link'
 
 export interface CameraFeed {
@@ -22,9 +23,9 @@ const RECONNECT_AFTER_MS = 10_000
 
 export function startViewerSession(room: RoomClient): ViewerSession {
   const cameras = new Map<string, WatchedCamera>()
-  const listeners = new Set<(feeds: CameraFeed[]) => void>()
+  const listeners = createListeners<[CameraFeed[]]>()
   const feeds = (): CameraFeed[] => [...cameras.values()].map(({ camera, stream, offlineSince }) => ({ camera, stream, offlineSince }))
-  const notify = () => listeners.forEach(listener => listener(feeds()))
+  const notify = () => listeners.notify(feeds())
 
   function connect(watched: WatchedCamera) {
     const link = createPeerLink(room, watched.camera.id, { polite: false })
@@ -122,9 +123,9 @@ export function startViewerSession(room: RoomClient): ViewerSession {
 
   return {
     onFeedsChange(listener) {
-      listeners.add(listener)
+      const stop = listeners.add(listener)
       listener(feeds())
-      return () => listeners.delete(listener)
+      return stop
     },
     close() {
       stopSignals()

@@ -1,11 +1,9 @@
 import { withSupabase } from '@supabase/server'
 import { parseName } from '../_shared/name.ts'
-import { generateRoomKey, hashRoomKey } from '../_shared/room-key.ts'
+import { generateRoomKey, hashRoomKey, readRoomKeyPepper } from '../_shared/room-key.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
 
-const pepper = Deno.env.get('ROOM_KEY_PEPPER')
-if (!pepper)
-  throw new Error('ROOM_KEY_PEPPER is not set')
+const pepper = readRoomKeyPepper(name => Deno.env.get(name))
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req, ctx) => {
