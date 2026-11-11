@@ -5,7 +5,19 @@ export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 )
 
-export async function ensureAnonymousSession(): Promise<void> {
+let signIn: Promise<void> = Promise.resolve()
+
+/** The app opens without waiting for it, so every call to the service waits for the last one started. */
+export function ensureAnonymousSession(): Promise<void> {
+  signIn = anonymousSession()
+  return signIn
+}
+
+export function signedIn(): Promise<void> {
+  return signIn
+}
+
+async function anonymousSession(): Promise<void> {
   const { data } = await supabase.auth.getSession()
   if (data.session)
     return

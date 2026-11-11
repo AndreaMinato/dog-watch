@@ -3,7 +3,7 @@ import type { Species } from '../mascot/mascot'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { speciesOrDefault } from '../mascot/mascot'
 import { createListeners } from './listeners'
-import { supabase } from './supabase'
+import { signedIn, supabase } from './supabase'
 
 export type Role = 'camera' | 'viewer'
 
@@ -75,6 +75,7 @@ export class RoomRefusedError extends Error {
 export const MEMBER_LIMITS: Record<Role, number> = { camera: 4, viewer: 3 }
 
 async function invoke<T>(name: string, body: object): Promise<T> {
+  await signedIn()
   const { data, error } = await supabase.functions.invoke<T>(name, { body })
   if (error)
     throw error

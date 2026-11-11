@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { createRoom, joinAsCamera, joinAsViewer, openCameraMenu, openDevice, test } from './devices'
 
@@ -19,6 +19,35 @@ async function forgetSession(page: Page): Promise<void> {
     localStorage.removeItem(Object.keys(localStorage).find(name => name.endsWith('-auth-token'))!)
   })
 }
+
+/** On a first visit, asks to create a room while the sign-in is still on its way: returns that held sign-in. */
+async function createRoomDuringSignIn(page: Page): Promise<Route> {
+  const { promise: signIn, resolve: holdSignIn } = Promise.withResolvers<Route>()
+  await page.route('**/auth/v1/signup', holdSignIn)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+  await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' }).click()
+  await page.getByLabel('Come si chiama la Stanza?').fill('Casa al mare')
+  await page.getByRole('button', { name: 'Crea', exact: true }).click()
+  return signIn
+}
+
+test('on a slow first visit, creating a room waits for the sign-in', async ({ page }) => {
+  const signIn = await createRoomDuringSignIn(page)
+
+  await signIn.continue()
+
+  await expect(page.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveCount(4)
+})
+
+test('on a slow first visit, a sign-in that fails says the service cannot be reached', async ({ page }) => {
+  const signIn = await createRoomDuringSignIn(page)
+
+  await signIn.abort('internetdisconnected')
+
+  await expect(page.getByText(unreachable)).toBeVisible()
+  await expect(page.getByText('Qualcosa è andato storto, riprova.')).toBeHidden()
+})
 
 test('without a connection the app says so, and opens once the connection is back', async ({ page }) => {
   await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
