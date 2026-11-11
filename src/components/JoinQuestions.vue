@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import { appName } from '../brand'
 import { compatibility } from '../device/compatibility'
 import { randomSpecies, rolePoses, SPECIES } from '../mascot/mascot'
-import { joinErrorMessage, somethingWentWrong, speciesLabels } from '../room/messages'
+import { installedCameraNeedsIos184, joinErrorMessage, somethingWentWrong, speciesLabels } from '../room/messages'
 import { createRoom, InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 import MascotFigure from './MascotFigure.vue'
@@ -187,6 +187,7 @@ const submitLabel = computed(() => {
       <p v-if="!compatibility.camera" :id="`${id}-camera-unsupported`" class="hint">
         Questo browser non può usare la fotocamera o tenere lo schermo acceso, quindi qui puoi entrare solo come Spettatore.
         Per fare da telecamera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
+        {{ installedCameraNeedsIos184 }}
       </p>
       <p v-if="error" role="alert">
         {{ error }}
