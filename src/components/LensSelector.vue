@@ -22,7 +22,7 @@ function choose() {
 </script>
 
 <template>
-  <label v-if="cameras.length > 1">
+  <label v-if="cameras.length > 1" class="lens">
     Obiettivo
     <select v-model="selected" @change="choose">
       <option v-for="(camera, index) in cameras" :key="camera.deviceId" :value="camera.deviceId">
@@ -31,3 +31,11 @@ function choose() {
     </select>
   </label>
 </template>
+
+<style scoped>
+.lens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+</style>

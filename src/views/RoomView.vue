@@ -52,14 +52,11 @@ async function exit() {
 </script>
 
 <template>
-  <main v-show="!resting || !room">
+  <main v-show="!resting || !room" :class="{ wide: room?.self.role === 'viewer' }">
     <h1>Stanza</h1>
     <template v-if="room">
       <template v-if="room.self.role === 'camera'">
-        <CameraPreview :room="room" />
-        <button type="button" @click="resting = true">
-          Schermata a riposo
-        </button>
+        <CameraPreview :room="room" @rest="resting = true" />
         <JoinLink :room-key="room.key" />
       </template>
       <template v-else>
@@ -82,45 +79,49 @@ async function exit() {
           <p>Ecco la nuova Chiave della Stanza: dalla ai dispositivi fidati.</p>
           <output class="room-key" aria-label="Chiave della Stanza">{{ room.key }}</output>
         </template>
-        <ConfirmButton
-          label="Rigenera la Chiave"
-          question="Rigenerare la Chiave? Tutti gli altri dispositivi verranno espulsi e dovranno rientrare con la Chiave nuova."
-          confirm-label="Rigenera"
-          @confirm="run(rotate)"
-        />
-        <ConfirmButton
-          label="Chiudi la Stanza"
-          question="Chiudere la Stanza? Verrà cancellata con tutti i suoi dati e la Chiave smetterà di funzionare."
-          confirm-label="Chiudi"
-          @confirm="run(closeRoom)"
-        />
+        <div class="controls">
+          <ConfirmButton
+            label="Rigenera la Chiave"
+            question="Rigenerare la Chiave? Tutti gli altri dispositivi verranno espulsi e dovranno rientrare con la Chiave nuova."
+            confirm-label="Rigenera"
+            @confirm="run(rotate)"
+          />
+          <ConfirmButton
+            label="Chiudi la Stanza"
+            question="Chiudere la Stanza? Verrà cancellata con tutti i suoi dati e la Chiave smetterà di funzionare."
+            confirm-label="Chiudi"
+            @confirm="run(closeRoom)"
+          />
+        </div>
         <p v-if="error" role="alert">
           {{ somethingWentWrong }}
         </p>
       </template>
-      <button type="button" @click="exit">
-        Esci
-      </button>
+      <div class="controls">
+        <button type="button" @click="exit">
+          Esci
+        </button>
+      </div>
     </template>
     <template v-else-if="ended">
       <p role="alert">
         {{ endMessage(ended) }}
       </p>
-      <RouterLink :to="{ name: 'join' }">
-        Entra in una Stanza
-      </RouterLink>
-      <RouterLink :to="{ name: 'home' }">
-        Torna alla home
-      </RouterLink>
+      <div class="controls">
+        <RouterLink class="button primary" :to="{ name: 'join' }">
+          Entra in una Stanza
+        </RouterLink>
+        <RouterLink class="button" :to="{ name: 'home' }">
+          Torna alla home
+        </RouterLink>
+      </div>
     </template>
   </main>
   <RestScreen v-if="resting && room" @wake="resting = false" />
 </template>
 
 <style scoped>
-.room-key {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: bold;
+.wide {
+  max-width: 72rem;
 }
 </style>

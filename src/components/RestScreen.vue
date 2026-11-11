@@ -24,6 +24,7 @@ const emit = defineEmits<{ wake: [] }>()
 }
 
 .wake {
+  width: 100%;
   margin-top: 2rem;
   border: none;
   background: none;

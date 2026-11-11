@@ -7,6 +7,7 @@ import { startCameraSession } from '../room/camera-session'
 import LensSelector from './LensSelector.vue'
 
 const { room } = defineProps<{ room: RoomClient }>()
+defineEmits<{ rest: [] }>()
 
 const session = shallowRef<CameraSession | null>(null)
 const paused = shallowRef(false)
@@ -54,21 +55,27 @@ onBeforeUnmount(() => {
     muted
     playsinline
   />
-  <template v-if="session">
-    <button type="button" @click="togglePause(session)">
-      {{ paused ? 'Riprendi' : 'Metti in pausa' }}
+  <div class="controls">
+    <template v-if="session">
+      <button type="button" @click="togglePause(session)">
+        {{ paused ? 'Riprendi' : 'Metti in pausa' }}
+      </button>
+      <button type="button" @click="toggleMute(session)">
+        {{ muted ? 'Riattiva audio' : 'Silenzia' }}
+      </button>
+    </template>
+    <button type="button" @click="$emit('rest')">
+      Schermata a riposo
     </button>
-    <button type="button" @click="toggleMute(session)">
-      {{ muted ? 'Riattiva audio' : 'Silenzia' }}
-    </button>
-    <LensSelector :session="session" />
-  </template>
+  </div>
+  <LensSelector v-if="session" :session="session" />
 </template>
 
 <style scoped>
 .preview {
+  display: block;
   width: 100%;
-  max-width: 40rem;
+  border-radius: 0.5rem;
   background: black;
 }
 </style>

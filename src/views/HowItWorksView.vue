@@ -29,7 +29,7 @@
       Nessun cookie di tracciamento, nessuna analytics.
     </p>
 
-    <RouterLink :to="{ name: 'home' }">
+    <RouterLink class="button" :to="{ name: 'home' }">
       Torna alla Home
     </RouterLink>
   </main>

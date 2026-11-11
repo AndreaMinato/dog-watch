@@ -6,13 +6,13 @@ import RememberedRooms from '../components/RememberedRooms.vue'
   <main>
     <h1>dog-watch</h1>
     <nav class="actions">
-      <RouterLink :to="{ name: 'create' }">
+      <RouterLink class="button primary" :to="{ name: 'create' }">
         Crea una Stanza
       </RouterLink>
-      <RouterLink :to="{ name: 'join' }">
+      <RouterLink class="button primary" :to="{ name: 'join' }">
         Entra in una Stanza
       </RouterLink>
-      <RouterLink :to="{ name: 'how-it-works' }">
+      <RouterLink class="button" :to="{ name: 'how-it-works' }">
         Come funziona e cosa salviamo
       </RouterLink>
     </nav>
@@ -24,6 +24,7 @@ import RememberedRooms from '../components/RememberedRooms.vue'
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  margin-block: 1.5rem;
 }
 </style>

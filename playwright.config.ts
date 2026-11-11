@@ -3,6 +3,12 @@ import { defineConfig, devices } from '@playwright/test'
 
 const isCI = Boolean(process.env.CI)
 const port = isCI ? 4173 : 5173
+const fakeMedia = {
+  args: [
+    '--use-fake-device-for-media-stream',
+    '--use-fake-ui-for-media-stream',
+  ],
+}
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -19,15 +25,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        launchOptions: {
-          args: [
-            '--use-fake-device-for-media-stream',
-            '--use-fake-ui-for-media-stream',
-          ],
-        },
-      },
+      testIgnore: /phone\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], launchOptions: fakeMedia },
+    },
+    {
+      name: 'phone',
+      testMatch: /phone\.spec\.ts/,
+      use: { ...devices['iPhone 13 Mini'], browserName: 'chromium', launchOptions: fakeMedia },
     },
   ],
   webServer: {

@@ -49,7 +49,16 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
   background: rgb(0 0 0 / 60%);
 }
 .feed video {
+  display: block;
   width: 100%;
+  border-radius: 0.5rem;
   background: black;
+}
+figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-block: 0.25rem;
 }
 </style>
