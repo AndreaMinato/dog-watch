@@ -1,0 +1,184 @@
+/* PROTOTIPO Veglia: palette giorno/notte, testo, pezzi condivisi dalle varianti. */
+.veglia {
+  --live: #f1b07c;
+  --live-ink: #26305c;
+  --rest: #0f1435;
+  --f-display: 'Young Serif', Georgia, serif;
+  --f-text: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-family: var(--f-text);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+}
+.veglia[data-tema='giorno'] {
+  --bg: #cbdac6;
+  --surface: #e4ede1;
+  --ink: #26305c;
+  --soft: #47517d;
+  --line: #a9bfa3;
+  --btn: #26305c;
+  --btn-ink: #f6e8d2;
+  --edge: #26305c;
+  --tile: #e4ede1;
+  --off: #b9cdb4;
+  --sofa: #f6e8d2;
+  --feed: linear-gradient(180deg, #f4d0ac 0%, #f1b07c 64%, #e0a0a0 64%, #d99395 100%);
+  color-scheme: light;
+}
+.veglia[data-tema='notte'] {
+  --bg: #1b2249;
+  --surface: #252e60;
+  --ink: #eef1e8;
+  --soft: #b9c2da;
+  --line: #3a447c;
+  --btn: #f1b07c;
+  --btn-ink: #1b2249;
+  --edge: #0f1435;
+  --tile: radial-gradient(circle at 50% 38%, rgb(241 176 124 / 36%), rgb(241 176 124 / 0%) 62%), #252e60;
+  --off: #232b5a;
+  --sofa: #171c42;
+  --feed:
+    radial-gradient(ellipse at 78% 22%, rgb(241 176 124 / 50%), rgb(241 176 124 / 0%) 48%),
+    linear-gradient(180deg, #36407a 0%, #2b3468 64%, #232a59 64%, #1d234c 100%);
+  color-scheme: dark;
+}
+
+.veglia *,
+.veglia *::before,
+.veglia *::after {
+  box-sizing: border-box;
+}
+.veglia h1,
+.veglia h2,
+.veglia h3,
+.veglia p {
+  margin: 0;
+}
+.veglia .title {
+  font-family: var(--f-display);
+  font-weight: 400;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.veglia .lbl {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.veglia .soft {
+  color: var(--soft);
+}
+.veglia .pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--live);
+  color: var(--live-ink);
+}
+.veglia .pill.off {
+  background: transparent;
+  color: var(--soft);
+  box-shadow: inset 0 0 0 1.5px var(--soft);
+}
+.veglia .pill.wait {
+  background: var(--surface);
+  color: var(--ink);
+}
+.veglia .btn {
+  display: block;
+  width: 100%;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: var(--btn);
+  color: var(--btn-ink);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+.veglia .btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.veglia .btn:focus-visible,
+.veglia button:focus-visible,
+.veglia input:focus-visible {
+  outline: 3px solid var(--live);
+  outline-offset: 3px;
+}
+.veglia .surface {
+  background: var(--surface);
+  border-radius: 18px;
+}
+.veglia .avatar {
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--tile);
+}
+.veglia .avatar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.veglia input[type='text'] {
+  width: 100%;
+  font: inherit;
+  font-size: 17px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.veglia .look {
+  animation: look 5s ease-in-out infinite;
+}
+@keyframes look {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  35%,
+  55% {
+    transform: translateX(-2.4px);
+  }
+  70%,
+  90% {
+    transform: translateX(2.4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.veglia .breathe {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: breathe 4.5s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.015, 1.03);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .veglia * {
+    animation: none !important;
+  }
+}
