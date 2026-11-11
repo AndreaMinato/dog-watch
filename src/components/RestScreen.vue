@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { screenMayTurnOff } from '../room/messages'
 import ViewerList from './ViewerList.vue'
 
+defineProps<{ screenKeptOn: boolean }>()
 const emit = defineEmits<{ wake: [] }>()
 </script>
 
 <template>
   <section class="rest" aria-label="Schermata a riposo" @click="emit('wake')">
+    <p v-if="!screenKeptOn" role="alert" class="warning">
+      {{ screenMayTurnOff }}
+    </p>
     <ViewerList />
     <button type="button" class="wake">
       Tocca lo schermo per svegliarlo
@@ -21,6 +26,10 @@ const emit = defineEmits<{ wake: [] }>()
   padding: 1rem;
   background: black;
   color: #555;
+}
+
+.warning {
+  color: #e0a000;
 }
 
 .wake {

@@ -1,5 +1,7 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, test } from './devices'
+import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
+
+const screenMayTurnOff = /il browser non tiene acceso lo schermo/i
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -15,10 +17,41 @@ test('the camera takes the screen lock back when it becomes visible again', asyn
   await joinAsCamera(camera, 'soggiorno')
   await expect.poll(() => heldWakeLocks(camera)).toBe(1)
 
+  await setVisibility(camera, 'hidden')
   await releaseWakeLocks(camera)
+  await setVisibility(camera, 'visible')
+
+  await expect.poll(() => heldWakeLocks(camera)).toBe(1)
+})
+
+test('the camera warns while the browser takes the screen lock back and refuses it again, until the screen is kept on', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  await expect.poll(() => heldWakeLocks(camera)).toBe(1)
+
+  await camera.context().clearPermissions()
+  await releaseWakeLocks(camera)
+
+  await expect(camera.getByRole('alert')).toHaveText(screenMayTurnOff)
+
+  await camera.context().grantPermissions(['screen-wake-lock'])
   await hideAndShow(camera)
 
   await expect.poll(() => heldWakeLocks(camera)).toBe(1)
+  await expect(camera.getByRole('alert')).toHaveCount(0)
+})
+
+test('the camera warns that the screen may turn off when the browser refuses to keep it on, also while resting', async ({ browser }) => {
+  const camera = await openDevice(browser, { permissions: [] })
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+
+  await expect(camera.getByRole('alert')).toHaveText(screenMayTurnOff)
+
+  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+
+  await expect(camera.getByRole('region', { name: 'Schermata a riposo' }).getByRole('alert')).toHaveText(screenMayTurnOff)
 })
 
 test('the camera films again for its viewers after losing the camera while hidden', async ({ browser }) => {

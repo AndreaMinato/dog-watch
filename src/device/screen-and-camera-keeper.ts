@@ -1,16 +1,39 @@
 import type { CameraSession } from '../room/camera-session'
 
-export function keepScreenAndCameraOn(session: Pick<CameraSession, 'reacquire'>): () => void {
+export function keepScreenAndCameraOn(
+  session: Pick<CameraSession, 'reacquire'>,
+  onScreenKeptOn: (keptOn: boolean) => void,
+): () => void {
   let wakeLock: Promise<WakeLockSentinel | null> = Promise.resolve(null)
   let stopped = false
 
+  async function requestScreen() {
+    try {
+      const sentinel = await navigator.wakeLock.request('screen')
+      sentinel.addEventListener('release', onRelease)
+      onScreenKeptOn(true)
+      return sentinel
+    }
+    catch (error) {
+      // Refused on low battery, power saving or a hidden page: the next visibility change retries.
+      console.error(error)
+      onScreenKeptOn(false)
+      return null
+    }
+  }
+
   function holdScreen() {
-    wakeLock = wakeLock.then(async (held) => {
+    wakeLock = wakeLock.then((held) => {
       if (stopped || (held && !held.released))
         return held
-      // Refused on low battery, power saving or a hidden page: the next visibility change retries.
-      return navigator.wakeLock.request('screen').catch(() => null)
+      return requestScreen()
     })
+  }
+
+  function onRelease() {
+    // The browser releases the lock of a hidden page: the visibility change takes it back.
+    if (!stopped && document.visibilityState === 'visible')
+      holdScreen()
   }
 
   function onVisibilityChange() {

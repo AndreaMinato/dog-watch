@@ -26,7 +26,7 @@ test('a camera re-enters by itself after the browser restarts', async ({ browser
 
   const storage = await camera.context().storageState()
   await camera.context().close()
-  const restarted = await openDevice(browser, storage)
+  const restarted = await openDevice(browser, { storageState: storage })
 
   await expect(restarted.getByLabel('Anteprima')).toBeVisible()
   await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
@@ -62,7 +62,7 @@ test('a camera stops re-entering when its remembered key no longer works', async
   await livingRoom.getByRole('dialog').getByRole('button', { name: 'Rigenera' }).click()
   await expect(livingRoom.getByRole('status', { name: 'Chiave della Stanza' })).not.toHaveText(key)
 
-  const restarted = await openDevice(browser, storage)
+  const restarted = await openDevice(browser, { storageState: storage })
 
   const recent = restarted.getByRole('list', { name: 'Stanze recenti' }).getByRole('listitem')
   await expect(recent.getByRole('alert')).toHaveText('La Chiave ricordata non funziona più: probabilmente è stata rigenerata. Inserisci la Chiave nuova.')

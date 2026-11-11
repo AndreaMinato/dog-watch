@@ -8,13 +8,14 @@ import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
-import { refusalMessages, roleLabels, somethingWentWrong } from '../room/messages'
+import { refusalMessages, roleLabels, screenMayTurnOff, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
 
 const resting = shallowRef(false)
+const screenKeptOn = shallowRef(true)
 
 function endMessage(event: ControlEvent): string {
   switch (event.type) {
@@ -56,7 +57,10 @@ async function exit() {
     <h1>Stanza</h1>
     <template v-if="room">
       <template v-if="room.self.role === 'camera'">
-        <CameraPreview :room="room" @rest="resting = true" />
+        <p v-if="!screenKeptOn" role="alert">
+          {{ screenMayTurnOff }}
+        </p>
+        <CameraPreview :room="room" @rest="resting = true" @screen-kept-on="screenKeptOn = $event" />
         <JoinLink :room-key="room.key" />
       </template>
       <template v-else>
@@ -117,7 +121,7 @@ async function exit() {
       </div>
     </template>
   </main>
-  <RestScreen v-if="resting && room" @wake="resting = false" />
+  <RestScreen v-if="resting && room" :screen-kept-on="screenKeptOn" @wake="resting = false" />
 </template>
 
 <style scoped>

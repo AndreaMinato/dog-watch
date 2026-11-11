@@ -5,6 +5,8 @@ export const roleLabels: Record<Role, string> = { camera: 'Camera', viewer: 'Spe
 
 export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 
+export const screenMayTurnOff = 'Il browser non tiene acceso lo schermo: se si spegne, la Camera smette di trasmettere. Disattiva il risparmio energetico o metti in carica il dispositivo.'
+
 export const refusalMessages: Record<Refusal, string> = {
   cameras_full: `La Stanza ha già ${MEMBER_LIMITS.camera} Camere: non puoi entrare come Camera.`,
   viewers_full: `La Stanza ha già ${MEMBER_LIMITS.viewer} Spettatori: non puoi entrare come Spettatore.`,

@@ -7,7 +7,7 @@ import { startCameraSession } from '../room/camera-session'
 import LensSelector from './LensSelector.vue'
 
 const { room } = defineProps<{ room: RoomClient }>()
-defineEmits<{ rest: [] }>()
+const emit = defineEmits<{ rest: [], screenKeptOn: [keptOn: boolean] }>()
 
 const session = shallowRef<CameraSession | null>(null)
 const paused = shallowRef(false)
@@ -22,7 +22,7 @@ onMounted(async () => {
     return
   }
   session.value = started
-  releaseScreenAndCamera = keepScreenAndCameraOn(started)
+  releaseScreenAndCamera = keepScreenAndCameraOn(started, keptOn => emit('screenKeptOn', keptOn))
 })
 
 async function togglePause(session: CameraSession) {
