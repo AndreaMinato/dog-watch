@@ -104,10 +104,6 @@ export async function joinAsViewer(page: Page, key: string, nickname: string, an
   await enter(page, animal)
 }
 
-export function members(page: Page) {
-  return page.getByRole('list', { name: 'Nella Stanza' }).getByRole('listitem')
-}
-
 /** What a viewer sees of the cameras: a thumbnail each, named after the camera and its state ("soggiorno, in diretta"). */
 export function cameraThumbnails(page: Page) {
   return page.getByRole('list', { name: 'Telecamere' }).getByRole('button')
@@ -123,6 +119,37 @@ export async function offerToInstall(page: Page): Promise<void> {
       },
     }))
   })
+}
+
+/** The camera's menu: pause, mute, invite, close the room, leave. */
+export async function openCameraMenu(camera: Page): Promise<Locator> {
+  await camera.getByRole('button', { name: 'Menu', exact: true }).click()
+  const menu = camera.getByRole('dialog', { name: 'Menu' })
+  await expect(menu).toBeVisible()
+  return menu
+}
+
+/** On a camera: "Stanno guardando" keeps listing who watches while it stays open. */
+export async function openWatchers(camera: Page): Promise<Locator> {
+  await camera.getByRole('button', { name: /guarda/ }).click()
+  const sheet = camera.getByRole('dialog', { name: 'Stanno guardando' })
+  await expect(sheet).toBeVisible()
+  return sheet
+}
+
+/** The viewers in a camera's open "Stanno guardando", each read as "Andrea da 12 minuti". */
+export function watchers(camera: Page): Locator {
+  return camera.getByRole('list', { name: 'Stanno guardando' }).getByRole('listitem')
+}
+
+/** Rotates the key from the camera's "Stanno guardando", which then shows the new key in words. */
+export async function rotateKey(camera: Page): Promise<string> {
+  const sheet = await openWatchers(camera)
+  await sheet.getByRole('button', { name: 'Rigenera la Chiave' }).click()
+  await camera.getByRole('dialog', { name: /^Rigenerare la Chiave\?/ }).getByRole('button', { name: 'Rigenera' }).click()
+  const words = sheet.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')
+  await expect(words).toHaveCount(4)
+  return (await words.allTextContents()).map(word => word.trim()).join('-')
 }
 
 export async function openInviteSheet(page: Page): Promise<Locator> {

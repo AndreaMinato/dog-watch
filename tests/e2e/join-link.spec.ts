@@ -1,8 +1,9 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, joinAsCamera, next, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, next, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
 
 async function invitationLink(camera: Page): Promise<string> {
+  await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
   return (await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())!
 }

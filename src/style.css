@@ -196,6 +196,21 @@ button:disabled {
   cursor: default;
 }
 
+.round {
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.round svg {
+  width: 1.5rem;
+}
+
 dialog {
   max-width: min(30rem, calc(100vw - 2rem));
   border: none;

@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { devices, expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, offerToInstall, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, enter, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, offerToInstall, openCameraMenu, openDevice, openInviteSheet, openWatchers, rotateKey, test, watchers } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -158,7 +158,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const page = await openDevice(browser)
       await createRoom(page, 'Casa al mare')
       await joinAsCamera(page, 'soggiorno')
-      await page.getByRole('button', { name: 'Esci' }).click()
+      await (await openCameraMenu(page)).getByRole('button', { name: 'Esci' }).click()
       await expect(page.getByRole('heading', { name: 'Le tue Stanze' })).toBeVisible()
       await expectUsable(page)
 
@@ -194,7 +194,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
-      await expect(camera.getByRole('button', { name: 'Metti in pausa' })).toBeVisible()
+      await expectAdvancingVideo(camera.getByLabel('Anteprima'))
       await expectUsable(camera)
     })
 
@@ -241,6 +241,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await camera.reload()
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
+      await openCameraMenu(camera)
       const sheet = await openInviteSheet(camera)
       await expect(sheet.getByRole('button', { name: 'Condividi il link' })).toBeVisible()
 
@@ -249,11 +250,37 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectPlacedForTheScreen(sheet)
     })
 
+    test('the camera screen, "Stanno guardando" and the menu are usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      const key = await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      await joinAsViewer(await openDevice(browser), key, 'Andrea')
+      await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+      await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+      await expectUsable(camera)
+
+      const watching = await openWatchers(camera)
+      await expect(watchers(camera)).toHaveCount(1)
+      await expectUsable(camera)
+      await expect(watching).toBeVisible()
+      await expectPlacedForTheScreen(watching)
+      await watching.getByRole('button', { name: 'Chiudi', exact: true }).click()
+
+      await rotateKey(camera)
+      await expectUsable(camera)
+      await watching.getByRole('button', { name: 'Chiudi', exact: true }).click()
+
+      const menu = await openCameraMenu(camera)
+      await expectUsable(camera)
+      await expect(menu).toBeVisible()
+      await expectPlacedForTheScreen(menu)
+    })
+
     test('the rest screen stays black', async ({ browser }) => {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
-      await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+      await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
       await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toHaveCSS('background-color', 'rgb(0, 0, 0)')
       await expectReadable(camera)

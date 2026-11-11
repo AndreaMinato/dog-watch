@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, next, openDevice, openWatchers, test, watchers } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -9,16 +9,14 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key.toUpperCase().replaceAll('-', ' '), 'Andrea')
 
-  await expect(members(camera)).toHaveCount(2)
-  await expect(members(camera).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
-  await expect(members(camera).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
   await expect(cameraThumbnails(viewer)).toHaveAccessibleName('soggiorno, in diretta')
+  await openWatchers(camera)
+  await expect(watchers(camera)).toHaveText([/^Andrea /])
 
   await viewer.getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewer).toHaveURL('/')
-  await expect(members(camera)).toHaveCount(1)
-  await expect(members(camera)).toContainText('soggiorno')
+  await expect(watchers(camera)).toHaveCount(0)
 })
 
 test('too many wrong keys ask to retry later, back at the key', async ({ browser }) => {

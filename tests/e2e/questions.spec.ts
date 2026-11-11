@@ -1,13 +1,9 @@
-import type { Locator, Page } from '@playwright/test'
+import type { Locator } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, next, openCameraMenu, openDevice, openInviteSheet, openWatchers, test, watchers } from './devices'
 
 function drawing(choice: Locator) {
   return choice.getByRole('img')
-}
-
-function mascotOf(page: Page, memberName: string) {
-  return members(page).filter({ hasText: memberName }).getByRole('img')
 }
 
 test('a new device starts from what it will do, each choice with the animal in the pose of its role', async ({ browser }) => {
@@ -47,8 +43,9 @@ test('a future camera without a key creates the room, sees its key in words and 
   await animals.getByRole('radio', { name: 'Gatto', exact: true }).check()
   await page.getByRole('button', { name: 'Entra', exact: true }).click()
 
-  await expect(members(page)).toHaveText(['Telecamera: Camera da letto (tu)'])
-  await expect(mascotOf(page, 'Camera da letto')).toHaveAccessibleName('Gatto seduto')
+  await expect(page.getByRole('heading', { level: 1, name: 'Camera da letto' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
+  await openCameraMenu(page)
   const invitation = await openInviteSheet(page)
   await expect(invitation.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveText(words.map(word => word.trim()))
 })
@@ -139,5 +136,6 @@ test('a viewer enters with the key, a nickname the others see and an animal', as
   await enter(page, 'Coniglio')
 
   await expect(cameraThumbnails(page)).toHaveAccessibleName('soggiorno, in diretta')
-  await expect(mascotOf(camera, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
+  await openWatchers(camera)
+  await expect(watchers(camera).filter({ hasText: 'Andrea' }).getByRole('img')).toHaveAccessibleName('Coniglio affacciato')
 })
