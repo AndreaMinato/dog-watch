@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import type { CameraStatus } from '../room/room-client'
+import { statusLabels } from '../room/messages'
 
 const { status } = defineProps<{ status: CameraStatus }>()
-
-const labels: Record<CameraStatus, string> = {
-  live: 'In diretta',
-  paused: 'In pausa',
-}
 </script>
 
 <template>
-  <span class="pill" :class="status">{{ labels[status] }}</span>
+  <span class="pill" :class="status">{{ statusLabels[status] }}</span>
 </template>
 
 <style scoped>

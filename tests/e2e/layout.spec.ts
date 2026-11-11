@@ -18,10 +18,15 @@ async function expectReadable(page: Page) {
 
 /** Every control reached with Tab, from the top of the page or of the open dialog, shows a solid outline. */
 async function expectVisibleFocus(page: Page) {
-  // A click outside an open dialog would close it.
-  const dialog = page.getByRole('dialog')
-  const box = await dialog.isVisible() ? await dialog.boundingBox() : null
-  await page.mouse.click(box ? box.x + box.width / 2 : 1, box ? box.y + 1 : 1)
+  // Tab goes on from the last focus. A tap would move it, but would also close a sheet or wake the rest screen.
+  await page.evaluate(() => {
+    const start = document.querySelector('dialog[open]') ?? document.body
+    const top = document.createElement('span')
+    top.tabIndex = -1
+    start.prepend(top)
+    top.focus()
+    top.remove()
+  })
   const withoutOutline: string[] = []
   for (let tabs = 0; tabs < 50; tabs++) {
     await page.keyboard.press('Tab')
@@ -190,11 +195,12 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(page)
     })
 
-    test('the camera is usable on this screen', async ({ browser }) => {
+    test('the camera, with the notice of its first start, is usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+      await expect(camera.getByRole('button', { name: 'Ho capito' })).toBeVisible()
       await expectUsable(camera)
     })
 
@@ -276,14 +282,18 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectPlacedForTheScreen(menu)
     })
 
-    test('the rest screen stays black', async ({ browser }) => {
+    test('the rest screen stays black and is usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
-      await createRoom(camera, 'Casa al mare')
+      const key = await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
+      await joinAsViewer(await openDevice(browser), key, 'Andrea')
       await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
-      await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toHaveCSS('background-color', 'rgb(0, 0, 0)')
-      await expectReadable(camera)
+      const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+      await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
+      await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+      await expectUsable(camera)
+      await expect(rest).toBeVisible()
     })
   })
 }
