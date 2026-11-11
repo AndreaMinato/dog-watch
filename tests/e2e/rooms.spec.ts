@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { cameraThumbnails, createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -10,11 +10,10 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key.toUpperCase().replaceAll('-', ' '), 'Andrea')
 
-  for (const page of [camera, viewer]) {
-    await expect(members(page)).toHaveCount(2)
-    await expect(members(page).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
-    await expect(members(page).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
-  }
+  await expect(members(camera)).toHaveCount(2)
+  await expect(members(camera).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
+  await expect(members(camera).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
+  await expect(cameraThumbnails(viewer)).toHaveAccessibleName('soggiorno, in diretta')
 
   await viewer.getByRole('button', { name: 'Esci' }).click()
 

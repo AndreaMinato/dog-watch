@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openDevice, test } from './devices'
+import { cameraThumbnails, createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openDevice, test } from './devices'
 
 test('a reloaded camera re-enters by itself and the viewer sees it again', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -85,7 +85,8 @@ test('a viewer finds the room among the recent ones and re-enters with a tap', a
   await recent.getByRole('button', { name: 'Casa al mare' }).click()
 
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
-  await expect(members(viewer)).toHaveText(['Telecamera: soggiorno', 'Spettatore: Andrea (tu)'])
+  await expect(cameraThumbnails(viewer)).toHaveAccessibleName('soggiorno, in diretta')
+  await expect(viewer.getByText('Stai guardando solo tu')).toBeVisible()
 })
 
 test('forgetting a room removes it from the recent ones', async ({ browser }) => {
@@ -151,7 +152,7 @@ test('a closed room is forgotten', async ({ browser }) => {
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
 
   await camera.getByRole('button', { name: 'Chiudi la Stanza' }).click()
   await camera.getByRole('dialog').getByRole('button', { name: 'Chiudi' }).click()

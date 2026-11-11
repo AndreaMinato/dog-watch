@@ -41,12 +41,33 @@ test('a viewer is told when another viewer joins', async ({ browser }) => {
 
   const andrea = await openDevice(browser)
   await joinAsViewer(andrea, key, 'Andrea')
-  await expect(members(andrea)).toHaveCount(2)
+  await expect(andrea.getByText('Stai guardando solo tu')).toBeVisible()
 
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
 
   await expect(andrea.getByText('Nuovo Spettatore: Giulia')).toBeVisible()
-  await expect(members(giulia)).toHaveCount(3)
+  await expect(giulia.getByText('Con te: Andrea')).toBeVisible()
   await expect(giulia.getByText(/Nuovo Spettatore/)).toHaveCount(0)
+})
+
+test('a viewer sees who else is watching with it', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const andrea = await openDevice(browser)
+  await joinAsViewer(andrea, key, 'Andrea')
+  await expect(andrea.getByText('Stai guardando solo tu')).toBeVisible()
+
+  const giulia = await openDevice(browser)
+  await joinAsViewer(giulia, key, 'Giulia')
+  const marta = await openDevice(browser)
+  await joinAsViewer(marta, key, 'Marta')
+
+  await expect(andrea.getByText('Con te: Giulia e Marta')).toBeVisible()
+
+  await giulia.close()
+  await marta.getByRole('button', { name: 'Esci' }).click()
+
+  await expect(andrea.getByText('Stai guardando solo tu')).toBeVisible()
 })

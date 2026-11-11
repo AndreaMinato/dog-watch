@@ -2,13 +2,12 @@
 import type { ControlEvent } from '../room/room-client'
 import { shallowRef, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
-import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
 import InviteSheet from '../components/InviteSheet.vue'
 import MascotFigure from '../components/MascotFigure.vue'
-import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
+import ViewerScreen from '../components/ViewerScreen.vue'
 import { rolePoses } from '../mascot/mascot'
 import { refusalMessages, roleLabels, screenMayTurnOff, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
@@ -56,7 +55,8 @@ async function exit() {
 </script>
 
 <template>
-  <main v-show="!resting || !room" :class="{ wide: room?.self.role === 'viewer' }">
+  <ViewerScreen v-if="room?.self.role === 'viewer'" :room="room" @exit="exit" />
+  <main v-else v-show="!resting || !room">
     <h1>Stanza</h1>
     <template v-if="room">
       <template v-if="room.self.role === 'camera'">
@@ -64,10 +64,6 @@ async function exit() {
           {{ screenMayTurnOff }}
         </p>
         <CameraPreview :room="room" @rest="resting = true" @screen-kept-on="screenKeptOn = $event" />
-      </template>
-      <template v-else>
-        <CameraFeeds :room="room" />
-        <NewViewerNotice :room="room" />
       </template>
       <h2 id="members-heading">
         Nella Stanza
@@ -132,9 +128,6 @@ async function exit() {
 </template>
 
 <style scoped>
-.wide {
-  max-width: 72rem;
-}
 .members {
   display: flex;
   flex-direction: column;

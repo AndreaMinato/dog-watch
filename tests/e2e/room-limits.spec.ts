@@ -91,7 +91,7 @@ test('of two viewers joining together for the last place, the later one leaves e
 
   const later = await openDevice(browser)
   await joinAsViewer(later, key, 'Dario')
-  await expect(members(later)).toHaveCount(4)
+  await expect(later.getByText('Con te: Andrea e Bea')).toBeVisible()
 
   releaseSlowNetwork()
 

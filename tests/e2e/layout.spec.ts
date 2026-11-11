@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openInviteSheet, test } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -85,6 +85,16 @@ async function expectPlacedForTheScreen(sheet: Locator) {
   }
 }
 
+/** On the phone the thumbnails sit below the big video; on wider screens, in a column on its right. */
+async function expectThumbnailsPlacedForTheScreen(page: Page) {
+  const video = (await page.getByRole('region', { name: 'soggiorno' }).boundingBox())!
+  const thumbnails = (await page.getByRole('list', { name: 'Telecamere' }).boundingBox())!
+  if (test.info().project.name === 'phone')
+    expect(thumbnails.y).toBeGreaterThanOrEqual(video.y + video.height)
+  else
+    expect(thumbnails.x).toBeGreaterThanOrEqual(video.x + video.width)
+}
+
 for (const colorScheme of ['light', 'dark'] as const) {
   test.describe(`${colorScheme} scheme`, () => {
     test.use({ colorScheme })
@@ -108,23 +118,31 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(page)
     })
 
-    test('camera and viewer are usable on this screen', async ({ browser }) => {
+    test('the camera is usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
-      const key = await createRoom(camera, 'Casa al mare')
+      await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await expect(camera.getByRole('button', { name: 'Metti in pausa' })).toBeVisible()
       await expectUsable(camera)
+    })
 
+    test('the viewer is usable on this screen, its thumbnails below the big video on the phone and on its right on wider screens', async ({ browser }) => {
+      const host = await openDevice(browser)
+      const key = await createRoom(host, 'Casa al mare')
       const viewer = await openDevice(browser)
       await joinAsViewer(viewer, key, 'Andrea')
-      await expect(members(viewer)).toHaveCount(2)
-      const feed = viewer.getByLabel('Telecamera soggiorno')
-      await expect(feed).toBeVisible()
+      await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera' })).toBeVisible()
       await expectUsable(viewer)
 
-      await feed.click()
-      await expect(viewer.getByRole('button', { name: 'Torna alla griglia' })).toBeVisible()
+      await joinAsCamera(host, 'soggiorno')
+      for (const name of ['cucina', 'studio'])
+        await joinAsCameraWithKey(await openDevice(browser), key, name)
+
+      await expect(cameraThumbnails(viewer)).toHaveCount(3)
+      for (const thumbnail of await cameraThumbnails(viewer).all())
+        await expect(thumbnail).toHaveAccessibleName(/, in diretta$/)
       await expectUsable(viewer)
+      await expectThumbnailsPlacedForTheScreen(viewer)
     })
 
     test('a camera that dropped out, its animal asleep, is usable on this screen', async ({ browser }) => {
@@ -137,7 +155,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
       await camera.close()
 
-      await expect(viewer.getByRole('img', { name: /seduto che dorme$/ })).toBeVisible()
+      await expect(viewer.getByRole('region', { name: 'soggiorno' }).getByRole('img', { name: /seduto che dorme$/ })).toBeVisible()
       expect(await viewer.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0)
       await expectUsable(viewer)
     })

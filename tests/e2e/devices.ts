@@ -93,6 +93,11 @@ export function members(page: Page) {
   return page.getByRole('list', { name: 'Nella Stanza' }).getByRole('listitem')
 }
 
+/** What a viewer sees of the cameras: a thumbnail each, named after the camera and its state ("soggiorno, in diretta"). */
+export function cameraThumbnails(page: Page) {
+  return page.getByRole('list', { name: 'Telecamere' }).getByRole('button')
+}
+
 export async function openInviteSheet(page: Page): Promise<Locator> {
   await page.getByRole('button', { name: 'Invita qualcuno' }).click()
   const sheet = page.getByRole('dialog', { name: 'Invita qualcuno' })

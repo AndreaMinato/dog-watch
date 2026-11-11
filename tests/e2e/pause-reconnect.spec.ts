@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, openPeerConnections, test } from './devices'
 
 async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{ camera: Page, viewer: Page }> {
   const camera = await openDevice(browser)
@@ -72,9 +72,9 @@ test('the viewer sees since when a camera that closed its page is offline', asyn
   await camera.close()
   const droppedAt = Date.now()
 
-  const offline = viewer.getByText(/Telecamera soggiorno offline dalle \d\d:\d\d/)
+  const offline = viewer.getByText(/soggiorno è scollegata dalle \d\d:\d\d/)
   await expect(offline).toBeVisible()
-  expect(clockTimes(droppedAt)).toContain((await offline.textContent())!.trim().slice(-5))
+  expect(clockTimes(droppedAt)).toContain(/dalle (\d\d:\d\d)/.exec((await offline.textContent())!)![1])
 })
 
 async function loseNetwork(camera: Page): Promise<void> {
@@ -86,7 +86,7 @@ async function loseNetwork(camera: Page): Promise<void> {
 test('the viewer gets the video back after the camera briefly loses the network', async ({ browser }) => {
   test.setTimeout(120_000)
   const { camera, viewer } = await watchCamera(browser)
-  const offline = viewer.getByText(/Telecamera soggiorno offline dalle/)
+  const offline = viewer.getByText(/soggiorno è scollegata dalle/)
 
   await loseNetwork(camera)
 
@@ -101,16 +101,17 @@ test('the viewer gets the video back after the camera briefly loses the network'
 test('the viewer gets the video back after the camera drops out of the room for lack of network', async ({ browser }) => {
   test.setTimeout(240_000)
   const { camera, viewer } = await watchCamera(browser)
-  const offline = viewer.getByText(/Telecamera soggiorno offline dalle/)
+  const offline = viewer.getByText(/soggiorno è scollegata dalle/)
 
   await loseNetwork(camera)
 
-  await expect(members(viewer)).toHaveCount(1, { timeout: 120_000 })
+  // Once the camera is out of the room, the viewer stops trying to reach it until it is back.
+  await expect.poll(() => openPeerConnections(viewer), { timeout: 120_000 }).toBe(0)
   await expect(offline).toBeVisible()
 
   await camera.context().setOffline(false)
 
-  await expect(members(viewer)).toHaveCount(2, { timeout: 60_000 })
+  await expect.poll(() => openPeerConnections(viewer), { timeout: 60_000 }).toBe(1)
   await expect(offline).toBeHidden({ timeout: 60_000 })
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })

@@ -10,6 +10,12 @@ export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 
 export const screenMayTurnOff = 'Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere. Disattiva il risparmio energetico o metti in carica il dispositivo.'
 
+const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
+
+export function offlineSinceLabel(since: Date): string {
+  return `scollegata dalle ${clock.format(since)}`
+}
+
 export const refusalMessages: Record<Refusal, string> = {
   cameras_full: `La Stanza ha già ${MEMBER_LIMITS.camera} telecamere: non puoi entrare come telecamera.`,
   viewers_full: `La Stanza ha già ${MEMBER_LIMITS.viewer} Spettatori: non puoi entrare come Spettatore.`,

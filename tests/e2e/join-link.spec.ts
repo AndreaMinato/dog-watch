@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, members, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, joinAsCamera, openDevice, openInviteSheet, test } from './devices'
 
 async function invitationLink(camera: Page): Promise<string> {
   const sheet = await openInviteSheet(camera)
@@ -22,7 +22,7 @@ test('opening the join link asks only for role and name', async ({ browser }) =>
   await viewer.getByLabel('Spettatore').check()
   await viewer.getByLabel('Soprannome').fill('Andrea')
   await viewer.getByRole('button', { name: 'Entra' }).click()
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
 })
 
 test('going back after opening the join link does not bring the key back', async ({ browser }) => {
