@@ -136,8 +136,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
     test('each question of an invited viewer, and a refused key, are usable on this screen', async ({ browser }) => {
       const page = await openDevice(browser)
-      await page.goto('/entra#abaco-abete-abisso-zuppa')
-      await expect(page.getByText('Hai un invito per una Stanza.')).toBeVisible()
+      await page.goto('/entra#abaco-abete-abisso-zuppa&Casa%20al%20mare')
+      await expect(page.getByText('Hai un invito per Casa al mare.')).toBeVisible()
       await expectUsable(page)
 
       await page.getByRole('button', { name: 'Guarderà la casa' }).click()

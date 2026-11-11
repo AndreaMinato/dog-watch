@@ -14,9 +14,10 @@ const titleId = useId()
 const copied = shallowRef(false)
 const canShare = 'share' in navigator
 
+/** /entra#<Chiave>&<Nome della Stanza>: whoever opens it sees where they are going before entering. */
 const link = computed(() => {
   const url = new URL(router.resolve({ name: 'join' }).href, location.origin)
-  url.hash = roomKey
+  url.hash = `${roomKey}&${encodeURIComponent(roomName)}`
   return url.href
 })
 const qr = computed(() => toSvgDataURL(generate(link.value), { on: '#26305c', off: '#ffffff', pad: 2 }))

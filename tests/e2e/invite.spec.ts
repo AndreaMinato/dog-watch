@@ -15,10 +15,11 @@ async function decodeQr(sheet: Locator): Promise<string | undefined> {
   return jsQR(new Uint8ClampedArray(png.data), png.width, png.height)?.data
 }
 
+/** Every room in these tests is "Casa al mare". */
 async function expectInvitationTo(sheet: Locator, key: string) {
   const link = new URL((await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())!)
   expect(link.pathname).toBe('/entra')
-  expect(link.hash).toBe(`#${key}`)
+  expect(link.hash).toBe(`#${key}&Casa%20al%20mare`)
   expect(await decodeQr(sheet)).toBe(link.href)
   await expect(sheet.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveText(key.split('-'))
 }

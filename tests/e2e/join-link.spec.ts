@@ -18,7 +18,7 @@ test('opening the join link skips the key: three questions and the device is in'
   await viewer.goto(link)
 
   await expect(viewer).toHaveURL(new URL('/entra', link).href)
-  await expect(viewer.getByText('Hai un invito per una Stanza.')).toBeVisible()
+  await expect(viewer.getByText('Hai un invito per Casa al mare.')).toBeVisible()
   await expect(viewer.getByText('1 di 3')).toBeVisible()
   await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
   await expect(viewer.getByText('2 di 3')).toBeVisible()
@@ -29,9 +29,43 @@ test('opening the join link skips the key: three questions and the device is in'
   await expect(cameraThumbnails(viewer)).toHaveCount(1)
 })
 
+test('a link shared before it carried the room name says only that there is an invitation', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+
+  await viewer.goto(`/entra#${key}`)
+
+  await expect(viewer).toHaveURL(/\/entra$/)
+  await expect(viewer.getByText('Hai un invito per una Stanza.')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await enter(viewer)
+  await expect(viewer.getByRole('heading', { level: 1, name: 'Casa al mare' })).toBeVisible()
+})
+
+test('once in, the room goes by the name it has, not the one written in the link', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+
+  await viewer.goto(`/entra#${key}&${encodeURIComponent('Casa di Marta & Luca')}`)
+
+  await expect(viewer).toHaveURL(/\/entra$/)
+  await expect(viewer.getByText('Hai un invito per Casa di Marta & Luca.')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await enter(viewer)
+  await expect(viewer.getByRole('heading', { level: 1, name: 'Casa al mare' })).toBeVisible()
+})
+
 test('a link with a key that no longer works leads to the key question, with the link\'s key to correct', async ({ browser }) => {
   const viewer = await openDevice(browser)
-  await viewer.goto('/entra#abaco-abete-abisso-zuppa')
+  await viewer.goto('/entra#abaco-abete-abisso-zuppa&Casa%20al%20mare')
 
   await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
   await viewer.getByLabel('Come ti chiami?').fill('Andrea')
@@ -43,7 +77,7 @@ test('a link with a key that no longer works leads to the key question, with the
   await expect(viewer.getByLabel('Hai la Chiave della Stanza?')).toHaveValue('abaco-abete-abisso-zuppa')
 })
 
-test('going back after opening the join link does not bring the key back', async ({ browser }) => {
+test('going back after opening the join link brings back neither the key nor the room name', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
@@ -58,4 +92,5 @@ test('going back after opening the join link does not bring the key back', async
 
   await expect(viewer).toHaveURL(new URL('/', link).href)
   expect(viewer.url()).not.toContain(key)
+  expect(viewer.url()).not.toContain('Casa')
 })

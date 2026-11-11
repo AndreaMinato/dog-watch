@@ -11,9 +11,11 @@ import { createRoom, InvalidKeyError, RoomRefusedError, TooManyAttemptsError } f
 import { useRoom } from '../room/use-room'
 import MascotFigure from './MascotFigure.vue'
 
-const { invitationKey, creating = false, exitLabel } = defineProps<{
+const { invitationKey, invitationRoomName, creating = false, exitLabel } = defineProps<{
   /** From an invitation link: the device skips the key question. */
   invitationKey?: string
+  /** Written in the link by whoever invited: shown until the room answers with its own. */
+  invitationRoomName?: string
   /** Starts at the room to create, as a future camera. */
   creating?: boolean
   /** Where the first question leads back to, instead of the app name. */
@@ -159,7 +161,12 @@ const submitLabel = computed(() => {
     </header>
 
     <p v-if="invited && step === 'role'" class="invitation surface">
-      Hai un invito per una Stanza.
+      <template v-if="invitationRoomName">
+        Hai un invito per <strong>{{ invitationRoomName }}</strong>.
+      </template>
+      <template v-else>
+        Hai un invito per una Stanza.
+      </template>
     </p>
 
     <section v-if="step === 'role'" class="question">
