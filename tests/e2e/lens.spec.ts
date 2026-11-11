@@ -44,3 +44,23 @@ test('a camera with several lenses moves to the next one at each tap while its v
   await expectAdvancingVideo(feed)
   expect(await openPeerConnections(camera)).toBe(1)
 })
+
+test('a lens that cannot be opened is reported on the camera', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await camera.addInitScript(() => {
+    const getUserMedia = MediaDevices.prototype.getUserMedia
+    MediaDevices.prototype.getUserMedia = function (constraints) {
+      const video = constraints?.video
+      if (typeof video === 'object' && video.deviceId)
+        return Promise.reject(new DOMException('Could not start video source', 'NotReadableError'))
+      return getUserMedia.call(this, constraints)
+    }
+  })
+  await camera.reload()
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+
+  await camera.getByRole('button', { name: 'Cambia obiettivo' }).click()
+
+  await expect(camera.getByRole('alert')).toHaveText('Impossibile usare l\'altro obiettivo: potrebbe essere occupato da un\'altra app o non essere più collegato.')
+})

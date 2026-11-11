@@ -11,7 +11,7 @@ const { roomName, roomKey } = defineProps<{ roomName: string, roomKey: string }>
 const router = useRouter()
 const sheet = useTemplateRef('sheet')
 const titleId = useId()
-const copied = shallowRef(false)
+const feedback = shallowRef('')
 const canShare = 'share' in navigator
 
 /** /entra#<Chiave>&<Nome della Stanza>: whoever opens it sees where they are going before entering. */
@@ -23,17 +23,33 @@ const link = computed(() => {
 const qr = computed(() => toSvgDataURL(generate(link.value), { on: '#26305c', off: '#ffffff', pad: 2 }))
 
 function open() {
-  copied.value = false
+  feedback.value = ''
   sheet.value?.open()
 }
 
 async function share() {
-  await navigator.share({ url: link.value })
+  feedback.value = ''
+  try {
+    await navigator.share({ url: link.value })
+  }
+  catch (cause) {
+    // Closing the share sheet without choosing is the user's choice, not a failure.
+    if (cause instanceof DOMException && cause.name === 'AbortError')
+      return
+    console.error(cause)
+    feedback.value = 'Condivisione non riuscita: copia il link.'
+  }
 }
 
 async function copy() {
-  await navigator.clipboard.writeText(link.value)
-  copied.value = true
+  try {
+    await navigator.clipboard.writeText(link.value)
+    feedback.value = 'Link copiato'
+  }
+  catch (cause) {
+    console.error(cause)
+    feedback.value = 'Copia non riuscita: seleziona il link e copialo a mano.'
+  }
 }
 
 defineExpose({ open })
@@ -56,7 +72,7 @@ defineExpose({ open })
           Copia il link
         </button>
         <p role="status">
-          {{ copied ? 'Link copiato' : '' }}
+          {{ feedback }}
         </p>
       </div>
     </div>

@@ -29,6 +29,7 @@ const session = shallowRef<CameraSession | null>(null)
 const paused = shallowRef(false)
 const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
+const lensFailed = shallowRef(false)
 const firstStart = shallowRef(!cameraNoticeUnderstood())
 let unmounted = false
 let releaseScreenAndCamera = () => {}
@@ -100,6 +101,9 @@ onBeforeUnmount(() => {
       <p v-if="!screenKeptOn" role="alert" class="notice">
         {{ screenMayTurnOff }}
       </p>
+      <p v-if="lensFailed" role="alert" class="notice">
+        Impossibile usare l'altro obiettivo: potrebbe essere occupato da un'altra app o non essere più collegato.
+      </p>
       <p class="notice">
         Tieni il dispositivo in carica e questa pagina in primo piano: se lo schermo si spegne o passi a un'altra app, la telecamera smette di trasmettere.
       </p>
@@ -114,7 +118,7 @@ onBeforeUnmount(() => {
       <WatchingNotice />
     </div>
     <div class="bottom">
-      <LensSwitch v-if="session" :session="session" />
+      <LensSwitch v-if="session" v-model:failed="lensFailed" :session="session" />
       <button type="button" class="button primary dim" @click="resting = true">
         Oscura lo schermo
       </button>

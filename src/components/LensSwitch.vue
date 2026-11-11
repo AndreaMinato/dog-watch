@@ -3,6 +3,7 @@ import type { CameraSession } from '../room/camera-session'
 import { onBeforeUnmount, shallowRef } from 'vue'
 
 const { session } = defineProps<{ session: CameraSession }>()
+const failed = defineModel<boolean>('failed', { required: true })
 
 const lenses = shallowRef<string[]>([])
 
@@ -17,7 +18,15 @@ onBeforeUnmount(() => navigator.mediaDevices.removeEventListener('devicechange',
 
 function switchLens() {
   const filming = lenses.value.indexOf(session.preview.getVideoTracks()[0]?.getSettings().deviceId ?? '')
-  session.useCamera(lenses.value[(filming + 1) % lenses.value.length]!).catch(console.error)
+  session.useCamera(lenses.value[(filming + 1) % lenses.value.length]!).then(
+    () => {
+      failed.value = false
+    },
+    (cause: unknown) => {
+      console.error(cause)
+      failed.value = true
+    },
+  )
 }
 </script>
 

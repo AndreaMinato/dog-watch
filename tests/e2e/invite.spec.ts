@@ -111,3 +111,28 @@ test('without a system share sheet the link can only be copied', async ({ browse
   await expect(sheet.getByRole('button', { name: 'Copia il link' })).toBeVisible()
   await expect(sheet.getByRole('button', { name: 'Condividi il link' })).toHaveCount(0)
 })
+
+test('a share the user cancels is no error, a copy that fails says so', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await camera.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: async () => {
+      throw new DOMException('Share canceled', 'AbortError')
+    } })
+    Object.defineProperty(navigator.clipboard, 'writeText', { value: async () => {
+      throw new DOMException('Write permission denied.', 'NotAllowedError')
+    } })
+  })
+  await camera.reload()
+  const errors: string[] = []
+  camera.on('pageerror', error => errors.push(error.message))
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  await openCameraMenu(camera)
+  const sheet = await openInviteSheet(camera)
+
+  await sheet.getByRole('button', { name: 'Condividi il link' }).click()
+  await sheet.getByRole('button', { name: 'Copia il link' }).click()
+
+  await expect(sheet.getByText('Copia non riuscita: seleziona il link e copialo a mano.')).toBeVisible()
+  expect(errors.filter(error => error.includes('Share canceled'))).toEqual([])
+})
