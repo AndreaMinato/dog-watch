@@ -12,7 +12,7 @@ test('a reloaded camera re-enters by itself and the viewer sees it again', async
   await camera.reload()
 
   await expect(camera.getByLabel('Anteprima')).toBeVisible()
-  await expect(members(camera)).toHaveText(['Spettatore: Andrea', 'Camera: soggiorno (tu)'])
+  await expect(members(camera)).toHaveText(['Spettatore: Andrea', 'Telecamera: soggiorno (tu)'])
   await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
 })
 
@@ -85,7 +85,7 @@ test('a viewer finds the room among the recent ones and re-enters with a tap', a
   await recent.getByRole('button', { name: 'Casa al mare' }).click()
 
   await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
-  await expect(members(viewer)).toHaveText(['Camera: soggiorno', 'Spettatore: Andrea (tu)'])
+  await expect(members(viewer)).toHaveText(['Telecamera: soggiorno', 'Spettatore: Andrea (tu)'])
 })
 
 test('forgetting a room removes it from the recent ones', async ({ browser }) => {

@@ -12,7 +12,7 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
 
   for (const page of [camera, viewer]) {
     await expect(members(page)).toHaveCount(2)
-    await expect(members(page).filter({ hasText: 'Camera' })).toContainText('soggiorno')
+    await expect(members(page).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
     await expect(members(page).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
   }
 

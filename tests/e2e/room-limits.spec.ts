@@ -96,7 +96,7 @@ test('of two viewers joining together for the last place, the later one leaves e
   releaseSlowNetwork()
 
   await expect(later.getByRole('alert')).toHaveText('La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.')
-  await expect(members(camera)).toHaveText(['Camera: soggiorno (tu)', 'Spettatore: Andrea', 'Spettatore: Bea', 'Spettatore: Carlo'])
+  await expect(members(camera)).toHaveText(['Telecamera: soggiorno (tu)', 'Spettatore: Andrea', 'Spettatore: Bea', 'Spettatore: Carlo'])
 })
 
 test('the camera refuses a fourth viewer that ignores the limit', async ({ browser }) => {
