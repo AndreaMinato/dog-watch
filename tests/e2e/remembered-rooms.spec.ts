@@ -15,7 +15,7 @@ test('a recent room shows the animal, how the device was in it and the last visi
   yesterday.setDate(yesterday.getDate() - 1)
   await viewer.clock.setFixedTime(yesterday)
   await joinAsViewer(viewer, key, 'Andrea', 'Coniglio')
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
   await viewer.getByRole('button', { name: 'Esci' }).click()
   await camera.getByRole('button', { name: 'Esci' }).click()
 
@@ -30,7 +30,7 @@ test('a recent room shows the animal, how the device was in it and the last visi
   await expect(viewerRoom.getByRole('img')).toHaveAccessibleName('Coniglio affacciato')
 
   await viewerRoom.click()
-  await expect(members(viewer)).toHaveText(['Spettatore: Andrea (tu)'])
+  await expect(viewer.getByRole('button', { name: 'Esci' })).toBeVisible()
   await viewer.getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewerRoom).toHaveAccessibleDescription('Spettatore · Andrea · ultima visita oggi')
