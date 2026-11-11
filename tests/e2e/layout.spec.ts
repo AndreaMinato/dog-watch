@@ -91,6 +91,13 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(page)
     })
 
+    test('the message without a connection is usable on this screen', async ({ page }) => {
+      await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
+      await page.goto('/')
+      await expect(page.getByRole('heading', { name: 'Impossibile collegarsi' })).toBeVisible()
+      await expectUsable(page)
+    })
+
     test('camera and viewer are usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
       const key = await createRoom(camera, 'Casa al mare')
