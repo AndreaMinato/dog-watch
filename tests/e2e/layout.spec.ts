@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, openDevice, openInviteSheet, test } from './devices'
+import { devices, expect } from '@playwright/test'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, offerToInstall, openDevice, openInviteSheet, test } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -170,6 +170,17 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
       await expect(page.getByRole('button', { name: 'Le tue Stanze' })).toBeVisible()
       await expectUsable(page)
+    })
+
+    test('the button and the steps to install the app are usable on this screen', async ({ browser }) => {
+      const page = await openDevice(browser)
+      await offerToInstall(page)
+      await expect(page.getByRole('button', { name: 'Installa l\'app' })).toBeVisible()
+      await expectUsable(page)
+
+      const iPhone = await openDevice(browser, { userAgent: devices['iPhone 13 Mini'].userAgent })
+      await expect(iPhone.getByText('Per installare l\'app tocca Condividi, poi Aggiungi alla schermata Home.')).toBeVisible()
+      await expectUsable(iPhone)
     })
 
     test('the message without a connection is usable on this screen', async ({ page }) => {

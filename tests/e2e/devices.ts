@@ -5,6 +5,7 @@ declare global {
   interface Window {
     peerConnections: RTCPeerConnection[]
     wakeLocks: WakeLockSentinel[]
+    installPrompts: number
   }
 }
 
@@ -110,6 +111,18 @@ export function members(page: Page) {
 /** What a viewer sees of the cameras: a thumbnail each, named after the camera and its state ("soggiorno, in diretta"). */
 export function cameraThumbnails(page: Page) {
   return page.getByRole('list', { name: 'Telecamere' }).getByRole('button')
+}
+
+/** Chromium offers to install the app with this event; each call of its `prompt()` is counted in `installPrompts`. */
+export async function offerToInstall(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.installPrompts = 0
+    window.dispatchEvent(Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: async () => {
+        window.installPrompts++
+      },
+    }))
+  })
 }
 
 export async function openInviteSheet(page: Page): Promise<Locator> {

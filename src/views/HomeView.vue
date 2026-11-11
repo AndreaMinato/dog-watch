@@ -3,6 +3,7 @@ import type { RememberedRoom } from '../room/remembered-rooms'
 import { computed, nextTick, onBeforeUnmount, shallowRef, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { appName } from '../brand'
+import InstallApp from '../components/InstallApp.vue'
 import JoinQuestions from '../components/JoinQuestions.vue'
 import MascotFigure from '../components/MascotFigure.vue'
 import { rolePoses } from '../mascot/mascot'
@@ -151,6 +152,7 @@ onBeforeUnmount(() => clearTimeout(retry))
         Usa questo dispositivo in un'altra Stanza
       </button>
     </div>
+    <InstallApp />
     <p>
       <RouterLink class="button" :to="{ name: 'how-it-works' }">
         Come funziona e cosa salviamo
