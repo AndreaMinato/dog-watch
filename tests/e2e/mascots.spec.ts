@@ -91,7 +91,7 @@ test('a device re-entering a recent room comes back with the same animal', async
   await expect(members(camera)).toHaveCount(2)
 
   await viewer.reload()
-  await viewer.getByRole('list', { name: 'Stanze recenti' }).getByRole('button', { name: 'Casa al mare' }).click()
+  await viewer.getByRole('list', { name: 'Le tue Stanze' }).getByRole('button', { name: 'Casa al mare', exact: true }).click()
   await camera.reload()
 
   for (const page of [camera, viewer]) {
