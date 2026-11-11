@@ -45,6 +45,7 @@
     "simple-git-hooks": "catalog:dev",
     "typescript": "catalog:dev",
     "vite": "catalog:dev",
+    "vite-plugin-pwa": "catalog:dev",
     "vitest": "catalog:dev",
     "vue-tsc": "catalog:dev"
   },
