@@ -1,14 +1,5 @@
-import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { PNG } from 'pngjs'
-import { test } from './devices'
-
-async function pngSize(page: Page, href: string) {
-  const response = await page.request.get(href)
-  expect(response.headers()['content-type']).toBe('image/png')
-  const { width, height } = PNG.sync.read(await response.body())
-  return `${width}x${height}`
-}
+import { pngSize, test } from './devices'
 
 test('the status bar takes the colour of the day and of the night theme', async ({ page }) => {
   await page.goto('/')

@@ -1,5 +1,6 @@
 import type { Browser, BrowserContextOptions, Locator, Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
+import { PNG } from 'pngjs'
 
 declare global {
   interface Window {
@@ -157,6 +158,14 @@ export async function openInviteSheet(page: Page): Promise<Locator> {
   const sheet = page.getByRole('dialog', { name: 'Invita qualcuno' })
   await expect(sheet).toBeVisible()
   return sheet
+}
+
+/** The size of the PNG image at `url`, as "192x192". */
+export async function pngSize(page: Page, url: string): Promise<string> {
+  const response = await page.request.get(url)
+  expect(response.headers()['content-type']).toBe('image/png')
+  const { width, height } = PNG.sync.read(await response.body())
+  return `${width}x${height}`
 }
 
 function captureFrame(video: Locator): Promise<string> {
