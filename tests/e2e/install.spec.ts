@@ -3,6 +3,7 @@ import { devices, expect } from '@playwright/test'
 import { offerToInstall, openDevice, test } from './devices'
 
 const shareSteps = 'Per installare l\'app tocca Condividi, poi Aggiungi alla schermata Home.'
+const installedCameraNeedsIos184 = 'Con l\'app installata su iPhone o iPad serve iOS 18.4 o successivo, perché lo schermo resti acceso.'
 // Safari on the iPad says it is a Mac.
 const iPad = { ...devices['Desktop Safari'], hasTouch: true }
 
@@ -46,6 +47,7 @@ test('iPhone and iPad, which install only from Share, say how; a Mac does not', 
   for (const device of [devices['iPhone 13 Mini'], iPad]) {
     const page = await openDevice(browser, device)
     await expect(page.getByText(shareSteps)).toBeVisible()
+    await expect(page.getByText(installedCameraNeedsIos184)).toBeVisible()
   }
 
   const mac = await openDevice(browser, devices['Desktop Safari'])
