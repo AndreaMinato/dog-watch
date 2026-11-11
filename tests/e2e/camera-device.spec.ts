@@ -85,7 +85,7 @@ test('the camera is reminded to stay plugged in and in the foreground', async ({
   await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
 })
 
-test('the camera rests on a black screen listing its viewers and wakes up on a tap', async ({ browser }) => {
+test('the camera rests on a black screen saying it is live and listing its viewers, and wakes up on a tap', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
@@ -96,6 +96,7 @@ test('the camera rests on a black screen listing its viewers and wakes up on a t
 
   const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
   await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+  await expect(rest.getByText('In diretta', { exact: true })).toBeVisible()
   await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
   await expect(camera.getByLabel('Anteprima')).toBeHidden()
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
@@ -156,6 +157,19 @@ test('a camera left with its menu open dims its screen too, and a tap brings bac
   await expect(rest).toBeHidden()
   await expect(menu).toBeHidden()
   await expectAdvancingVideo(preview)
+})
+
+test('a paused camera says so on its rest screen', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
+
+  const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+  await expect(rest.getByText('In pausa', { exact: true })).toBeVisible()
+  await expect(rest.getByText('In diretta', { exact: true })).toHaveCount(0)
 })
 
 test('a resting camera shows that the room was closed', async ({ browser }) => {

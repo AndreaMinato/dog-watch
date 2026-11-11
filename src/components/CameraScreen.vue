@@ -112,7 +112,7 @@ onBeforeUnmount(() => {
       />
     </div>
   </main>
-  <RestScreen v-if="resting" :screen-kept-on="screenKeptOn" @wake="resting = false" />
+  <RestScreen v-if="resting" :status="paused ? 'paused' : 'live'" :screen-kept-on="screenKeptOn" @wake="resting = false" />
 </template>
 
 <style scoped>

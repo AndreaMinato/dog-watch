@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { screenMayTurnOff } from '../room/messages'
+import type { CameraStatus } from '../room/room-client'
+import { screenMayTurnOff, statusLabels } from '../room/messages'
 import ViewerList from './ViewerList.vue'
 
-defineProps<{ screenKeptOn: boolean }>()
+defineProps<{ status: CameraStatus, screenKeptOn: boolean }>()
 const emit = defineEmits<{ wake: [] }>()
 </script>
 
@@ -11,9 +12,12 @@ const emit = defineEmits<{ wake: [] }>()
     <p v-if="!screenKeptOn" role="alert" class="warning">
       {{ screenMayTurnOff }}
     </p>
+    <p class="status">
+      {{ statusLabels[status] }}
+    </p>
     <ViewerList />
     <button type="button" class="wake">
-      Tocca lo schermo per svegliarlo
+      Tocca per riaccendere lo schermo
     </button>
   </section>
 </template>
@@ -22,22 +26,30 @@ const emit = defineEmits<{ wake: [] }>()
 .rest {
   position: fixed;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   overflow: auto;
   padding: 1rem;
   background: var(--rest);
   color: var(--on-rest);
+  font-size: 0.875rem;
+  text-align: center;
 }
 
-.warning {
+.rest :focus-visible {
+  outline-color: var(--on-rest);
+}
+
+.warning,
+.status {
   font-weight: 700;
 }
 
 .wake {
-  width: 100%;
-  margin-top: 2rem;
   border: none;
-  background: none;
   color: inherit;
-  font: inherit;
+  font-weight: 400;
 }
 </style>
