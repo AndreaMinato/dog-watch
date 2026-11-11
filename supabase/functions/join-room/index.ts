@@ -15,6 +15,7 @@ const turnKey = readTurnKey(name => Deno.env.get(name))
 const roles = ['camera', 'viewer']
 const maxFailedAttemptsPerHour = 10
 const hourInMs = 60 * 60 * 1000
+const roomExpiryMs = 30 * 24 * hourInMs
 const invalidKeyResponseMs = 500
 
 export default {
@@ -44,6 +45,8 @@ export default {
       .from('rooms')
       .update({ last_joined_at: now })
       .eq('key_hash', keyHash)
+      // An expired room the cleanup has not deleted yet refuses its key all the same.
+      .gte('last_joined_at', new Date(receivedAt - roomExpiryMs).toISOString())
       .select('id, name')
       .maybeSingle()
     if (error)

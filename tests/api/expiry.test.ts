@@ -8,7 +8,7 @@ function hoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
 }
 
-async function roomLastJoined(daysAgo: number): Promise<string> {
+async function roomLastJoined(daysAgo: number) {
   const { roomId, key } = await createRoom()
   const user = await signInAnonymously()
   await invokeFunction('join-room', { user, body: { key, role: 'camera', name: 'soggiorno' } })
@@ -18,7 +18,7 @@ async function roomLastJoined(daysAgo: number): Promise<string> {
     .eq('id', roomId)
   if (error)
     throw error
-  return roomId
+  return { roomId, key }
 }
 
 async function purgeExpired() {
@@ -27,10 +27,32 @@ async function purgeExpired() {
     throw error
 }
 
+describe('expired room', () => {
+  it('refuses its key before the cleanup runs, like an unknown key', async () => {
+    const { key } = await roomLastJoined(31)
+    const user = await signInAnonymously()
+    const startedAt = Date.now()
+
+    const response = await invokeFunction('join-room', { user, body: { key, role: 'viewer', name: 'Andrea' } })
+
+    expect({ status: response.status, body: await response.json() }).toEqual({ status: 403, body: { error: 'invalid_key' } })
+    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(500)
+  })
+
+  it('still accepts its key 29 days after the last join', async () => {
+    const { roomId, key } = await roomLastJoined(29)
+    const user = await signInAnonymously()
+
+    const response = await invokeFunction('join-room', { user, body: { key, role: 'viewer', name: 'Andrea' } })
+
+    expect({ status: response.status, body: await response.json() }).toMatchObject({ status: 200, body: { roomId } })
+  })
+})
+
 describe('cleanup', () => {
   it('deletes rooms nobody joined for more than 30 days, with their members', async () => {
-    const expired = await roomLastJoined(31)
-    const active = await roomLastJoined(29)
+    const { roomId: expired } = await roomLastJoined(31)
+    const { roomId: active } = await roomLastJoined(29)
 
     await purgeExpired()
 
