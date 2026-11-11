@@ -112,6 +112,21 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(viewer)
     })
 
+    test('a camera that dropped out, its animal asleep, is usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      const key = await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      const viewer = await openDevice(browser)
+      await joinAsViewer(viewer, key, 'Andrea')
+      await expect(viewer.getByLabel('Telecamera soggiorno')).toBeVisible()
+
+      await camera.close()
+
+      await expect(viewer.getByRole('img', { name: /seduto che dorme$/ })).toBeVisible()
+      expect(await viewer.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0)
+      await expectUsable(viewer)
+    })
+
     test('the rest screen stays black', async ({ browser }) => {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')

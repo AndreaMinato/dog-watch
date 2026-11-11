@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { CameraFeed } from '../room/viewer-session'
 import { shallowRef } from 'vue'
+import { rolePoses } from '../mascot/mascot'
+import MascotFigure from './MascotFigure.vue'
 import StatusPill from './StatusPill.vue'
 
 const { feed } = defineProps<{ feed: CameraFeed }>()
@@ -26,7 +28,16 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
     </p>
     <StatusPill v-else class="status" :status="feed.camera.status" />
     <figcaption>
-      <span class="name">{{ feed.camera.name }}</span>
+      <span class="camera">
+        <MascotFigure
+          class="avatar"
+          :species="feed.camera.mascot"
+          :pose="rolePoses[feed.camera.role]"
+          :state="feed.offlineSince ? 'asleep' : 'awake'"
+          crop
+        />
+        <span class="name">{{ feed.camera.name }}</span>
+      </span>
       <button type="button" @click="muted = !muted">
         {{ muted ? 'Attiva audio' : 'Disattiva audio' }}
       </button>
@@ -56,6 +67,15 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
   width: 100%;
   border-radius: 0.5rem;
   background: var(--surface);
+}
+.camera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.avatar {
+  flex: none;
+  width: 2.5rem;
 }
 .name {
   font-family: var(--font-display);

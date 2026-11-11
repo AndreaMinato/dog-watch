@@ -19,6 +19,20 @@ test('each device sees the other\'s animal in the pose of its role', async ({ br
   }
 })
 
+test('the viewer sees the camera\'s animal on its video, asleep once the camera drops out', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno', 'Gatto')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+  const feedMascot = viewer.getByRole('region', { name: 'Telecamere' }).getByRole('img')
+  await expect(feedMascot).toHaveAccessibleName('Gatto seduto')
+
+  await camera.close()
+
+  await expect(feedMascot).toHaveAccessibleName('Gatto seduto che dorme')
+})
+
 test('a device that keeps the proposed animal enters with it', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
