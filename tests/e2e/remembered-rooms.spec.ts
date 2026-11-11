@@ -98,7 +98,7 @@ test('forgetting a room removes it from the recent ones', async ({ browser }) =>
 
   await expect(device.getByRole('list', { name: 'Stanze recenti' })).toHaveCount(0)
   await device.reload()
-  await expect(device.getByRole('link', { name: 'Crea una Stanza' })).toBeVisible()
+  await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
   await expect(device.getByRole('list', { name: 'Stanze recenti' })).toHaveCount(0)
 })
 
@@ -155,7 +155,7 @@ test('a closed room is forgotten', async ({ browser }) => {
   for (const device of [camera, viewer]) {
     await expect(device.getByRole('alert')).toHaveText('Stanza chiusa')
     await device.getByRole('link', { name: 'Torna alla home' }).click()
-    await expect(device.getByRole('link', { name: 'Crea una Stanza' })).toBeVisible()
+    await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
     await expect(device.getByRole('list', { name: 'Stanze recenti' })).toHaveCount(0)
   }
 })

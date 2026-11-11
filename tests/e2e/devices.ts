@@ -53,39 +53,53 @@ export async function openDevice(browser: Browser, options: BrowserContextOption
   return page
 }
 
-export async function createRoom(page: Page, name: string): Promise<string> {
-  await page.getByRole('link', { name: 'Crea una Stanza' }).click()
-  await page.getByLabel('Nome della Stanza').fill(name)
-  await page.getByRole('button', { name: 'Crea' }).click()
-  const key = page.getByRole('status', { name: 'Chiave della Stanza' })
-  await expect(key).toHaveText(/^[a-z]+(?:-[a-z]+){3}$/)
-  return (await key.textContent())!
+export function next(page: Page): Promise<void> {
+  return page.getByRole('button', { name: 'Avanti', exact: true }).click()
 }
 
-/** Without an animal, the device enters with the one the form proposes. */
-async function enter(page: Page, animal?: string): Promise<void> {
+/** From the first question, as a future camera: returns the key of the new room, shown in words. */
+export async function createRoom(page: Page, name: string): Promise<string> {
+  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+  await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' }).click()
+  await page.getByLabel('Come si chiama la Stanza?').fill(name)
+  await page.getByRole('button', { name: 'Crea', exact: true }).click()
+  const words = page.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')
+  await expect(words).toHaveCount(4)
+  const key = (await words.allTextContents()).map(word => word.trim()).join('-')
+  expect(key).toMatch(/^[a-z]+(?:-[a-z]+){3}$/)
+  return key
+}
+
+/** Without an animal, the device enters with the one proposed. */
+export async function enter(page: Page, animal?: string): Promise<void> {
   if (animal)
     await page.getByRole('radio', { name: animal, exact: true }).check()
-  await page.getByRole('button', { name: 'Entra' }).click()
+  await page.getByRole('button', { name: 'Entra', exact: true }).click()
 }
 
+/** Goes on from the key just shown by createRoom. */
 export async function joinAsCamera(page: Page, name: string, animal?: string): Promise<void> {
-  await page.getByRole('radio', { name: 'Telecamera' }).check()
-  await page.getByLabel('Nome della telecamera').fill(name)
+  await next(page)
+  await page.getByLabel('Che stanza riprende?').fill(name)
+  await next(page)
   await enter(page, animal)
 }
 
 export async function joinAsCameraWithKey(page: Page, key: string, name: string): Promise<void> {
-  await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
-  await page.getByLabel('Chiave').fill(key)
-  await joinAsCamera(page, name)
+  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+  await page.getByLabel('Hai la Chiave della Stanza?').fill(key)
+  await next(page)
+  await page.getByLabel('Che stanza riprende?').fill(name)
+  await next(page)
+  await enter(page)
 }
 
 export async function joinAsViewer(page: Page, key: string, nickname: string, animal?: string): Promise<void> {
-  await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
-  await page.getByLabel('Chiave').fill(key)
-  await page.getByLabel('Spettatore').check()
-  await page.getByLabel('Soprannome').fill(nickname)
+  await page.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await page.getByLabel('Hai la Chiave della Stanza?').fill(key)
+  await next(page)
+  await page.getByLabel('Come ti chiami?').fill(nickname)
+  await next(page)
   await enter(page, animal)
 }
 

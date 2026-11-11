@@ -11,5 +11,5 @@ test('without a connection the app says so, and opens once the connection is bac
   await page.unroute('**/auth/v1/**')
   await page.getByRole('button', { name: 'Riprova' }).click()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Veglia' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Cosa farà questo dispositivo?' })).toBeVisible()
 })
