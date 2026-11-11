@@ -17,7 +17,7 @@ const name = shallowRef('')
 const pending = shallowRef(false)
 const error = shallowRef<string | null>(null)
 
-const nameLabel = computed(() => role.value === 'camera' ? 'Nome della Camera' : 'Soprannome')
+const nameLabel = computed(() => role.value === 'camera' ? 'Nome della telecamera' : 'Soprannome')
 
 async function submit() {
   pending.value = true
@@ -50,13 +50,13 @@ async function submit() {
           value="camera"
           :disabled="!compatibility.camera"
           :aria-describedby="compatibility.camera ? undefined : 'camera-unsupported'"
-        > Camera
+        > Telecamera
       </label>
       <label><input v-model="role" type="radio" value="viewer"> Spettatore</label>
     </fieldset>
     <p v-if="!compatibility.camera" id="camera-unsupported">
       Questo browser non può usare la fotocamera o tenere lo schermo acceso, quindi qui puoi entrare solo come Spettatore.
-      Per fare da Camera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
+      Per fare da telecamera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
     </p>
     <label class="field">
       {{ nameLabel }}

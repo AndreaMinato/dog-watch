@@ -63,8 +63,8 @@ export async function createRoom(page: Page, name: string): Promise<string> {
 }
 
 export async function joinAsCamera(page: Page, name: string): Promise<void> {
-  await page.getByLabel('Camera').check()
-  await page.getByLabel('Nome della Camera').fill(name)
+  await page.getByRole('radio', { name: 'Telecamera' }).check()
+  await page.getByLabel('Nome della telecamera').fill(name)
   await page.getByRole('button', { name: 'Entra' }).click()
 }
 

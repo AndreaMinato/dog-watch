@@ -8,7 +8,7 @@ test('a browser without WebRTC is told it is not supported', async ({ page }) =>
   await page.goto('/')
 
   await expect(page.getByRole('heading', { name: 'Browser non supportato' })).toBeVisible()
-  await expect(page.getByText('Safari su iPhone o iPad (iOS 16.4 o successivo)')).toBeVisible()
+  await expect(page.getByText('Telecamera: Safari su iPhone o iPad (iOS 16.4 o successivo)')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Crea una Stanza' })).toBeHidden()
 })
 
@@ -19,9 +19,9 @@ test('a browser without Wake Lock can join only as a viewer', async ({ page }) =
   await page.goto('/')
   await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
 
-  const camera = page.getByLabel('Camera')
+  const camera = page.getByRole('radio', { name: 'Telecamera' })
   await expect(camera).toBeDisabled()
-  await expect(camera).toHaveAccessibleDescription(/non può usare la fotocamera o tenere lo schermo acceso/)
+  await expect(camera).toHaveAccessibleDescription(/non può usare la fotocamera o tenere lo schermo acceso.*Per fare da telecamera usa Safari/)
   await expect(page.getByLabel('Spettatore')).toBeEnabled()
   await expect(page.getByLabel('Spettatore')).toBeChecked()
 })
