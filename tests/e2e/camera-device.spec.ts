@@ -2,6 +2,7 @@ import { expect } from '@playwright/test'
 import { cameraThumbnails, createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openCameraMenu, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
 
 const screenMayTurnOff = /^Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere\./
+const reminder = /Tieni il dispositivo in carica e questa pagina in primo piano: .* la telecamera smette di trasmettere\./
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -73,6 +74,18 @@ test('the camera films again for its viewers after losing the camera while hidde
   expect(await openPeerConnections(camera)).toBe(1)
 })
 
+test('the camera is reminded to stay plugged in and in the foreground', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+
+  await expect(camera.getByText(reminder)).toBeVisible()
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
+  await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
+})
+
 test('on its first start only, the camera is told to stay open and plugged in, and that the screen dims by itself', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
@@ -83,7 +96,7 @@ test('on its first start only, the camera is told to stay open and plugged in, a
   const notice = camera.getByText('Tieni l\'app aperta e il telefono in carica: se blocchi lo schermo la trasmissione si ferma. Lo schermo si oscura da solo dopo 2 minuti.', { exact: true })
   await expect(notice).toBeVisible()
   await expect(cameraThumbnails(viewer)).toHaveCount(1)
-  await expect(viewer.getByText('in carica')).toHaveCount(0)
+  await expect(viewer.getByText('Tieni l\'app aperta')).toHaveCount(0)
 
   await camera.getByRole('button', { name: 'Ho capito' }).click()
 
@@ -92,7 +105,8 @@ test('on its first start only, the camera is told to stay open and plugged in, a
   await camera.reload()
 
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
-  await expect(camera.getByText('in carica')).toHaveCount(0)
+  await expect(camera.getByText(reminder)).toBeVisible()
+  await expect(notice).toHaveCount(0)
   await expect(camera.getByRole('button', { name: 'Ho capito' })).toHaveCount(0)
 })
 

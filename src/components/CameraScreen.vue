@@ -100,6 +100,9 @@ onBeforeUnmount(() => {
       <p v-if="!screenKeptOn" role="alert" class="notice">
         {{ screenMayTurnOff }}
       </p>
+      <p class="notice">
+        Tieni il dispositivo in carica e questa pagina in primo piano: se lo schermo si spegne o passi a un'altra app, la telecamera smette di trasmettere.
+      </p>
       <div v-if="firstStart" class="notice first-start">
         <p>
           Tieni l'app aperta e il telefono in carica: se blocchi lo schermo la trasmissione si ferma. Lo schermo si oscura da solo dopo 2 minuti.
