@@ -41,8 +41,8 @@ export const test = base.extend<{ closeDevices: void }>({
  * The local gateway is not behind Cloudflare: give each device its own client IP, as
  * Cloudflare would, so failed join attempts never pile up across tests and runs.
  */
-export async function openDevice(browser: Browser, storageState?: BrowserContextOptions['storageState']): Promise<Page> {
-  const context = await browser.newContext({ permissions: ['screen-wake-lock'], storageState })
+export async function openDevice(browser: Browser, options: BrowserContextOptions = {}): Promise<Page> {
+  const context = await browser.newContext({ permissions: ['screen-wake-lock'], ...options })
   await context.addInitScript(recordPeerConnections)
   await context.addInitScript(recordWakeLocks)
   const ip = Array.from(crypto.getRandomValues(new Uint8Array(4))).join('.')
@@ -129,13 +129,16 @@ export function releaseWakeLocks(page: Page): Promise<void> {
 }
 
 /** Headless pages are always visible: fake the visibility a phone goes through when it sleeps and wakes. */
+export async function setVisibility(page: Page, state: DocumentVisibilityState): Promise<void> {
+  await page.evaluate((visibilityState) => {
+    Object.defineProperty(document, 'visibilityState', { value: visibilityState, configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }, state)
+}
+
 export async function hideAndShow(page: Page): Promise<void> {
-  for (const state of ['hidden', 'visible']) {
-    await page.evaluate((visibilityState) => {
-      Object.defineProperty(document, 'visibilityState', { value: visibilityState, configurable: true })
-      document.dispatchEvent(new Event('visibilitychange'))
-    }, state)
-  }
+  await setVisibility(page, 'hidden')
+  await setVisibility(page, 'visible')
 }
 
 export async function expectFrozenVideo(video: Locator): Promise<void> {
