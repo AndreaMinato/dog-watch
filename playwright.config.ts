@@ -25,13 +25,18 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /phone\.spec\.ts/,
+      testIgnore: /layout\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], launchOptions: fakeMedia },
     },
     {
       name: 'phone',
-      testMatch: /phone\.spec\.ts/,
+      testMatch: /layout\.spec\.ts/,
       use: { ...devices['iPhone 13 Mini'], browserName: 'chromium', launchOptions: fakeMedia },
+    },
+    {
+      name: 'tablet',
+      testMatch: /layout\.spec\.ts/,
+      use: { ...devices['iPad Mini'], browserName: 'chromium', launchOptions: fakeMedia },
     },
   ],
   webServer: {
