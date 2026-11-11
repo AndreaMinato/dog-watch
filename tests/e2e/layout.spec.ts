@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openInviteSheet, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, openDevice, openInviteSheet, test } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -106,15 +106,58 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(page.locator('body')).toHaveCSS('color', palettes[colorScheme].text)
     })
 
-    test('home, create and join are usable on this screen', async ({ browser }) => {
+    test('each question of a new camera is usable on this screen', async ({ browser }) => {
       const page = await openDevice(browser)
+      await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
       await expectUsable(page)
 
-      await createRoom(page, 'Casa al mare')
+      await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+      await expect(page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' })).toBeVisible()
       await expectUsable(page)
 
-      await page.goto('/entra')
-      await expect(page.getByLabel('Chiave')).toBeVisible()
+      await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' }).click()
+      await expect(page.getByLabel('Come si chiama la Stanza?')).toBeVisible()
+      await expectUsable(page)
+
+      await page.getByLabel('Come si chiama la Stanza?').fill('Casa al mare')
+      await page.getByRole('button', { name: 'Crea', exact: true }).click()
+      await expect(page.getByRole('list', { name: 'Chiave della Stanza' })).toBeVisible()
+      await expectUsable(page)
+
+      await next(page)
+      await expect(page.getByRole('button', { name: 'Camera da letto' })).toBeVisible()
+      await expectUsable(page)
+
+      await page.getByRole('button', { name: 'Camera da letto' }).click()
+      await next(page)
+      await expect(page.getByRole('group', { name: 'Scegli il tuo animale' })).toBeVisible()
+      await expectUsable(page)
+    })
+
+    test('each question of an invited viewer, and a refused key, are usable on this screen', async ({ browser }) => {
+      const page = await openDevice(browser)
+      await page.goto('/entra#abaco-abete-abisso-zuppa')
+      await expect(page.getByText('Hai un invito per una Stanza.')).toBeVisible()
+      await expectUsable(page)
+
+      await page.getByRole('button', { name: 'Guarderà la casa' }).click()
+      await expect(page.getByLabel('Come ti chiami?')).toBeVisible()
+      await expectUsable(page)
+
+      await page.getByLabel('Come ti chiami?').fill('Andrea')
+      await next(page)
+      await expect(page.getByRole('group', { name: 'Scegli il tuo animale' })).toBeVisible()
+      await expectUsable(page)
+
+      await enter(page)
+      await expect(page.getByRole('alert')).toHaveText('Chiave non valida')
+      await expectUsable(page)
+    })
+
+    test('the message without a connection is usable on this screen', async ({ page }) => {
+      await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
+      await page.goto('/')
+      await expect(page.getByRole('heading', { name: 'Impossibile collegarsi' })).toBeVisible()
       await expectUsable(page)
     })
 

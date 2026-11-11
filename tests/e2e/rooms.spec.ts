@@ -1,6 +1,5 @@
-import type { Browser, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, joinAsViewer, members, next, openDevice, test } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -22,33 +21,15 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   await expect(members(camera)).toContainText('soggiorno')
 })
 
-async function tryWrongKey(page: Page) {
-  await page.getByLabel('Chiave').fill('abaco abete abisso zuppa')
-  await page.getByRole('button', { name: 'Entra' }).click()
-}
-
-async function openJoinForm(browser: Browser): Promise<Page> {
+test('too many wrong keys ask to retry later, back at the key', async ({ browser }) => {
   const viewer = await openDevice(browser)
-  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
-  await viewer.getByLabel('Spettatore').check()
-  await viewer.getByLabel('Soprannome').fill('Andrea')
-  return viewer
-}
-
-test('a wrong key is refused', async ({ browser }) => {
-  const viewer = await openJoinForm(browser)
-
-  await tryWrongKey(viewer)
-
-  await expect(viewer.getByRole('alert')).toHaveText('Chiave non valida')
-})
-
-test('too many wrong keys ask to retry later', async ({ browser }) => {
-  const viewer = await openJoinForm(browser)
-  for (let attempt = 0; attempt < 10; attempt++)
-    await tryWrongKey(viewer)
-
-  await tryWrongKey(viewer)
+  await joinAsViewer(viewer, 'abaco abete abisso zuppa', 'Andrea')
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await next(viewer)
+    await next(viewer)
+    await enter(viewer)
+  }
 
   await expect(viewer.getByRole('alert')).toHaveText('Troppi tentativi, riprova più tardi.')
+  await expect(viewer.getByLabel('Hai la Chiave della Stanza?')).toHaveValue('abaco abete abisso zuppa')
 })
