@@ -67,17 +67,19 @@ test('a camera re-enters by itself after the browser restarts', async ({ browser
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
-test('a camera keeps trying to re-enter while joining fails, and gets back on air by itself', async ({ browser }) => {
+test('a camera keeps trying to re-enter while joining fails, even with the questions open, and gets back on air by itself', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
-  let failingJoins = 2
+  let failingJoins = 3
   await camera.route('**/functions/v1/join-room', route => failingJoins-- > 0 ? route.abort() : route.fallback())
 
   await camera.reload()
+  await camera.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
+  await expect(camera.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
 
   await expect(camera.getByLabel('Anteprima')).toBeVisible()
   expect(failingJoins).toBe(-1)
@@ -133,10 +135,32 @@ test('forgetting a room removes it from the recent ones', async ({ browser }) =>
 
   await recent.getByRole('button', { name: 'Dimentica' }).click()
 
+  await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeFocused()
   await expect(recentRooms(device)).toHaveCount(0)
   await device.reload()
   await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
   await expect(recentRooms(device)).toHaveCount(0)
+})
+
+test('a device with recent rooms answers the questions only to use another room, and keeps its rooms', async ({ browser }) => {
+  const device = await openDevice(browser)
+  await createRoom(device, 'Casa al mare')
+  await joinAsCamera(device, 'soggiorno')
+  await device.getByRole('button', { name: 'Esci' }).click()
+  await expect(recentRooms(device)).toHaveCount(1)
+  await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toHaveCount(0)
+
+  await device.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
+  await expect(device.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeFocused()
+  await expect(recentRooms(device)).toHaveCount(0)
+  await device.getByRole('button', { name: 'Le tue Stanze' }).click()
+  await expect(device.getByRole('heading', { name: 'Le tue Stanze' })).toBeFocused()
+  await device.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
+  await createRoom(device, 'Ufficio')
+  await joinAsCamera(device, 'scrivania')
+  await device.getByRole('button', { name: 'Esci' }).click()
+
+  await expect(recentRooms(device).getByRole('button', { name: /^Casa al mare$|^Ufficio$/ })).toHaveText([/Ufficio/, /Casa al mare/])
 })
 
 test('a camera that left its room stays out after a reload', async ({ browser }) => {
