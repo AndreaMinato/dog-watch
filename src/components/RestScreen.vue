@@ -28,7 +28,7 @@ const emit = defineEmits<{ wake: [] }>()
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   align-items: center;
   overflow: auto;
   padding: 1rem;
