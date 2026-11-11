@@ -154,6 +154,24 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(page)
     })
 
+    test('the recent rooms, one asking for the new key, and the questions they open are usable on this screen', async ({ browser }) => {
+      const page = await openDevice(browser)
+      await createRoom(page, 'Casa al mare')
+      await joinAsCamera(page, 'soggiorno')
+      await page.getByRole('button', { name: 'Esci' }).click()
+      await expect(page.getByRole('heading', { name: 'Le tue Stanze' })).toBeVisible()
+      await expectUsable(page)
+
+      await page.route('**/functions/v1/join-room', route => route.fulfill({ status: 403 }))
+      await page.getByRole('button', { name: 'Casa al mare', exact: true }).click()
+      await expect(page.getByLabel('Chiave nuova')).toBeVisible()
+      await expectUsable(page)
+
+      await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
+      await expect(page.getByRole('button', { name: 'Le tue Stanze' })).toBeVisible()
+      await expectUsable(page)
+    })
+
     test('the message without a connection is usable on this screen', async ({ page }) => {
       await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
       await page.goto('/')
