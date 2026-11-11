@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { ControlEvent } from '../room/room-client'
-import { shallowRef } from 'vue'
+import { shallowRef, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
-import JoinLink from '../components/JoinLink.vue'
+import InviteSheet from '../components/InviteSheet.vue'
 import MascotFigure from '../components/MascotFigure.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
@@ -16,6 +16,7 @@ import { useRoom } from '../room/use-room'
 const router = useRouter()
 const { room, members, ended, leave, rotateKey, closeRoom } = useRoom()
 
+const invite = useTemplateRef('invite')
 const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
 
@@ -63,7 +64,6 @@ async function exit() {
           {{ screenMayTurnOff }}
         </p>
         <CameraPreview :room="room" @rest="resting = true" @screen-kept-on="screenKeptOn = $event" />
-        <JoinLink :room-key="room.key" />
       </template>
       <template v-else>
         <CameraFeeds :room="room" />
@@ -105,10 +105,14 @@ async function exit() {
         </p>
       </template>
       <div class="controls">
+        <button type="button" @click="invite?.open()">
+          Invita qualcuno
+        </button>
         <button type="button" @click="exit">
           Esci
         </button>
       </div>
+      <InviteSheet ref="invite" :room-name="room.roomName" :room-key="room.key" />
     </template>
     <template v-else-if="ended">
       <p role="alert">

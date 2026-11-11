@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openInviteSheet, openPeerConnections, test } from './devices'
 
 async function watchedRoom(browser: Browser, prepareViewer?: (viewer: Page) => Promise<void>) {
   const camera = await openDevice(browser)
@@ -30,10 +30,11 @@ test('rotating the key expels the viewer, who re-enters with the new key', async
   const newKey = camera.getByRole('status', { name: 'Chiave della Stanza' })
   await expect(newKey).toHaveText(/^[a-z]+(?:-[a-z]+){3}$/)
   await expect(newKey).not.toHaveText(key)
-  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-  await expect(camera.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${await newKey.textContent()}$`))
+  const newKeyText = (await newKey.textContent())!
+  const sheet = await openInviteSheet(camera)
+  await expect(sheet.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${newKeyText}$`))
 
-  await joinAsViewer(viewer, (await newKey.textContent())!, 'Andrea')
+  await joinAsViewer(viewer, newKeyText, 'Andrea')
 
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })

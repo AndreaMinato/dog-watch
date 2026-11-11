@@ -93,6 +93,13 @@ export function members(page: Page) {
   return page.getByRole('list', { name: 'Nella Stanza' }).getByRole('listitem')
 }
 
+export async function openInviteSheet(page: Page): Promise<Locator> {
+  await page.getByRole('button', { name: 'Invita qualcuno' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Invita qualcuno' })
+  await expect(sheet).toBeVisible()
+  return sheet
+}
+
 function captureFrame(video: Locator): Promise<string> {
   return video.evaluate((element: HTMLVideoElement) => {
     const canvas = document.createElement('canvas')
