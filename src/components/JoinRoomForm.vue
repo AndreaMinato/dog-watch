@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import type { Species } from '../mascot/mascot'
 import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
-import { joinErrorMessage } from '../room/messages'
+import { randomSpecies, rolePoses, SPECIES } from '../mascot/mascot'
+import { joinErrorMessage, speciesLabels } from '../room/messages'
 import { useRoom } from '../room/use-room'
+import MascotFigure from './MascotFigure.vue'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
 
@@ -14,6 +17,7 @@ const { join } = useRoom()
 const key = shallowRef('')
 const role = shallowRef<Role>('viewer')
 const name = shallowRef('')
+const mascot = shallowRef<Species>(randomSpecies())
 const pending = shallowRef(false)
 const error = shallowRef<string | null>(null)
 
@@ -23,7 +27,7 @@ async function submit() {
   pending.value = true
   error.value = null
   try {
-    await join({ key: roomKey ?? key.value, role: role.value, name: name.value })
+    await join({ key: roomKey ?? key.value, role: role.value, name: name.value, mascot: mascot.value })
     await router.push({ name: 'room' })
   }
   catch (cause) {
@@ -62,6 +66,17 @@ async function submit() {
       {{ nameLabel }}
       <input v-model.trim="name" required maxlength="40">
     </label>
+    <fieldset class="animals">
+      <legend>Animale</legend>
+      <p class="hint">
+        Gli altri riconoscono questo dispositivo da lui.
+      </p>
+      <label v-for="species in SPECIES" :key="species" class="animal">
+        <MascotFigure class="figure" :species="species" :pose="rolePoses[role]" aria-hidden="true" />
+        <input v-model="mascot" type="radio" :value="species">
+        {{ speciesLabels[species] }}
+      </label>
+    </fieldset>
     <p v-if="error" role="alert">
       {{ error }}
     </p>
@@ -94,5 +109,39 @@ async function submit() {
   align-items: center;
   gap: 0.5rem;
   min-height: var(--touch);
+}
+.animals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.animals legend {
+  padding: 0;
+}
+.hint {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.animal {
+  display: grid;
+  grid-template-columns: auto auto;
+  place-content: center;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  padding: 0.5rem;
+  border-radius: 1.25rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+.animal:has(input:checked) {
+  box-shadow: inset 0 0 0 2px var(--text);
+}
+.figure {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 4.5rem;
 }
 </style>

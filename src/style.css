@@ -47,6 +47,24 @@
   --rest: #000;
   --on-rest: #7a83a6;
 
+  --mascot-eye: #1f2547;
+  --mascot-highlight: #fff;
+  --mascot-ledge: var(--blueberry);
+  --cat-fur: #efa56e;
+  --cat-dark: #c97a43;
+  --cat-light: #f8e6cb;
+  --cat-inner: var(--nose);
+  --cat-nose: #dc7c84;
+  --dog-fur: #a8714a;
+  --dog-dark: #6b4329;
+  --dog-light: var(--wool);
+  --dog-nose: #2a2230;
+  --rabbit-fur: #b6bdcb;
+  --rabbit-dark: #8c95a8;
+  --rabbit-light: #f4f1ec;
+  --rabbit-inner: var(--nose);
+  --rabbit-nose: #dc7c84;
+
   --touch: 2.75rem;
   --font-display: 'Young Serif', georgia, serif;
   --font-text: 'Atkinson Hyperlegible', system-ui, sans-serif;
@@ -64,6 +82,7 @@
     --text-muted: var(--mist);
     --primary: var(--apricot);
     --on-primary: var(--night-blueberry);
+    --mascot-ledge: #0f1435;
   }
 }
 

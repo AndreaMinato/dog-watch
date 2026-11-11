@@ -1,7 +1,10 @@
+import type { Species } from '../mascot/mascot'
 import type { Refusal, Role } from './room-client'
 import { InvalidKeyError, MEMBER_LIMITS, RoomRefusedError, TooManyAttemptsError } from './room-client'
 
 export const roleLabels: Record<Role, string> = { camera: 'Telecamera', viewer: 'Spettatore' }
+
+export const speciesLabels: Record<Species, string> = { dog: 'Cane', cat: 'Gatto', rabbit: 'Coniglio' }
 
 export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 

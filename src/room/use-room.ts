@@ -8,8 +8,8 @@ const members = shallowRef<readonly Member[]>([])
 const ended = shallowRef<ControlEvent | null>(null)
 
 function remember(client: RoomClient) {
-  const { roomId, roomName, key, self: { role, name } } = client
-  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name })
+  const { roomId, roomName, key, self: { role, name, mascot } } = client
+  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name, mascot })
 }
 
 function reset() {

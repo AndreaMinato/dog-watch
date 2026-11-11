@@ -31,7 +31,7 @@ async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) 
   pending.value = true
   failure.value = null
   try {
-    await join({ key, role: room.role, name: room.memberName })
+    await join({ key, role: room.role, name: room.memberName, mascot: room.mascot })
     await router.push({ name: 'room' })
   }
   catch (cause) {

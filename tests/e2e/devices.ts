@@ -62,10 +62,17 @@ export async function createRoom(page: Page, name: string): Promise<string> {
   return (await key.textContent())!
 }
 
-export async function joinAsCamera(page: Page, name: string): Promise<void> {
+/** Without an animal, the device enters with the one the form proposes. */
+async function enter(page: Page, animal?: string): Promise<void> {
+  if (animal)
+    await page.getByRole('radio', { name: animal, exact: true }).check()
+  await page.getByRole('button', { name: 'Entra' }).click()
+}
+
+export async function joinAsCamera(page: Page, name: string, animal?: string): Promise<void> {
   await page.getByRole('radio', { name: 'Telecamera' }).check()
   await page.getByLabel('Nome della telecamera').fill(name)
-  await page.getByRole('button', { name: 'Entra' }).click()
+  await enter(page, animal)
 }
 
 export async function joinAsCameraWithKey(page: Page, key: string, name: string): Promise<void> {
@@ -74,12 +81,12 @@ export async function joinAsCameraWithKey(page: Page, key: string, name: string)
   await joinAsCamera(page, name)
 }
 
-export async function joinAsViewer(page: Page, key: string, nickname: string): Promise<void> {
+export async function joinAsViewer(page: Page, key: string, nickname: string, animal?: string): Promise<void> {
   await page.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await page.getByLabel('Chiave').fill(key)
   await page.getByLabel('Spettatore').check()
   await page.getByLabel('Soprannome').fill(nickname)
-  await page.getByRole('button', { name: 'Entra' }).click()
+  await enter(page, animal)
 }
 
 export function members(page: Page) {

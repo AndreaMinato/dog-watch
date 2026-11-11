@@ -1,4 +1,6 @@
+import type { Species } from '../mascot/mascot'
 import type { Role } from './room-client'
+import { speciesOrDefault } from '../mascot/mascot'
 
 export interface RememberedRoom {
   roomId: string
@@ -7,6 +9,7 @@ export interface RememberedRoom {
   role: Role
   /** The Camera's name or the Spettatore's soprannome in this room. */
   memberName: string
+  mascot: Species
 }
 
 const ROOMS = 'dog-watch:rooms'
@@ -36,7 +39,8 @@ function write(item: string, value: unknown) {
 
 /** Most recently entered first. */
 export function rememberedRooms(): RememberedRoom[] {
-  return read<RememberedRoom[]>(ROOMS, [])
+  // Rooms remembered before mascots existed have none.
+  return read<RememberedRoom[]>(ROOMS, []).map(room => ({ ...room, mascot: speciesOrDefault(room.mascot) }))
 }
 
 export function rememberEnteredRoom(room: RememberedRoom) {

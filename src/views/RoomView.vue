@@ -6,8 +6,10 @@ import CameraFeeds from '../components/CameraFeeds.vue'
 import CameraPreview from '../components/CameraPreview.vue'
 import ConfirmButton from '../components/ConfirmButton.vue'
 import JoinLink from '../components/JoinLink.vue'
+import MascotFigure from '../components/MascotFigure.vue'
 import NewViewerNotice from '../components/NewViewerNotice.vue'
 import RestScreen from '../components/RestScreen.vue'
+import { rolePoses } from '../mascot/mascot'
 import { refusalMessages, roleLabels, screenMayTurnOff, somethingWentWrong } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
@@ -70,8 +72,9 @@ async function exit() {
       <h2 id="members-heading">
         Nella Stanza
       </h2>
-      <ul aria-labelledby="members-heading">
-        <li v-for="member in members" :key="member.id">
+      <ul aria-labelledby="members-heading" class="members">
+        <li v-for="member in members" :key="member.id" class="member">
+          <MascotFigure class="avatar" :species="member.mascot" :pose="rolePoses[member.role]" crop />
           {{ roleLabels[member.role] }}: {{ member.name }}
           <template v-if="member.id === room.self.id">
             (tu)
@@ -127,5 +130,21 @@ async function exit() {
 <style scoped>
 .wide {
   max-width: 72rem;
+}
+.members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.avatar {
+  flex: none;
+  width: 2.5rem;
 }
 </style>

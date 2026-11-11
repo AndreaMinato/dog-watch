@@ -1,5 +1,7 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import type { Species } from '../mascot/mascot'
 import { FunctionsHttpError } from '@supabase/supabase-js'
+import { speciesOrDefault } from '../mascot/mascot'
 import { createListeners } from './listeners'
 import { supabase } from './supabase'
 
@@ -12,12 +14,17 @@ export interface Member {
   role: Role
   name: string
   status: CameraStatus
+  mascot: Species
+  /** ISO timestamp from the server clock; a re-entry gets a new one. */
+  joinedAt: string
 }
 
 export interface JoinRequest {
   key: string
   role: Role
   name: string
+  /** Travels in Presence only: the server never sees it. */
+  mascot: Species
 }
 
 export type Signal = { link: string } & (
@@ -110,20 +117,19 @@ interface Presence {
   name: string
   joinedAt: string
   status: CameraStatus
+  mascot: Species
 }
-
-type PresentMember = Member & Pick<Presence, 'joinedAt'>
 
 function sameName(a: string, b: string): boolean {
   return a.localeCompare(b, undefined, { sensitivity: 'base' }) === 0
 }
 
 /** Everyone applies the same limits to the same Presence state, so they all agree on who exceeds them: the latest to join. */
-function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<string, Refusal> } {
+function admit(present: Member[]): { admitted: Member[], refusals: Map<string, Refusal> } {
   const admitted: Member[] = []
   const refusals = new Map<string, Refusal>()
   const byJoinOrder = [...present].sort((a, b) => Date.parse(a.joinedAt) - Date.parse(b.joinedAt) || a.id.localeCompare(b.id))
-  for (const { joinedAt: _, ...member } of byJoinOrder) {
+  for (const member of byJoinOrder) {
     const sameRole = admitted.filter(other => other.role === member.role)
     if (sameRole.length >= MEMBER_LIMITS[member.role])
       refusals.set(member.id, member.role === 'camera' ? 'cameras_full' : 'viewers_full')
@@ -135,7 +141,7 @@ function admit(present: PresentMember[]): { admitted: Member[], refusals: Map<st
   return { admitted, refusals }
 }
 
-export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomClient> {
+export async function joinRoom({ key, role, name, mascot }: JoinRequest): Promise<RoomClient> {
   const { roomId, roomName, topic, iceServers: joinedIceServers, iceServersTtl, joinedAt } = await invoke<JoinResponse>('join-room', { key, role, name })
     .catch((error: unknown) => {
       const status = error instanceof FunctionsHttpError ? error.context.status : undefined
@@ -146,7 +152,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       throw error
     })
   const { data: { session } } = await supabase.auth.getSession()
-  const self: Member = { id: session!.user.id, role, name, status: 'live' }
+  const self: Member = { id: session!.user.id, role, name, status: 'live', mascot, joinedAt }
 
   const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
   const memberListeners = createListeners<[Member[]]>()
@@ -166,7 +172,9 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   })
   channel.on('presence', { event: 'sync' }, () => {
     const present = Object.entries(channel.presenceState<Presence>())
-      .flatMap(([id, [presence]]) => presence ? [{ id, role: presence.role, name: presence.name, joinedAt: presence.joinedAt, status: presence.status }] : [])
+      .flatMap(([id, [presence]]) => presence
+        ? [{ id, role: presence.role, name: presence.name, status: presence.status, mascot: speciesOrDefault(presence.mascot), joinedAt: presence.joinedAt }]
+        : [])
     const presentIds = new Set(present.map(member => member.id))
     const departed = members.filter(member => departing.has(member.id) && !presentIds.has(member.id))
     departing.forEach(id => presentIds.has(id) || departing.delete(id))
@@ -233,7 +241,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     await disconnect()
   }
 
-  const presence: Presence = { role, name, joinedAt, status: 'live' }
+  const presence: Presence = { role, name, joinedAt, status: 'live', mascot }
   // Realtime drops this Presence with the socket: track it again after every rejoin.
   await subscribe(channel, () => channel.track(presence))
   await channel.track(presence)
