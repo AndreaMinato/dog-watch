@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { useId } from 'vue'
 import { useRoom } from '../room/use-room'
 
-const { members } = useRoom()
+const { viewers } = useRoom()
 
 const headingId = useId()
-const viewers = computed(() => members.value.filter(member => member.role === 'viewer'))
 </script>
 
 <template>

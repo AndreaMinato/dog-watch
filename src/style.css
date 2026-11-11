@@ -224,13 +224,6 @@ dialog {
   background: var(--surface);
 }
 
-.room-key {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  overflow-wrap: anywhere;
-}
-
 .controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

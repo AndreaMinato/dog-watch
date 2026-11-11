@@ -14,10 +14,10 @@ import NewViewerNotice from './NewViewerNotice.vue'
 const { room } = defineProps<{ room: RoomClient }>()
 defineEmits<{ exit: [] }>()
 
-const { members } = useRoom()
+const { viewers } = useRoom()
 const names = new Intl.ListFormat('it', { type: 'conjunction' })
 const company = computed(() => {
-  const others = members.value.filter(member => member.role === 'viewer' && member.id !== room.self.id)
+  const others = viewers.value.filter(viewer => viewer.id !== room.self.id)
   return others.length > 0 ? `Con te: ${names.format(others.map(viewer => viewer.name))}` : 'Stai guardando solo tu'
 })
 

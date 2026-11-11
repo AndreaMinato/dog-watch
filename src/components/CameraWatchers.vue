@@ -10,7 +10,7 @@ import RoomKeyWords from './RoomKeyWords.vue'
 
 const { roomKey } = defineProps<{ roomKey: string }>()
 
-const { members, rotateKey } = useRoom()
+const { viewers, rotateKey } = useRoom()
 
 const sheet = useTemplateRef('sheet')
 const newKeyNote = useTemplateRef('newKeyNote')
@@ -23,7 +23,6 @@ const ticking = setInterval(() => {
 }, 30_000)
 onBeforeUnmount(() => clearInterval(ticking))
 
-const viewers = computed(() => members.value.filter(member => member.role === 'viewer'))
 const watching = computed(() => {
   switch (viewers.value.length) {
     case 0:

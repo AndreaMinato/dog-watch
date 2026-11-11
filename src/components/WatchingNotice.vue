@@ -1,28 +1,15 @@
 <script setup lang="ts">
-import type { Member } from '../room/room-client'
-import { shallowRef, watch } from 'vue'
+import { shallowRef } from 'vue'
 import { useRoom } from '../room/use-room'
 
 const SHOWN_FOR_MS = 8_000
 
-const { members } = useRoom()
+const { onViewerArrival } = useRoom()
 
 const arrivals = shallowRef<{ id: number, name: string }[]>([])
 let lastArrival = 0
 
-function viewerIds(current: readonly Member[]): Set<string> {
-  return new Set(current.filter(member => member.role === 'viewer').map(member => member.id))
-}
-
-// Who watched before this screen opened is no news: only later arrivals are.
-let watching = viewerIds(members.value)
-watch(members, (current) => {
-  for (const member of current) {
-    if (member.role === 'viewer' && !watching.has(member.id))
-      announce(member.name)
-  }
-  watching = viewerIds(current)
-})
+onViewerArrival(viewer => announce(viewer.name))
 
 function announce(name: string) {
   const arrival = { id: ++lastArrival, name }
