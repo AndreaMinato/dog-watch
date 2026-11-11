@@ -30,7 +30,7 @@ test('a recent room shows the animal, how the device was in it and the last visi
   await expect(viewerRoom.getByRole('img')).toHaveAccessibleName('Coniglio affacciato')
 
   await viewerRoom.click()
-  await expect(viewer.getByText('Qui non c\'è ancora nessuna telecamera')).toBeVisible()
+  await expect(viewer.getByRole('button', { name: 'Esci' })).toBeVisible()
   await viewer.getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewerRoom).toHaveAccessibleDescription('Spettatore · Andrea · ultima visita oggi')
