@@ -24,12 +24,12 @@ const emit = defineEmits<{ wake: [] }>()
   inset: 0;
   overflow: auto;
   padding: 1rem;
-  background: black;
-  color: #555;
+  background: var(--rest);
+  color: var(--on-rest);
 }
 
 .warning {
-  color: #e0a000;
+  font-weight: 700;
 }
 
 .wake {

@@ -1,10 +1,23 @@
 import type { Page } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
 import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
+const palettes = {
+  light: { background: 'rgb(203, 218, 198)', text: 'rgb(38, 48, 92)' },
+  dark: { background: 'rgb(27, 34, 73)', text: 'rgb(238, 241, 232)' },
+}
+
+/** WCAG 2.2 AA contrast for every text on the screen. */
+async function expectReadable(page: Page) {
+  const { violations } = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze()
+  expect(violations.flatMap(violation => violation.nodes.map(node => `${node.target.join(' ')}: ${node.failureSummary}`))).toEqual([])
+}
+
 async function expectFitsTheScreen(page: Page) {
+  await expectReadable(page)
   await expect.poll(() => page.evaluate(() =>
     document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0)
 
@@ -23,6 +36,13 @@ async function expectFitsTheScreen(page: Page) {
 for (const colorScheme of ['light', 'dark'] as const) {
   test.describe(`${colorScheme} scheme`, () => {
     test.use({ colorScheme })
+
+    test('the page takes the palette of the scheme', async ({ browser }) => {
+      const page = await openDevice(browser)
+
+      await expect(page.locator('body')).toHaveCSS('background-color', palettes[colorScheme].background)
+      await expect(page.locator('body')).toHaveCSS('color', palettes[colorScheme].text)
+    })
 
     test('home, create and join fit the screen', async ({ browser }) => {
       const page = await openDevice(browser)
@@ -64,6 +84,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
 
       await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+      await expectReadable(camera)
     })
   })
 }

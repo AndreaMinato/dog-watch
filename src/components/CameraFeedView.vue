@@ -45,14 +45,14 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
   inset: 0 0 auto;
   margin: 0;
   padding: 0.5rem;
-  color: white;
-  background: rgb(0 0 0 / 60%);
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: var(--surface);
 }
 .feed video {
   display: block;
   width: 100%;
   border-radius: 0.5rem;
-  background: black;
+  background: var(--surface);
 }
 figcaption {
   display: flex;

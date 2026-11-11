@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
+    "@axe-core/playwright": "catalog:dev",
     "@playwright/test": "catalog:dev",
     "@tsconfig/node24": "catalog:dev",
     "@types/node": "catalog:dev",

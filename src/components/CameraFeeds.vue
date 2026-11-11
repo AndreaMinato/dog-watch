@@ -57,8 +57,7 @@ onBeforeUnmount(() => session.close())
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem;
-  background: black;
-  color: white;
+  background: var(--background);
 }
 .enlarged .grid {
   flex: 1;

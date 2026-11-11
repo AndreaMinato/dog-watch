@@ -9,6 +9,7 @@ allowBuilds:
 catalogs:
   dev:
     '@antfu/eslint-config': ^9.5.1
+    '@axe-core/playwright': ^4.14.0
     '@playwright/test': ^1.64.1
     '@tsconfig/node24': ^24.0.5
     '@types/node': ^24.19.2

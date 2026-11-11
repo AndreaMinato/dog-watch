@@ -68,7 +68,7 @@ onBeforeUnmount(() => clearTimeout(retry))
       Stanze recenti
     </h2>
     <ul aria-labelledby="recent-rooms-heading" class="rooms">
-      <li v-for="room in rooms" :key="room.roomId" class="room">
+      <li v-for="room in rooms" :key="room.roomId" class="room surface">
         <button type="button" :disabled="pending" @click="enter(room)">
           {{ room.roomName }}
         </button>
@@ -105,9 +105,7 @@ onBeforeUnmount(() => clearTimeout(retry))
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  padding: 1rem;
 }
 .new-key,
 .field {

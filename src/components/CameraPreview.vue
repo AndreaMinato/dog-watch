@@ -76,6 +76,6 @@ onBeforeUnmount(() => {
   display: block;
   width: 100%;
   border-radius: 0.5rem;
-  background: black;
+  background: var(--surface);
 }
 </style>

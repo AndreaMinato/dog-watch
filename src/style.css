@@ -23,12 +23,30 @@
 }
 
 :root {
-  --text: #1a1a1a;
-  --background: #fff;
-  --surface: #eef0f3;
-  --border: #b8bec7;
-  --accent: #0b5cad;
-  --on-accent: #fff;
+  --sage: #cbdac6;
+  --leaf: #e4ede1;
+  --blueberry: #26305c;
+  --soft-blueberry: #47517d;
+  --apricot: #f1b07c;
+  --nose: #e79c9e;
+  --wool: #f6e8d2;
+  --night-blueberry: #1b2249;
+  --dusk: #252e60;
+  --light-sage: #eef1e8;
+  --mist: #b9c2da;
+
+  --background: var(--sage);
+  --surface: var(--leaf);
+  --text: var(--blueberry);
+  --text-muted: var(--soft-blueberry);
+  --primary: var(--blueberry);
+  --on-primary: var(--wool);
+  /* Apricot means "in diretta" (and, at night, the main action): never decoration. */
+  --live: var(--apricot);
+  --on-live: var(--blueberry);
+  --rest: #000;
+  --on-rest: #7a83a6;
+
   --touch: 2.75rem;
   --font-display: 'Young Serif', georgia, serif;
   --font-text: 'Atkinson Hyperlegible', system-ui, sans-serif;
@@ -40,12 +58,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #ececec;
-    --background: #121417;
-    --surface: #23272e;
-    --border: #4a515c;
-    --accent: #7ab4ff;
-    --on-accent: #0b1a2c;
+    --background: var(--night-blueberry);
+    --surface: var(--dusk);
+    --text: var(--light-sage);
+    --text-muted: var(--mist);
+    --primary: var(--apricot);
+    --on-primary: var(--night-blueberry);
   }
 }
 
@@ -87,7 +105,12 @@ video {
 }
 
 a {
-  color: var(--accent);
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
 }
 
 button,
@@ -101,9 +124,9 @@ input,
 select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: var(--background);
+  border: 2px solid var(--text-muted);
+  border-radius: 0.75rem;
+  background: var(--surface);
   color: inherit;
 }
 
@@ -112,7 +135,7 @@ input[type='radio'] {
   height: 1.25rem;
   min-height: 0;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--text);
 }
 
 button,
@@ -121,11 +144,12 @@ button,
   align-items: center;
   justify-content: center;
   min-height: var(--touch);
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: var(--surface);
+  padding: 0.5rem 1.25rem;
+  border: 2px solid var(--text-muted);
+  border-radius: 999px;
+  background: transparent;
   color: inherit;
+  font-weight: 700;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -133,9 +157,9 @@ button,
 
 button[type='submit'],
 .button.primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 button:disabled {
@@ -145,16 +169,21 @@ button:disabled {
 
 dialog {
   max-width: min(30rem, calc(100vw - 2rem));
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: var(--background);
+  border: none;
+  border-radius: 1.25rem;
+  background: var(--surface);
   color: inherit;
+}
+
+.surface {
+  border-radius: 1.25rem;
+  background: var(--surface);
 }
 
 .room-key {
   display: block;
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  font-weight: bold;
   overflow-wrap: anywhere;
 }
 
