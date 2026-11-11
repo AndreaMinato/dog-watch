@@ -1,5 +1,7 @@
 import type { Species } from '../mascot/mascot'
 import type { CameraStatus, Refusal, Role } from './room-client'
+import { FunctionsFetchError } from '@supabase/supabase-js'
+import { appName } from '../brand'
 import { InvalidKeyError, MEMBER_LIMITS, RoomRefusedError, TooManyAttemptsError } from './room-client'
 
 export const roleLabels: Record<Role, string> = { camera: 'Telecamera', viewer: 'Spettatore' }
@@ -9,6 +11,8 @@ export const statusLabels: Record<CameraStatus, string> = { live: 'In diretta', 
 export const speciesLabels: Record<Species, string> = { dog: 'Cane', cat: 'Gatto', rabbit: 'Coniglio' }
 
 export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
+
+export const serviceUnreachable = `${appName} non riesce a raggiungere il servizio. Controlla la connessione a internet e riprova.`
 
 export const installedCameraNeedsIos184 = 'Con l\'app installata su iPhone o iPad serve iOS 18.4 o successivo, perché lo schermo resti acceso.'
 
@@ -33,5 +37,7 @@ export function joinErrorMessage(cause: unknown): string {
     return 'Troppi tentativi, riprova più tardi.'
   if (cause instanceof RoomRefusedError)
     return refusalMessages[cause.refusal]
+  if (cause instanceof FunctionsFetchError)
+    return serviceUnreachable
   return somethingWentWrong
 }

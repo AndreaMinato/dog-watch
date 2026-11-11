@@ -13,3 +13,8 @@ export async function ensureAnonymousSession(): Promise<void> {
   if (error)
     throw error
 }
+
+/** A failed call to the service is tried again after 1 s, then twice as long each time, up to 30 s. */
+export function nextRetryDelay(previous?: number): number {
+  return previous === undefined ? 1_000 : Math.min(previous * 2, 30_000)
+}

@@ -10,6 +10,7 @@ import { rolePoses } from '../mascot/mascot'
 import { joinErrorMessage, roleLabels } from '../room/messages'
 import { cameraRoomToReenter, forgetRoom, rememberedRooms, rememberLeftRoom } from '../room/remembered-rooms'
 import { InvalidKeyError, RoomRefusedError } from '../room/room-client'
+import { nextRetryDelay } from '../room/supabase'
 import { useRoom } from '../room/use-room'
 
 const router = useRouter()
@@ -50,8 +51,6 @@ function forget(room: RememberedRoom) {
   rooms.value = rememberedRooms()
 }
 
-const FIRST_RETRY_DELAY_MS = 1_000
-const MAX_RETRY_DELAY_MS = 30_000
 let retry: ReturnType<typeof setTimeout> | undefined
 
 /** With a retry delay, failures other than a definitive answer are retried with backoff. */
@@ -64,10 +63,10 @@ async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) 
     await router.push({ name: 'room' })
   }
   catch (cause) {
+    console.error(cause)
     const definitive = cause instanceof InvalidKeyError || cause instanceof RoomRefusedError
     if (retryDelay !== undefined && !definitive) {
-      console.error(cause)
-      retry = setTimeout(() => enter(room, key, Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS)), retryDelay)
+      retry = setTimeout(() => enter(room, key, nextRetryDelay(retryDelay)), retryDelay)
       return
     }
     if (retryDelay !== undefined)
@@ -88,7 +87,7 @@ async function enter(room: RememberedRoom, key = room.key, retryDelay?: number) 
 // Started here, not with the rooms, so it goes on while the home shows the questions.
 const cameraRoom = cameraRoomToReenter()
 if (cameraRoom)
-  enter(cameraRoom, cameraRoom.key, FIRST_RETRY_DELAY_MS)
+  enter(cameraRoom, cameraRoom.key, nextRetryDelay())
 onBeforeUnmount(() => clearTimeout(retry))
 </script>
 

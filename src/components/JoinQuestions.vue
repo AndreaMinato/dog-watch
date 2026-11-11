@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import { appName } from '../brand'
 import { compatibility } from '../device/compatibility'
 import { randomSpecies, rolePoses, SPECIES } from '../mascot/mascot'
-import { installedCameraNeedsIos184, joinErrorMessage, somethingWentWrong, speciesLabels } from '../room/messages'
+import { installedCameraNeedsIos184, joinErrorMessage, speciesLabels } from '../room/messages'
 import { createRoom, InvalidKeyError, RoomRefusedError, TooManyAttemptsError } from '../room/room-client'
 import { useRoom } from '../room/use-room'
 import MascotFigure from './MascotFigure.vue'
@@ -88,7 +88,7 @@ async function create() {
   }
   catch (cause) {
     console.error(cause)
-    error.value = somethingWentWrong
+    error.value = joinErrorMessage(cause)
   }
   finally {
     pending.value = false
