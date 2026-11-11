@@ -1,7 +1,7 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openInviteSheet, test } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -16,9 +16,12 @@ async function expectReadable(page: Page) {
   expect(violations.flatMap(violation => violation.nodes.map(node => `${node.target.join(' ')}: ${node.failureSummary}`))).toEqual([])
 }
 
-/** Every control reached with Tab, from the top of the page, shows a solid outline. */
+/** Every control reached with Tab, from the top of the page or of the open dialog, shows a solid outline. */
 async function expectVisibleFocus(page: Page) {
-  await page.mouse.click(1, 1)
+  // A click outside an open dialog would close it.
+  const dialog = page.getByRole('dialog')
+  const box = await dialog.isVisible() ? await dialog.boundingBox() : null
+  await page.mouse.click(box ? box.x + box.width / 2 : 1, box ? box.y + 1 : 1)
   const withoutOutline: string[] = []
   for (let tabs = 0; tabs < 50; tabs++) {
     await page.keyboard.press('Tab')
@@ -68,6 +71,20 @@ async function expectFitsTheScreen(page: Page) {
   expect(tooSmall).toEqual([])
 }
 
+/** On the phone a sheet rises from the bottom edge; on wider screens it is a dialog in the middle. */
+async function expectPlacedForTheScreen(sheet: Locator) {
+  const { width, height } = sheet.page().viewportSize()!
+  const box = (await sheet.boundingBox())!
+  if (test.info().project.name === 'phone') {
+    expect(box.width).toBe(width)
+    expect(box.y + box.height).toBeCloseTo(height, 0)
+  }
+  else {
+    expect(box.x + box.width / 2).toBeCloseTo(width / 2, 0)
+    expect(box.y + box.height / 2).toBeCloseTo(height / 2, 0)
+  }
+}
+
 for (const colorScheme of ['light', 'dark'] as const) {
   test.describe(`${colorScheme} scheme`, () => {
     test.use({ colorScheme })
@@ -96,8 +113,6 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const key = await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await expect(camera.getByRole('button', { name: 'Metti in pausa' })).toBeVisible()
-      await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-      await expect(camera.getByRole('img', { name: 'QR del link' })).toBeVisible()
       await expectUsable(camera)
 
       const viewer = await openDevice(browser)
@@ -110,6 +125,23 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await feed.click()
       await expect(viewer.getByRole('button', { name: 'Torna alla griglia' })).toBeVisible()
       await expectUsable(viewer)
+    })
+
+    test('the invite sheet is usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      // Phones and tablets offer a system share sheet, which brings "Condividi il link".
+      await camera.addInitScript(() => {
+        Object.defineProperty(navigator, 'share', { value: async () => {} })
+      })
+      await camera.reload()
+      await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      const sheet = await openInviteSheet(camera)
+      await expect(sheet.getByRole('button', { name: 'Condividi il link' })).toBeVisible()
+
+      await expectUsable(camera)
+      await expect(sheet).toBeVisible()
+      await expectPlacedForTheScreen(sheet)
     })
 
     test('the rest screen stays black', async ({ browser }) => {

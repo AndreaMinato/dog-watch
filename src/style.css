@@ -46,6 +46,7 @@
   --on-live: var(--blueberry);
   --rest: #000;
   --on-rest: #7a83a6;
+  --scrim: color-mix(in srgb, var(--night-blueberry) 55%, transparent);
 
   --touch: 2.75rem;
   --font-display: 'Young Serif', georgia, serif;
