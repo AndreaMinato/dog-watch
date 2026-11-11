@@ -30,7 +30,7 @@ const renderKey = computed(() => `${screen.value.key}-${variant.value.key}-${par
   <div class="stage" :class="params.larghezza">
     <div class="frame veglia" :data-tema="params.tema">
       <div class="scroller">
-        <component :is="variant.component" :key="renderKey" :scenario="params.scenario" />
+        <component :is="variant.component" v-bind="variant.props" :key="renderKey" :scenario="params.scenario" />
       </div>
     </div>
     <PrototypeSwitcher v-model="params" :screens="screens" :screen="screen" />

@@ -25,6 +25,7 @@ export interface RecentRoom {
   species: Species
   live: number
   total: number
+  lastVisit: string
 }
 
 export const room = { name: 'Casa al mare', key: 'tazza-ombra-vento-pino', link: 'veglia.app/entra#tazza-ombra-vento-pino' }
@@ -67,8 +68,9 @@ export function recentRoomsFor(scenario: string): RecentRoom[] {
   if (scenario !== 'stanze')
     return []
   return [
-    { name: 'Casa al mare', role: 'viewer', memberName: 'Andrea', species: 'cane', live: 2, total: 3 },
-    { name: 'Casa della nonna', role: 'camera', memberName: 'Cucina', species: 'coniglio', live: 0, total: 1 },
+    { name: 'Casa al mare', role: 'viewer', memberName: 'Andrea', species: 'cane', live: 2, total: 3, lastVisit: 'ieri' },
+    { name: 'Casa della nonna', role: 'viewer', memberName: 'Andrea', species: 'cane', live: 0, total: 1, lastVisit: '3 giorni fa' },
+    { name: 'Ufficio', role: 'viewer', memberName: 'Andrea', species: 'gatto', live: 1, total: 1, lastVisit: '2 settimane fa' },
   ]
 }
 

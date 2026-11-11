@@ -5,7 +5,8 @@ import { computed, shallowRef } from 'vue'
 import { recentRoomsFor, room } from '../mock'
 import PrototypeMascot from '../PrototypeMascot.vue'
 
-const { scenario } = defineProps<{ scenario: string }>()
+const { scenario, exitLabel } = defineProps<{ scenario: string, exitLabel?: string }>()
+defineEmits<{ exit: [] }>()
 
 type Step = 'role' | 'key' | 'create' | 'name' | 'animal' | 'done'
 
@@ -48,6 +49,9 @@ function startCreate() {
     <header class="bar">
       <button v-if="trail.length > 1 && step !== 'done'" type="button" class="back" @click="back">
         ← Indietro
+      </button>
+      <button v-else-if="exitLabel" type="button" class="back" @click="$emit('exit')">
+        ← {{ exitLabel }}
       </button>
       <b v-else class="title">Veglia</b>
       <span v-if="step !== 'done'" class="soft count">{{ position }} di {{ order.length - 1 }}</span>

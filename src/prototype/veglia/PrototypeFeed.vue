@@ -2,7 +2,7 @@
 import type { Cam } from './mock'
 import PrototypeMascot from './PrototypeMascot.vue'
 
-const { cam } = defineProps<{ cam: Cam }>()
+const { cam, compact = false } = defineProps<{ cam: Cam, compact?: boolean }>()
 </script>
 
 <template>
@@ -12,7 +12,7 @@ const { cam } = defineProps<{ cam: Cam }>()
     </div>
     <div v-else-if="cam.status === 'connecting'" class="wait-msg">
       <span class="avatar"><PrototypeMascot :species="cam.species" pose="affacciato" state="cerca" crop :label="cam.name" /></span>
-      <span>Collegamento a {{ cam.name }}…</span>
+      <span v-if="!compact">Collegamento a {{ cam.name }}…</span>
     </div>
     <slot />
   </div>
