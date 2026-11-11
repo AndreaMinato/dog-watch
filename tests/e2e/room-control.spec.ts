@@ -29,7 +29,7 @@ test('rotating the key from "Stanno guardando" expels the viewer and shows the n
   await sheet.getByRole('button', { name: 'Chiudi', exact: true }).click()
   await openCameraMenu(camera)
   const invitation = await openInviteSheet(camera)
-  await expect(invitation.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${newKey}$`))
+  await expect(invitation.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${newKey}&Casa%20al%20mare$`))
 
   await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await joinAsViewer(viewer, newKey, 'Andrea')
