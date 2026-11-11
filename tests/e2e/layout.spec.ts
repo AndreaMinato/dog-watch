@@ -184,11 +184,12 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(page)
     })
 
-    test('the camera is usable on this screen', async ({ browser }) => {
+    test('the camera, with the notice of its first start, is usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+      await expect(camera.getByRole('button', { name: 'Ho capito' })).toBeVisible()
       await expectUsable(camera)
     })
 

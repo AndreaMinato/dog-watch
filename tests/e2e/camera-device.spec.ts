@@ -73,16 +73,27 @@ test('the camera films again for its viewers after losing the camera while hidde
   expect(await openPeerConnections(camera)).toBe(1)
 })
 
-test('the camera is reminded to stay plugged in and in the foreground', async ({ browser }) => {
+test('on its first start only, the camera is told to stay open and plugged in, and that the screen dims by itself', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expect(camera.getByText(/Tieni il dispositivo in carica e questa pagina in primo piano: .* la telecamera smette di trasmettere\./)).toBeVisible()
+  const notice = camera.getByText('Tieni l\'app aperta e il telefono in carica: se blocchi lo schermo la trasmissione si ferma. Lo schermo si oscura da solo dopo 2 minuti.', { exact: true })
+  await expect(notice).toBeVisible()
   await expect(cameraThumbnails(viewer)).toHaveCount(1)
-  await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
+  await expect(viewer.getByText('in carica')).toHaveCount(0)
+
+  await camera.getByRole('button', { name: 'Ho capito' }).click()
+
+  await expect(notice).toBeHidden()
+
+  await camera.reload()
+
+  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expect(camera.getByText('in carica')).toHaveCount(0)
+  await expect(camera.getByRole('button', { name: 'Ho capito' })).toHaveCount(0)
 })
 
 test('the camera rests on a black screen saying it is live and listing its viewers, and wakes up on a tap', async ({ browser }) => {

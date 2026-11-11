@@ -6,6 +6,7 @@ import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
 import { rolePoses } from '../mascot/mascot'
 import { startCameraSession } from '../room/camera-session'
 import { screenMayTurnOff } from '../room/messages'
+import { cameraNoticeUnderstood, rememberCameraNoticeUnderstood } from '../room/remembered-rooms'
 import CameraMenu from './CameraMenu.vue'
 import CameraWatchers from './CameraWatchers.vue'
 import LensSwitch from './LensSwitch.vue'
@@ -28,6 +29,7 @@ const session = shallowRef<CameraSession | null>(null)
 const paused = shallowRef(false)
 const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
+const firstStart = shallowRef(!cameraNoticeUnderstood())
 let unmounted = false
 let releaseScreenAndCamera = () => {}
 let idle: ReturnType<typeof setTimeout> | undefined
@@ -36,6 +38,11 @@ function rest() {
   // An open sheet is modal: it would leave the rest screen deaf to the tap that wakes it.
   screen.value?.querySelectorAll('dialog').forEach(dialog => dialog.close())
   resting.value = true
+}
+
+function understood() {
+  rememberCameraNoticeUnderstood()
+  firstStart.value = false
 }
 
 function restartIdle() {
@@ -93,9 +100,14 @@ onBeforeUnmount(() => {
       <p v-if="!screenKeptOn" role="alert" class="notice">
         {{ screenMayTurnOff }}
       </p>
-      <p class="notice">
-        Tieni il dispositivo in carica e questa pagina in primo piano: se lo schermo si spegne o passi a un'altra app, la telecamera smette di trasmettere.
-      </p>
+      <div v-if="firstStart" class="notice first-start">
+        <p>
+          Tieni l'app aperta e il telefono in carica: se blocchi lo schermo la trasmissione si ferma. Lo schermo si oscura da solo dopo 2 minuti.
+        </p>
+        <button type="button" @click="understood">
+          Ho capito
+        </button>
+      </div>
       <WatchingNotice />
     </div>
     <div class="bottom">
@@ -171,6 +183,14 @@ onBeforeUnmount(() => {
   border-radius: 1rem;
   background: var(--surface);
   font-size: 0.875rem;
+}
+.first-start {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+}
+.first-start p {
+  margin: 0;
 }
 .bottom {
   display: flex;

@@ -16,6 +16,7 @@ export interface RememberedRoom {
 
 const ROOMS = 'dog-watch:rooms'
 const CAMERA_ROOM = 'dog-watch:camera-room'
+const CAMERA_NOTICE_UNDERSTOOD = 'dog-watch:camera-notice-understood'
 
 // Storage can be missing or throw (private browsing, blocked site data): the app then
 // simply remembers nothing.
@@ -65,4 +66,13 @@ export function forgetRoom(roomId: string) {
 export function cameraRoomToReenter(): RememberedRoom | undefined {
   const roomId = read<string | null>(CAMERA_ROOM, null)
   return rememberedRooms().find(room => room.roomId === roomId)
+}
+
+/** Whether "Ho capito" was tapped on the notice a Camera gets on its first start on this device. */
+export function cameraNoticeUnderstood(): boolean {
+  return read(CAMERA_NOTICE_UNDERSTOOD, false)
+}
+
+export function rememberCameraNoticeUnderstood() {
+  write(CAMERA_NOTICE_UNDERSTOOD, true)
 }

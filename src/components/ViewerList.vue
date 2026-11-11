@@ -23,3 +23,10 @@ const viewers = computed(() => members.value.filter(member => member.role === 'v
     </p>
   </section>
 </template>
+
+<style scoped>
+ul {
+  padding: 0;
+  list-style: none;
+}
+</style>
