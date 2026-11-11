@@ -1,6 +1,6 @@
 import type { CameraSession } from '../room/camera-session'
 
-export function keepDevice(session: Pick<CameraSession, 'reacquire'>): () => void {
+export function keepScreenAndCameraOn(session: Pick<CameraSession, 'reacquire'>): () => void {
   let wakeLock: Promise<WakeLockSentinel | null> = Promise.resolve(null)
   let stopped = false
 

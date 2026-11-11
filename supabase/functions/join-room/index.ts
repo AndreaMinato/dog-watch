@@ -2,12 +2,10 @@ import { withSupabase } from '@supabase/server'
 import { hashClientIp } from '../_shared/client-ip.ts'
 import { createIceServers, iceServersTtl, readTurnKey } from '../_shared/ice-servers.ts'
 import { parseName } from '../_shared/name.ts'
-import { hashRoomKey, normalizeRoomKey } from '../_shared/room-key.ts'
+import { hashRoomKey, normalizeRoomKey, readRoomKeyPepper } from '../_shared/room-key.ts'
 import '@supabase/functions-js/edge-runtime.d.ts'
 
-const pepper = Deno.env.get('ROOM_KEY_PEPPER')
-if (!pepper)
-  throw new Error('ROOM_KEY_PEPPER is not set')
+const pepper = readRoomKeyPepper(name => Deno.env.get(name))
 const ipHashSalt = Deno.env.get('IP_HASH_SALT')
 if (!ipHashSalt)
   throw new Error('IP_HASH_SALT is not set')

@@ -1,5 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { FunctionsHttpError } from '@supabase/supabase-js'
+import { createListeners } from './listeners'
 import { supabase } from './supabase'
 
 export type Role = 'camera' | 'viewer'
@@ -148,9 +149,9 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
   const self: Member = { id: session!.user.id, role, name, status: 'live' }
 
   const channel = supabase.channel(topic, { config: { private: true, presence: { key: self.id } } })
-  const memberListeners = new Set<(members: Member[]) => void>()
-  const departureListeners = new Set<(member: Member) => void>()
-  const controlListeners = new Set<ControlListener>()
+  const memberListeners = createListeners<[Member[]]>()
+  const departureListeners = createListeners<[Member]>()
+  const controlListeners = createListeners<Parameters<ControlListener>>()
   let members: Member[] = []
   let admitted = false
   let resolveVerdict: (refusal: Refusal | undefined) => void
@@ -171,12 +172,12 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     departing.forEach(id => presentIds.has(id) || departing.delete(id))
     const { admitted: current, refusals } = admit(present)
     members = current
-    departed.forEach(member => departureListeners.forEach(listener => listener(member)))
-    memberListeners.forEach(listener => listener(members))
+    departed.forEach(member => departureListeners.notify(member))
+    memberListeners.notify(members)
     const refusal = refusals.get(self.id)
     if (admitted && refusal) {
       admitted = false
-      controlListeners.forEach(listener => listener({ type: 'refused', refusal }))
+      controlListeners.notify({ type: 'refused', refusal })
     }
     else if (present.some(member => member.id === self.id)) {
       resolveVerdict(refusal)
@@ -185,18 +186,18 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
 
   // Signals can arrive before a session starts listening (a Viewer offers as soon as it
   // sees this Camera in Presence), so they wait here for the first listener.
-  const signalListeners = new Set<SignalListener>()
+  const signalListeners = createListeners<Parameters<SignalListener>>()
   const pendingSignals: SignalMessage[] = []
   channel.on<SignalMessage>('broadcast', { event: 'signal' }, ({ payload }) => {
     if (payload.to !== self.id)
       return
     if (signalListeners.size === 0)
       pendingSignals.push(payload)
-    signalListeners.forEach(listener => listener(payload.from, payload.signal))
+    signalListeners.notify(payload.from, payload.signal)
   })
 
   let iceServers = joinedIceServers
-  const iceServersListeners = new Set<(iceServers: RTCIceServer[]) => void>()
+  const iceServersListeners = createListeners<[RTCIceServer[]]>()
   let renewal: ReturnType<typeof setTimeout> | undefined
   // TURN credentials expire: renew them halfway, and on failure retry halfway to the
   // same expiry, so a transient error still leaves time for another attempt.
@@ -205,7 +206,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
       try {
         const grant = await invoke<IceServersGrant>('ice-credentials', { roomId })
         iceServers = grant.iceServers
-        iceServersListeners.forEach(listener => listener(iceServers))
+        iceServersListeners.notify(iceServers)
         scheduleIceServersRenewal(Date.now() + grant.iceServersTtl * 1000)
       }
       catch (error) {
@@ -216,10 +217,9 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     }, (expiresAt - Date.now()) / 2)
   }
 
-  const notifyControl = (event: ControlEvent) => controlListeners.forEach(listener => listener(event))
   channel.on<ControlMessage>('broadcast', { event: 'control' }, ({ payload: { to, event } }) => {
     if ((to === undefined || to === self.id) && !(event.type === 'key_rotated' && event.by === self.id))
-      notifyControl(event)
+      controlListeners.notify(event)
   })
 
   async function disconnect() {
@@ -257,34 +257,25 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     get iceServers() {
       return iceServers
     },
-    onIceServersChange(listener) {
-      iceServersListeners.add(listener)
-      return () => iceServersListeners.delete(listener)
-    },
+    onIceServersChange: iceServersListeners.add,
     onMembersChange(listener) {
-      memberListeners.add(listener)
+      const stop = memberListeners.add(listener)
       listener(members)
-      return () => memberListeners.delete(listener)
+      return stop
     },
-    onDeparture(listener) {
-      departureListeners.add(listener)
-      return () => departureListeners.delete(listener)
-    },
+    onDeparture: departureListeners.add,
     sendSignal(to, signal) {
       channel.send({ type: 'broadcast', event: 'signal', payload: { from: self.id, to, signal } satisfies SignalMessage })
     },
     onSignal(listener) {
-      signalListeners.add(listener)
+      const stop = signalListeners.add(listener)
       pendingSignals.splice(0).forEach(({ from, signal }) => listener(from, signal))
-      return () => signalListeners.delete(listener)
+      return stop
     },
     sendControl(to, event) {
       channel.send({ type: 'broadcast', event: 'control', payload: { to, event } satisfies ControlMessage })
     },
-    onControl(listener) {
-      controlListeners.add(listener)
-      return () => controlListeners.delete(listener)
-    },
+    onControl: controlListeners.add,
     async setStatus(status) {
       presence.status = status
       await channel.track(presence)
@@ -292,7 +283,7 @@ export async function joinRoom({ key, role, name }: JoinRequest): Promise<RoomCl
     async rotateKey() {
       currentKey = (await invoke<{ key: string }>('rotate-key', { roomId })).key
       // Not waiting for the broadcast: the rotating Camera must drop the expelled at once.
-      notifyControl({ type: 'key_rotated', by: self.id })
+      controlListeners.notify({ type: 'key_rotated', by: self.id })
     },
     async closeRoom() {
       await invoke('close-room', { roomId })

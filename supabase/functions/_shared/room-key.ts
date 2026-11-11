@@ -16,3 +16,10 @@ export function normalizeRoomKey(input: string): string {
 export function hashRoomKey(key: string, pepper: string): Promise<string> {
   return hmacSha256Hex(key, pepper)
 }
+
+export function readRoomKeyPepper(env: (name: string) => string | undefined): string {
+  const pepper = env('ROOM_KEY_PEPPER')
+  if (!pepper)
+    throw new Error('ROOM_KEY_PEPPER is not set')
+  return pepper
+}
