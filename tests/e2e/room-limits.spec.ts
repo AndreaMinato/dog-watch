@@ -35,7 +35,7 @@ test('a camera named like one already in the room is refused', async ({ browser 
   const second = await openDevice(browser)
   await joinAsCameraWithKey(second, key, 'Soggiorno')
 
-  await expect(second.getByRole('alert')).toHaveText('Nella Stanza c\'è già una Camera con questo nome: scegline un altro.')
+  await expect(second.getByRole('alert')).toHaveText('Nella Stanza c\'è già una telecamera con questo nome: scegline un altro.')
   await expect(members(first)).toHaveCount(1)
 })
 
@@ -50,7 +50,7 @@ test('a fifth camera is refused', async ({ browser }) => {
   const fifth = await openDevice(browser)
   await joinAsCameraWithKey(fifth, key, 'camera 5')
 
-  await expect(fifth.getByRole('alert')).toHaveText('La Stanza ha già 4 Camere: non puoi entrare come Camera.')
+  await expect(fifth.getByRole('alert')).toHaveText('La Stanza ha già 4 telecamere: non puoi entrare come telecamera.')
   await expect(members(host)).toHaveCount(4)
 })
 

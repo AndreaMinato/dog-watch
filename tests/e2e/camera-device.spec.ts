@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test'
 import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
 
-const screenMayTurnOff = /il browser non tiene acceso lo schermo/i
+const screenMayTurnOff = /^Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere\./
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -80,7 +80,7 @@ test('the camera is reminded to stay plugged in and in the foreground', async ({
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expect(camera.getByText('Tieni il dispositivo in carica e questa pagina in primo piano')).toBeVisible()
+  await expect(camera.getByText(/Tieni il dispositivo in carica e questa pagina in primo piano: .* la telecamera smette di trasmettere\./)).toBeVisible()
   await expect(viewer.getByRole('list', { name: 'Nella Stanza' })).toBeVisible()
   await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
 })
