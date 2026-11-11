@@ -20,7 +20,7 @@ test('a camera with several lenses switches lens while its viewers keep watching
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const feed = viewer.getByLabel('Camera soggiorno')
+  const feed = viewer.getByLabel('Telecamera soggiorno')
   await expectAdvancingVideo(feed)
 
   const lens = camera.getByLabel('Obiettivo')

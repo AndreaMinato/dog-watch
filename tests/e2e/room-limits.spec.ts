@@ -106,7 +106,7 @@ test('the camera refuses a fourth viewer that ignores the limit', async ({ brows
   for (const nickname of ['Andrea', 'Bea', 'Carlo']) {
     const viewer = await openDevice(browser)
     await joinAsViewer(viewer, key, nickname)
-    await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+    await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   }
 
   const intruder = await openDevice(browser)

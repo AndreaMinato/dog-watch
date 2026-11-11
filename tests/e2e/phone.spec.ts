@@ -44,7 +44,7 @@ test('camera and viewer fit the phone screen', async ({ browser }) => {
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
   await expect(members(viewer)).toHaveCount(2)
-  const feed = viewer.getByLabel('Camera soggiorno')
+  const feed = viewer.getByLabel('Telecamera soggiorno')
   await expect(feed).toBeVisible()
   await expectFitsThePhone(viewer)
 

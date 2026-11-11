@@ -8,7 +8,7 @@ async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   return { camera, viewer }
 }
 
@@ -17,12 +17,12 @@ test('the viewer sees the camera paused, then live again when it resumes', async
 
   await camera.getByRole('button', { name: 'Metti in pausa' }).click()
 
-  await expect(viewer.getByText('Camera in pausa')).toBeVisible()
+  await expect(viewer.getByText('Telecamera in pausa')).toBeVisible()
 
   await camera.getByRole('button', { name: 'Riprendi' }).click()
 
-  await expect(viewer.getByText('Camera in pausa')).toBeHidden()
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expect(viewer.getByText('Telecamera in pausa')).toBeHidden()
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 function receivedAudioEnergy(page: Page): Promise<number> {
@@ -66,7 +66,7 @@ test('the viewer sees since when a camera that closed its page is offline', asyn
   await camera.close()
   const droppedAt = Date.now()
 
-  const offline = viewer.getByText(/Camera soggiorno offline dalle \d\d:\d\d/)
+  const offline = viewer.getByText(/Telecamera soggiorno offline dalle \d\d:\d\d/)
   await expect(offline).toBeVisible()
   expect(clockTimes(droppedAt)).toContain((await offline.textContent())!.trim().slice(-5))
 })
@@ -80,7 +80,7 @@ async function loseNetwork(camera: Page): Promise<void> {
 test('the viewer gets the video back after the camera briefly loses the network', async ({ browser }) => {
   test.setTimeout(120_000)
   const { camera, viewer } = await watchCamera(browser)
-  const offline = viewer.getByText(/Camera soggiorno offline dalle/)
+  const offline = viewer.getByText(/Telecamera soggiorno offline dalle/)
 
   await loseNetwork(camera)
 
@@ -89,13 +89,13 @@ test('the viewer gets the video back after the camera briefly loses the network'
   await camera.context().setOffline(false)
 
   await expect(offline).toBeHidden({ timeout: 60_000 })
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 test('the viewer gets the video back after the camera drops out of the room for lack of network', async ({ browser }) => {
   test.setTimeout(240_000)
   const { camera, viewer } = await watchCamera(browser)
-  const offline = viewer.getByText(/Camera soggiorno offline dalle/)
+  const offline = viewer.getByText(/Telecamera soggiorno offline dalle/)
 
   await loseNetwork(camera)
 
@@ -106,5 +106,5 @@ test('the viewer gets the video back after the camera drops out of the room for 
 
   await expect(members(viewer)).toHaveCount(2, { timeout: 60_000 })
   await expect(offline).toBeHidden({ timeout: 60_000 })
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })

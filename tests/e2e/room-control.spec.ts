@@ -9,7 +9,7 @@ async function watchedRoom(browser: Browser, prepareViewer?: (viewer: Page) => P
   const viewer = await openDevice(browser)
   await prepareViewer?.(viewer)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   return { camera, viewer, key }
 }
 
@@ -24,7 +24,7 @@ test('rotating the key expels the viewer, who re-enters with the new key', async
   await confirm(camera, 'Rigenera la Chiave', 'Rigenera')
 
   await expect(viewer.getByRole('alert')).toHaveText('La Chiave è stata rigenerata: per rientrare serve la Chiave nuova.')
-  await expect(viewer.getByLabel('Camera soggiorno')).toHaveCount(0)
+  await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
   await expect.poll(() => openPeerConnections(camera)).toBe(0)
   await expect(members(camera)).toHaveCount(1)
   const newKey = camera.getByRole('status', { name: 'Chiave della Stanza' })
@@ -35,7 +35,7 @@ test('rotating the key expels the viewer, who re-enters with the new key', async
 
   await joinAsViewer(viewer, (await newKey.textContent())!, 'Andrea')
 
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 test('the camera drops an expelled viewer that ignores the expulsion', async ({ browser }) => {
@@ -64,7 +64,7 @@ test('rotating the key asks for confirmation first', async ({ browser }) => {
   await camera.getByRole('dialog').getByRole('button', { name: 'Annulla' }).click()
 
   await expect(camera.getByRole('dialog')).toBeHidden()
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   await expect(members(camera)).toHaveCount(2)
 })
 
@@ -77,7 +77,7 @@ test('closing the room tells the viewer and the key stops working', async ({ bro
   await confirm(camera, 'Chiudi la Stanza', 'Chiudi')
 
   await expect(viewer.getByRole('alert')).toHaveText('Stanza chiusa')
-  await expect(viewer.getByLabel('Camera soggiorno')).toHaveCount(0)
+  await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
   await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
 
   await joinAsViewer(viewer, key, 'Andrea')

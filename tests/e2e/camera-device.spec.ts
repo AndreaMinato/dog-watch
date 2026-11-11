@@ -60,7 +60,7 @@ test('the camera films again for its viewers after losing the camera while hidde
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const feed = viewer.getByLabel('Camera soggiorno')
+  const feed = viewer.getByLabel('Telecamera soggiorno')
   await expectAdvancingVideo(feed)
 
   await camera.getByLabel('Anteprima').evaluate((preview: HTMLVideoElement) =>
@@ -98,7 +98,7 @@ test('the camera rests on a black screen listing its viewers and wakes up on a t
   await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
   await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
   await expect(camera.getByLabel('Anteprima')).toBeHidden()
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
   await rest.click()
 

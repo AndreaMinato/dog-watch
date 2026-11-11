@@ -9,7 +9,7 @@ test('the viewer watches the camera live', async ({ browser }) => {
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 test('the viewer starts watching a camera that joins after it', async ({ browser }) => {
@@ -22,7 +22,7 @@ test('the viewer starts watching a camera that joins after it', async ({ browser
 
   await joinAsCamera(camera, 'soggiorno')
 
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 test('the viewer hears the camera only after unmuting it', async ({ browser }) => {
@@ -33,7 +33,7 @@ test('the viewer hears the camera only after unmuting it', async ({ browser }) =
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  const video = viewer.getByLabel('Camera soggiorno')
+  const video = viewer.getByLabel('Telecamera soggiorno')
   await expect.poll(() => video.evaluate((element: HTMLVideoElement) =>
     (element.srcObject as MediaStream).getAudioTracks().length)).toBe(1)
   await expect(video).toHaveJSProperty('muted', true)
@@ -61,7 +61,7 @@ test('the camera keeps connections open only while viewers are present', async (
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   expect(await openPeerConnections(camera)).toBe(1)
 
   await viewer.getByRole('button', { name: 'Esci' }).click()
@@ -76,7 +76,7 @@ test('the camera caps its video bitrate at 1.5 Mbps', async ({ browser }) => {
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
   expect(await videoSenderMaxBitrate(camera)).toBe(1_500_000)
 })

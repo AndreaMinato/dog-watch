@@ -13,7 +13,7 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
 <template>
   <figure class="feed">
     <video
-      :aria-label="`Camera ${feed.camera.name}`"
+      :aria-label="`Telecamera ${feed.camera.name}`"
       :srcObject="feed.stream"
       :muted="muted"
       autoplay
@@ -21,10 +21,10 @@ const clock = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-dig
       @click="$emit('enlarge')"
     />
     <p v-if="feed.offlineSince" class="status">
-      Camera {{ feed.camera.name }} offline dalle {{ clock.format(feed.offlineSince) }}
+      Telecamera {{ feed.camera.name }} offline dalle {{ clock.format(feed.offlineSince) }}
     </p>
     <p v-else-if="feed.camera.status === 'paused'" class="status">
-      Camera in pausa
+      Telecamera in pausa
     </p>
     <figcaption>
       {{ feed.camera.name }}

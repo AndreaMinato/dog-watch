@@ -24,9 +24,9 @@ onBeforeUnmount(() => session.close())
 </script>
 
 <template>
-  <section class="feeds" :class="{ enlarged }" aria-label="Camere">
+  <section class="feeds" :class="{ enlarged }" aria-label="Telecamere">
     <p v-if="noCameraPresent">
-      Nessuna Camera nella Stanza
+      Nessuna telecamera nella Stanza
     </p>
     <button v-if="enlarged" type="button" @click="enlargedId = null">
       Torna alla griglia

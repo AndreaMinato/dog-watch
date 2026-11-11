@@ -11,8 +11,9 @@ test('the viewer watches every camera in a grid and enlarges one with a tap', as
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  const livingRoomFeed = viewer.getByLabel('Camera soggiorno')
-  const kitchenFeed = viewer.getByLabel('Camera cucina')
+  const feeds = viewer.getByRole('region', { name: 'Telecamere' })
+  const livingRoomFeed = feeds.getByLabel('Telecamera soggiorno')
+  const kitchenFeed = feeds.getByLabel('Telecamera cucina')
   await expectAdvancingVideo(livingRoomFeed)
   await expectAdvancingVideo(kitchenFeed)
 
@@ -34,12 +35,12 @@ test('the viewer of a room without cameras is told there is none', async ({ brow
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expect(viewer.getByText('Nessuna Camera nella Stanza')).toBeVisible()
+  await expect(viewer.getByText('Nessuna telecamera nella Stanza')).toBeVisible()
 
   await joinAsCamera(host, 'soggiorno')
 
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
-  await expect(viewer.getByText('Nessuna Camera nella Stanza')).toBeHidden()
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expect(viewer.getByText('Nessuna telecamera nella Stanza')).toBeHidden()
 })
 
 test('a camera that leaves the room disappears from the viewer\'s grid', async ({ browser }) => {
@@ -50,18 +51,18 @@ test('a camera that leaves the room disappears from the viewer\'s grid', async (
   await joinAsCameraWithKey(kitchen, key, 'cucina')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera cucina'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera cucina'))
 
   await kitchen.getByRole('button', { name: 'Esci' }).click()
 
-  await expect(viewer.getByLabel('Camera cucina')).toHaveCount(0)
+  await expect(viewer.getByLabel('Telecamera cucina')).toHaveCount(0)
   await expect(viewer.getByText(/offline/)).toHaveCount(0)
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
   await livingRoom.getByRole('button', { name: 'Esci' }).click()
 
-  await expect(viewer.getByText('Nessuna Camera nella Stanza')).toBeVisible()
-  await expect(viewer.getByLabel('Camera soggiorno')).toHaveCount(0)
+  await expect(viewer.getByText('Nessuna telecamera nella Stanza')).toBeVisible()
+  await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
 })
 
 test('the viewer is told there is no camera while the only one is offline', async ({ browser }) => {
@@ -70,10 +71,10 @@ test('the viewer is told there is no camera while the only one is offline', asyn
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
   await camera.close()
 
-  await expect(viewer.getByText(/Camera soggiorno offline dalle/)).toBeVisible()
-  await expect(viewer.getByText('Nessuna Camera nella Stanza')).toBeVisible()
+  await expect(viewer.getByText(/Telecamera soggiorno offline dalle/)).toBeVisible()
+  await expect(viewer.getByText('Nessuna telecamera nella Stanza')).toBeVisible()
 })
