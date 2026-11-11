@@ -98,10 +98,12 @@ test('the viewer of a room without cameras is told there is none', async ({ brow
   const key = await createRoom(host, 'Casa al mare')
 
   const viewer = await openDevice(browser)
-  await joinAsViewer(viewer, key, 'Andrea')
+  await joinAsViewer(viewer, key, 'Andrea', 'Gatto')
 
   const none = viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera' })
   await expect(none).toBeVisible()
+  // Looking around is for a camera being connected: nothing is coming here.
+  await expect(viewer.getByRole('img', { name: 'Gatto affacciato', exact: true })).toBeVisible()
   await expect(viewer.getByText('apri l\'app su un altro telefono, entra con la Chiave di questa Stanza e scegli di usarlo come telecamera')).toBeVisible()
 
   await joinAsCamera(host, 'soggiorno')

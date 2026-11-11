@@ -47,7 +47,7 @@ onBeforeUnmount(() => session.close())
     </h1>
     <CameraStage v-if="picked" class="stage" :feed="picked" />
     <section v-else class="stage empty" aria-labelledby="no-camera">
-      <MascotFigure class="figure" :species="room.self.mascot" :pose="rolePoses.viewer" state="searching" />
+      <MascotFigure class="figure" :species="room.self.mascot" :pose="rolePoses.viewer" />
       <h2 id="no-camera">
         Qui non c'è ancora nessuna telecamera
       </h2>
