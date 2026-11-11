@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openCameraMenu, openDevice, test } from './devices'
 
 async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{ camera: Page, viewer: Page }> {
   const camera = await openDevice(browser)
@@ -15,14 +15,14 @@ async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{
 test('the camera and the viewer see the camera paused, then live again when it resumes', async ({ browser }) => {
   const { camera, viewer } = await watchCamera(browser)
 
-  await camera.getByRole('button', { name: 'Metti in pausa' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
 
   for (const page of [camera, viewer]) {
     await expect(page.getByText('In pausa', { exact: true })).toBeVisible()
     await expect(page.getByText('In diretta', { exact: true })).toBeHidden()
   }
 
-  await camera.getByRole('button', { name: 'Riprendi' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Riprendi' }).click()
 
   for (const page of [camera, viewer]) {
     await expect(page.getByText('In diretta', { exact: true })).toBeVisible()
@@ -56,7 +56,7 @@ test('the viewer receives no audio while the camera is silenced', async ({ brows
   await viewer.getByRole('button', { name: 'Attiva audio' }).click()
   await expect.poll(() => audioEnergyGain(viewer)).toBeGreaterThan(0.001)
 
-  await camera.getByRole('button', { name: 'Silenzia' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Silenzia' }).click()
 
   await expect.poll(() => audioEnergyGain(viewer)).toBeLessThan(0.000_01)
 })

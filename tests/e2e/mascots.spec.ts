@@ -1,9 +1,13 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openWatchers, test, watchers } from './devices'
 
 function mascotOf(page: Page, memberName: string) {
   return members(page).filter({ hasText: memberName }).getByRole('img')
+}
+
+function watcherMascot(camera: Page, viewerName: string) {
+  return watchers(camera).filter({ hasText: viewerName }).getByRole('img')
 }
 
 test('each device sees the other\'s animal in the pose of its role', async ({ browser }) => {
@@ -13,10 +17,11 @@ test('each device sees the other\'s animal in the pose of its role', async ({ br
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea', 'Coniglio')
 
-  for (const page of [camera, viewer]) {
-    await expect(mascotOf(page, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
-    await expect(mascotOf(page, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
-  }
+  await expect(mascotOf(viewer, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
+  await expect(mascotOf(viewer, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
+  await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
+  await openWatchers(camera)
+  await expect(watcherMascot(camera, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
 })
 
 test('the viewer sees the camera\'s animal on its video, asleep once the camera drops out', async ({ browser }) => {
@@ -46,8 +51,10 @@ test('a device that keeps the proposed animal enters with it', async ({ browser 
   await viewer.getByLabel('Spettatore').check()
   await viewer.getByLabel('Soprannome').fill('Andrea')
   await viewer.getByRole('button', { name: 'Entra' }).click()
+  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
 
-  await expect(mascotOf(camera, 'Andrea')).toHaveAccessibleName(`${animal} affacciato`)
+  await openWatchers(camera)
+  await expect(watcherMascot(camera, 'Andrea')).toHaveAccessibleName(`${animal} affacciato`)
 })
 
 /** Simulates a device on another version: what its Presence says about its animal. */
@@ -76,8 +83,10 @@ for (const [mascot, version] of [[undefined, 'an older version'], ['drago', 'a n
     await sendInPresence(viewer, mascot)
 
     await joinAsViewer(viewer, key, 'Andrea', 'Gatto')
+    await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
 
-    await expect(mascotOf(camera, 'Andrea')).toHaveAccessibleName('Cane affacciato')
+    await openWatchers(camera)
+    await expect(watcherMascot(camera, 'Andrea')).toHaveAccessibleName('Cane affacciato')
   })
 }
 
@@ -87,15 +96,17 @@ test('a device re-entering a recent room comes back with the same animal', async
   await joinAsCamera(camera, 'soggiorno', 'Gatto')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea', 'Coniglio')
-  await expect(members(camera)).toHaveCount(2)
+  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
 
   await viewer.reload()
   await viewer.getByRole('list', { name: 'Stanze recenti' }).getByRole('button', { name: 'Casa al mare' }).click()
   await camera.reload()
 
-  for (const page of [camera, viewer]) {
-    await expect(members(page)).toHaveCount(2)
-    await expect(mascotOf(page, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
-    await expect(mascotOf(page, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
-  }
+  await expect(members(viewer)).toHaveCount(2)
+  await expect(mascotOf(viewer, 'soggiorno')).toHaveAccessibleName('Gatto seduto')
+  await expect(mascotOf(viewer, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
+  await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await openWatchers(camera)
+  await expect(watcherMascot(camera, 'Andrea')).toHaveAccessibleName('Coniglio affacciato')
 })

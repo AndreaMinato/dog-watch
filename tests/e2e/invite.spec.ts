@@ -2,7 +2,7 @@ import type { Locator } from '@playwright/test'
 import { expect } from '@playwright/test'
 import jsQR from 'jsqr'
 import { PNG } from 'pngjs'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openInviteSheet, test } from './devices'
+import { createRoom, joinAsCamera, joinAsViewer, members, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
 
 declare global {
   interface Window {
@@ -28,6 +28,7 @@ test('the camera invites with the link, its QR and the key in words', async ({ b
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
 
+  await openCameraMenu(camera)
   await expectInvitationTo(await openInviteSheet(camera), key)
 })
 
@@ -42,11 +43,11 @@ test('the viewer invites with the same sheet', async ({ browser }) => {
   await expectInvitationTo(await openInviteSheet(viewer), key)
 })
 
-test('the sheet closes with Chiudi, Esc or a tap outside, giving the focus back to Invita qualcuno', async ({ browser }) => {
+test('the sheet closes with Chiudi, Esc or a tap outside, giving the focus back to the camera menu', async ({ browser }) => {
   const camera = await openDevice(browser)
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
-  const opener = camera.getByRole('button', { name: 'Invita qualcuno' })
+  const opener = camera.getByRole('button', { name: 'Menu', exact: true })
 
   const closings = [
     (sheet: Locator) => sheet.getByRole('button', { name: 'Chiudi', exact: true }).click(),
@@ -54,6 +55,7 @@ test('the sheet closes with Chiudi, Esc or a tap outside, giving the focus back 
     () => camera.mouse.click(5, 5),
   ]
   for (const close of closings) {
+    await openCameraMenu(camera)
     const sheet = await openInviteSheet(camera)
     await close(sheet)
     await expect(sheet).toBeHidden()
@@ -65,6 +67,7 @@ test('"Copia il link" copies the link and says so', async ({ browser }) => {
   const camera = await openDevice(browser, { permissions: ['clipboard-read', 'clipboard-write', 'screen-wake-lock'] })
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
+  await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
   await sheet.getByRole('button', { name: 'Copia il link' }).click()
@@ -84,6 +87,7 @@ test('"Condividi il link" hands the link to the system share sheet', async ({ br
   await camera.reload()
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
+  await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
   await sheet.getByRole('button', { name: 'Condividi il link' }).click()
@@ -100,6 +104,7 @@ test('without a system share sheet the link can only be copied', async ({ browse
   await camera.reload()
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
+  await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
   await expect(sheet.getByRole('button', { name: 'Copia il link' })).toBeVisible()

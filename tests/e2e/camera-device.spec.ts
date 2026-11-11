@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
+import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openCameraMenu, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
 
 const screenMayTurnOff = /^Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere\./
 
@@ -49,7 +49,7 @@ test('the camera warns that the screen may turn off when the browser refuses to 
 
   await expect(camera.getByRole('alert')).toHaveText(screenMayTurnOff)
 
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' }).getByRole('alert')).toHaveText(screenMayTurnOff)
 })
@@ -92,7 +92,7 @@ test('the camera rests on a black screen listing its viewers and wakes up on a t
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
   const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
   await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
@@ -112,11 +112,11 @@ test('a resting camera shows that the room was closed', async ({ browser }) => {
   await joinAsCamera(camera, 'soggiorno')
   const other = await openDevice(browser)
   await joinAsCameraWithKey(other, key, 'cucina')
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeVisible()
 
-  await other.getByRole('button', { name: 'Chiudi la Stanza' }).click()
-  await other.getByRole('dialog').getByRole('button', { name: 'Chiudi' }).click()
+  await (await openCameraMenu(other)).getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  await other.getByRole('dialog', { name: /^Chiudere la Stanza\?/ }).getByRole('button', { name: 'Chiudi', exact: true }).click()
 
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeHidden()
   await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
@@ -128,5 +128,5 @@ test('a device with a single camera offers no lens choice', async ({ browser }) 
   await joinAsCamera(camera, 'soggiorno')
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
 
-  await expect(camera.getByLabel('Obiettivo')).toHaveCount(0)
+  await expect(camera.getByRole('button', { name: 'Cambia obiettivo' })).toHaveCount(0)
 })

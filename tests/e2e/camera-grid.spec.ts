@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openCameraMenu, openDevice, test } from './devices'
 
 test('the viewer watches every camera in a grid and enlarges one with a tap', async ({ browser }) => {
   const livingRoom = await openDevice(browser)
@@ -53,13 +53,13 @@ test('a camera that leaves the room disappears from the viewer\'s grid', async (
   await joinAsViewer(viewer, key, 'Andrea')
   await expectAdvancingVideo(viewer.getByLabel('Telecamera cucina'))
 
-  await kitchen.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(kitchen)).getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewer.getByLabel('Telecamera cucina')).toHaveCount(0)
   await expect(viewer.getByText(/offline/)).toHaveCount(0)
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
-  await livingRoom.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(livingRoom)).getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewer.getByText('Nessuna telecamera nella Stanza')).toBeVisible()
   await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)

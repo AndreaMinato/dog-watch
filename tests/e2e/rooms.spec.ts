@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openWatchers, test, watchers } from './devices'
 
 test('a camera and a viewer join the same room and see each other', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -10,17 +10,16 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key.toUpperCase().replaceAll('-', ' '), 'Andrea')
 
-  for (const page of [camera, viewer]) {
-    await expect(members(page)).toHaveCount(2)
-    await expect(members(page).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
-    await expect(members(page).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
-  }
+  await expect(members(viewer)).toHaveCount(2)
+  await expect(members(viewer).filter({ hasText: 'Telecamera' })).toContainText('soggiorno')
+  await expect(members(viewer).filter({ hasText: 'Spettatore' })).toContainText('Andrea')
+  await openWatchers(camera)
+  await expect(watchers(camera)).toHaveText([/^Andrea /])
 
   await viewer.getByRole('button', { name: 'Esci' }).click()
 
   await expect(viewer).toHaveURL('/')
-  await expect(members(camera)).toHaveCount(1)
-  await expect(members(camera)).toContainText('soggiorno')
+  await expect(watchers(camera)).toHaveCount(0)
 })
 
 async function tryWrongKey(page: Page) {

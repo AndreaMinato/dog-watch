@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, joinAsCamera, joinAsViewer, members, openDevice, openWatchers, test, watchers } from './devices'
 
 test('the camera lists the nicknames of the connected viewers', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -11,10 +11,10 @@ test('the camera lists the nicknames of the connected viewers', async ({ browser
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
 
-  const viewers = members(camera).filter({ hasText: 'Spettatore' })
-  await expect(viewers).toHaveCount(2)
-  await expect(viewers.filter({ hasText: 'Andrea' })).toHaveCount(1)
-  await expect(viewers.filter({ hasText: 'Giulia' })).toHaveCount(1)
+  await openWatchers(camera)
+  await expect(watchers(camera)).toHaveCount(2)
+  await expect(watchers(camera).filter({ hasText: 'Andrea' })).toHaveCount(1)
+  await expect(watchers(camera).filter({ hasText: 'Giulia' })).toHaveCount(1)
 })
 
 test('the camera drops a viewer from the list when it leaves', async ({ browser }) => {
@@ -26,12 +26,12 @@ test('the camera drops a viewer from the list when it leaves', async ({ browser 
   await joinAsViewer(andrea, key, 'Andrea')
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
-  const viewers = members(camera).filter({ hasText: 'Spettatore' })
-  await expect(viewers).toHaveCount(2)
+  await openWatchers(camera)
+  await expect(watchers(camera)).toHaveCount(2)
 
   await giulia.close()
 
-  await expect(viewers).toHaveText(['Spettatore: Andrea'])
+  await expect(watchers(camera)).toHaveText([/^Andrea /])
 })
 
 test('a viewer is told when another viewer joins', async ({ browser }) => {

@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openDevice, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, members, openCameraMenu, openDevice, rotateKey, test } from './devices'
 
 test('a reloaded camera re-enters by itself and the viewer sees it again', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -12,7 +12,7 @@ test('a reloaded camera re-enters by itself and the viewer sees it again', async
   await camera.reload()
 
   await expect(camera.getByLabel('Anteprima')).toBeVisible()
-  await expect(members(camera)).toHaveText(['Spettatore: Andrea', 'Telecamera: soggiorno (tu)'])
+  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
@@ -58,9 +58,7 @@ test('a camera stops re-entering when its remembered key no longer works', async
   await expect(kitchen.getByLabel('Anteprima')).toBeVisible()
   const storage = await kitchen.context().storageState()
   await kitchen.context().close()
-  await livingRoom.getByRole('button', { name: 'Rigenera la Chiave' }).click()
-  await livingRoom.getByRole('dialog').getByRole('button', { name: 'Rigenera' }).click()
-  await expect(livingRoom.getByRole('status', { name: 'Chiave della Stanza' })).not.toHaveText(key)
+  expect(await rotateKey(livingRoom)).not.toBe(key)
 
   const restarted = await openDevice(browser, { storageState: storage })
 
@@ -92,7 +90,7 @@ test('forgetting a room removes it from the recent ones', async ({ browser }) =>
   const device = await openDevice(browser)
   await createRoom(device, 'Casa al mare')
   await joinAsCamera(device, 'soggiorno')
-  await device.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(device)).getByRole('button', { name: 'Esci' }).click()
   const recent = device.getByRole('list', { name: 'Stanze recenti' }).getByRole('listitem')
   await expect(recent).toContainText('Casa al mare')
 
@@ -108,7 +106,7 @@ test('a camera that left its room stays out after a reload', async ({ browser })
   const device = await openDevice(browser)
   await createRoom(device, 'Casa al mare')
   await joinAsCamera(device, 'soggiorno')
-  await device.getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(device)).getByRole('button', { name: 'Esci' }).click()
 
   await device.reload()
 
@@ -123,9 +121,7 @@ test('after the key is rotated the remembered room asks for the new key', async 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
   await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
-  await camera.getByRole('button', { name: 'Rigenera la Chiave' }).click()
-  await camera.getByRole('dialog').getByRole('button', { name: 'Rigenera' }).click()
-  const newKey = (await camera.getByRole('status', { name: 'Chiave della Stanza' }).textContent())!
+  const newKey = await rotateKey(camera)
   await viewer.getByRole('link', { name: 'Torna alla home' }).click()
 
   const recent = viewer.getByRole('list', { name: 'Stanze recenti' }).getByRole('listitem')
@@ -153,8 +149,8 @@ test('a closed room is forgotten', async ({ browser }) => {
   await joinAsViewer(viewer, key, 'Andrea')
   await expect(members(viewer)).toHaveCount(2)
 
-  await camera.getByRole('button', { name: 'Chiudi la Stanza' }).click()
-  await camera.getByRole('dialog').getByRole('button', { name: 'Chiudi' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  await camera.getByRole('dialog', { name: /^Chiudere la Stanza\?/ }).getByRole('button', { name: 'Chiudi', exact: true }).click()
 
   for (const device of [camera, viewer]) {
     await expect(device.getByRole('alert')).toHaveText('Stanza chiusa')
