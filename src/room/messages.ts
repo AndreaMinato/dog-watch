@@ -5,6 +5,8 @@ export const roleLabels: Record<Role, string> = { camera: 'Telecamera', viewer: 
 
 export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 
+export const installedCameraNeedsIos184 = 'Con l\'app installata su iPhone o iPad serve iOS 18.4 o successivo, perché lo schermo resti acceso.'
+
 export const screenMayTurnOff = 'Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere. Disattiva il risparmio energetico o metti in carica il dispositivo.'
 
 export const refusalMessages: Record<Refusal, string> = {

@@ -3,7 +3,7 @@ import type { Role } from '../room/room-client'
 import { computed, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { compatibility } from '../device/compatibility'
-import { joinErrorMessage } from '../room/messages'
+import { installedCameraNeedsIos184, joinErrorMessage } from '../room/messages'
 import { useRoom } from '../room/use-room'
 
 const { roomKey } = defineProps<{ roomKey?: string }>()
@@ -57,6 +57,7 @@ async function submit() {
     <p v-if="!compatibility.camera" id="camera-unsupported">
       Questo browser non può usare la fotocamera o tenere lo schermo acceso, quindi qui puoi entrare solo come Spettatore.
       Per fare da telecamera usa Safari su iPhone o iPad (iOS 16.4 o successivo) oppure Chrome su Android.
+      {{ installedCameraNeedsIos184 }}
     </p>
     <label class="field">
       {{ nameLabel }}
