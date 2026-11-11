@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.0.0...dog-watch-v1.1.0) (2026-11-11)
+
+
+### Features
+
+* make the interface comfortable on a phone ([#37](https://github.com/AndreaMinato/dog-watch/issues/37)) ([951ef23](https://github.com/AndreaMinato/dog-watch/commit/951ef2387b9f749997f9bb325d25be2800b3d9d3))
+
+
+### Bug Fixes
+
+* drop the key from the address bar after opening the join link ([#35](https://github.com/AndreaMinato/dog-watch/issues/35)) ([c039523](https://github.com/AndreaMinato/dog-watch/commit/c039523ead36fc24fd84479e63d37e7f128cb154)), closes [#28](https://github.com/AndreaMinato/dog-watch/issues/28)
+
 ## 1.0.0 (2026-10-22)
 
 
