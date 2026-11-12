@@ -64,7 +64,7 @@ defineExpose({ open })
     <div class="share">
       <img class="qr" :src="qr" alt="QR del link per entrare">
       <div class="actions">
-        <output class="link" aria-label="Link per entrare">{{ link }}</output>
+        <output class="link" aria-label="Link per entrare">{{ decodeURIComponent(link) }}</output>
         <button v-if="canShare" type="button" class="button primary" @click="share">
           Condividi il link
         </button>
