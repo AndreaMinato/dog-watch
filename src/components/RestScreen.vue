@@ -1,10 +1,22 @@
 <script setup lang="ts">
 import type { ShownStatus } from '../room/messages'
+import { onBeforeUnmount } from 'vue'
 import { screenMayTurnOff, statusLabels } from '../room/messages'
 import ViewerList from './ViewerList.vue'
 
 defineProps<{ status: ShownStatus, screenKeptOn: boolean }>()
 const emit = defineEmits<{ wake: [] }>()
+
+// The installed app paints the status bar with theme-color, which would stay light over the black screen.
+const rest = getComputedStyle(document.documentElement).getPropertyValue('--rest')
+const themeColors = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')]
+  .map(meta => ({ meta, content: meta.content }))
+themeColors.forEach(({ meta }) => {
+  meta.content = rest
+})
+onBeforeUnmount(() => themeColors.forEach(({ meta, content }) => {
+  meta.content = content
+}))
 </script>
 
 <template>

@@ -132,6 +132,24 @@ test('the camera rests on a black screen saying it is live and listing its viewe
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
 })
 
+test('the browser bars turn black while the camera rests, and take the theme colours back when it wakes', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const lightBars = camera.locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
+  const darkBars = camera.locator('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]')
+
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
+
+  await expect(lightBars).toHaveAttribute('content', '#000')
+  await expect(darkBars).toHaveAttribute('content', '#000')
+
+  await camera.getByRole('region', { name: 'Schermata a riposo' }).click()
+
+  await expect(lightBars).toHaveAttribute('content', '#cbdac6')
+  await expect(darkBars).toHaveAttribute('content', '#1b2249')
+})
+
 test('the camera dims its screen after two minutes without touches or keys, and a tap brings back the framing', async ({ browser }) => {
   const camera = await openDevice(browser)
   await camera.clock.install()
