@@ -4,7 +4,7 @@ import type { ShownStatus } from '../room/messages'
 import type { RoomClient } from '../room/room-client'
 import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
 import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
-import { rolePoses } from '../mascot/mascot'
+import { missingVideoMascots, rolePoses } from '../mascot/mascot'
 import { startCameraSession } from '../room/camera-session'
 import { screenMayTurnOff } from '../room/messages'
 import { cameraNoticeUnderstood, rememberCameraNoticeUnderstood } from '../room/remembered-rooms'
@@ -86,6 +86,7 @@ onBeforeUnmount(() => {
   <main v-show="!resting" ref="screen" class="camera-screen">
     <video
       v-if="session"
+      v-show="!paused"
       class="mirror"
       aria-label="Anteprima"
       :srcObject="session.preview"
@@ -122,6 +123,15 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <WatchingNotice />
+    </div>
+    <div v-if="paused" class="cover">
+      <MascotFigure class="figure" :species="room.self.mascot" :pose="rolePoses.camera" :state="missingVideoMascots.paused" />
+      <p class="caption">
+        {{ room.self.name }} è in pausa
+      </p>
+      <p>
+        Per riprendere, apri il menu e tocca <strong>Riprendi</strong>.
+      </p>
     </div>
     <div class="bottom">
       <LensSwitch v-if="session" v-model:failed="lensFailed" :session="session" />
@@ -191,6 +201,25 @@ onBeforeUnmount(() => {
 }
 .first-start p {
   margin: 0;
+}
+.cover {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.cover p {
+  margin: 0;
+}
+.figure {
+  width: 10rem;
+}
+.caption {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
 }
 .bottom {
   display: flex;

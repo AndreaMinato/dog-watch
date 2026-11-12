@@ -247,6 +247,22 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(viewer)
     })
 
+    test('a paused camera, its animal on its own screen and on the viewer\'s, is usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      const key = await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      const viewer = await openDevice(browser)
+      await joinAsViewer(viewer, key, 'Andrea')
+      await expect(viewer.getByLabel('Telecamera soggiorno')).toBeVisible()
+
+      await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+
+      await expect(camera.getByText('soggiorno è in pausa', { exact: true })).toBeVisible()
+      await expectUsable(camera)
+      await expect(viewer.getByText('soggiorno è in pausa', { exact: true })).toBeVisible()
+      await expectUsable(viewer)
+    })
+
     test('the invite sheet is usable on this screen', async ({ browser }) => {
       const camera = await openDevice(browser)
       // Phones and tablets offer a system share sheet, which brings "Condividi il link".

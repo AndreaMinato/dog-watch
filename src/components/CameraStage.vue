@@ -50,8 +50,11 @@ async function toggleFullscreen() {
       />
       <div v-if="cover" class="cover">
         <MascotFigure class="figure" :species="feed.camera.mascot" :pose="rolePoses[feed.camera.role]" :state="cover" />
-        <p v-if="state === 'connecting'" class="connecting">
+        <p v-if="state === 'connecting'" class="caption">
           Collegamento a {{ feed.camera.name }}…
+        </p>
+        <p v-else-if="state === 'paused'" class="caption">
+          {{ feed.camera.name }} è in pausa
         </p>
       </div>
       <div class="overlay">
@@ -65,7 +68,7 @@ async function toggleFullscreen() {
           />
           <span class="name">{{ feed.camera.name }}</span>
         </span>
-        <StatusPill v-if="!cover" :status="feed.camera.status" />
+        <StatusPill v-if="!cover || state === 'paused'" :status="feed.camera.status" />
       </div>
     </div>
     <p v-if="feed.offlineSince" class="note">
@@ -124,7 +127,7 @@ video {
   min-height: 0;
   flex: 0 1 60%;
 }
-.connecting {
+.caption {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.25rem;
