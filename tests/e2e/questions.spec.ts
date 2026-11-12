@@ -90,6 +90,34 @@ test('going back keeps every answer, and each question takes the focus', async (
   await expect(page.getByRole('radio', { name: 'Gatto', exact: true })).toBeChecked()
 })
 
+test('each role keeps its own name: switching role does not carry the other one over, going back to a role restores it', async ({ browser }) => {
+  const page = await openDevice(browser)
+  const back = page.getByRole('button', { name: 'Indietro' })
+  await page.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await page.getByLabel('Hai la Chiave della Stanza?').fill('tazza ombra vento bosco')
+  await next(page)
+  await page.getByLabel('Come ti chiami?').fill('Andrea')
+  await back.click()
+  await back.click()
+
+  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+  await next(page)
+  await expect(page.getByLabel('Che stanza riprende?')).toHaveValue('')
+  await page.getByLabel('Che stanza riprende?').fill('soggiorno')
+  await back.click()
+  await back.click()
+
+  await page.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await next(page)
+  await expect(page.getByLabel('Come ti chiami?')).toHaveValue('Andrea')
+  await back.click()
+  await back.click()
+
+  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
+  await next(page)
+  await expect(page.getByLabel('Che stanza riprende?')).toHaveValue('soggiorno')
+})
+
 test('a wrong key takes the device back to the key, keeping the other answers', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')

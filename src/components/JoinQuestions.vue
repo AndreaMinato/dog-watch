@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Species } from '../mascot/mascot'
 import type { Role } from '../room/room-client'
-import { computed, nextTick, shallowRef, useId, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, reactive, shallowRef, useId, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { appName } from '../brand'
 import { compatibility } from '../device/compatibility'
@@ -38,7 +38,13 @@ const key = shallowRef(invitationKey ?? '')
 const creatingRoom = shallowRef(startsCreating)
 const roomName = shallowRef('')
 const createdKey = shallowRef<string | null>(null)
-const name = shallowRef('')
+const names = reactive<Record<Role, string>>({ camera: '', viewer: '' })
+const name = computed({
+  get: () => names[role.value],
+  set: (value) => {
+    names[role.value] = value
+  },
+})
 const mascot = shallowRef<Species>(randomSpecies())
 const pending = shallowRef(false)
 const error = shallowRef<string | null>(null)
