@@ -31,6 +31,33 @@ test('the camera says "Collegamento…" while the browser asks for the camera, a
   await expect(camera.getByText('Collegamento…', { exact: true })).toHaveCount(0)
 })
 
+const cameraFailures = [
+  ['NotAllowedError', 'Permesso negato per fotocamera e microfono: consentili nelle impostazioni del sito, poi ricarica la pagina o riapri l\'app.'],
+  ['NotFoundError', 'Fotocamera o microfono non trovati: collegali, poi ricarica la pagina o riapri l\'app.'],
+  ['NotReadableError', 'Fotocamera o microfono occupati da un\'altra app: chiudila, poi ricarica la pagina o riapri l\'app.'],
+] as const
+
+for (const [failure, message] of cameraFailures) {
+  test(`a camera whose browser answers ${failure} says what failed and what to do, instead of "Collegamento…"`, async ({ browser }) => {
+    const camera = await openDevice(browser)
+    await camera.addInitScript((name) => {
+      MediaDevices.prototype.getUserMedia = () => Promise.reject(new DOMException('Refused by the test', name))
+    }, failure)
+    await camera.reload()
+    const logged: string[] = []
+    camera.on('console', (entry) => {
+      if (entry.type() === 'error')
+        logged.push(entry.text())
+    })
+    await createRoom(camera, 'Casa al mare')
+    await joinAsCamera(camera, 'soggiorno')
+
+    await expect(camera.getByRole('alert')).toHaveText(message)
+    await expect(camera.getByText('Collegamento…', { exact: true })).toBeHidden()
+    expect(logged.some(text => text.includes(failure))).toBe(true)
+  })
+}
+
 test('the camera always shows how many are watching', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')

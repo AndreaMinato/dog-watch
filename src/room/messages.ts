@@ -17,6 +17,21 @@ export const somethingWentWrong = 'Qualcosa è andato storto, riprova.'
 
 export const serviceUnreachable = `${appName} non riesce a raggiungere il servizio. Controlla la connessione a internet e riprova.`
 
+const thenReload = 'poi ricarica la pagina o riapri l\'app.'
+
+export function cameraErrorMessage(cause: unknown): string {
+  switch (cause instanceof DOMException && cause.name) {
+    case 'NotAllowedError':
+      return `Permesso negato per fotocamera e microfono: consentili nelle impostazioni del sito, ${thenReload}`
+    case 'NotFoundError':
+      return `Fotocamera o microfono non trovati: collegali, ${thenReload}`
+    case 'NotReadableError':
+      return `Fotocamera o microfono occupati da un'altra app: chiudila, ${thenReload}`
+    default:
+      return somethingWentWrong
+  }
+}
+
 export const installedCameraNeedsIos184 = 'Con l\'app installata su iPhone o iPad serve iOS 18.4 o successivo, perché lo schermo resti acceso.'
 
 export const screenMayTurnOff = 'Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere. Disattiva il risparmio energetico o metti in carica il dispositivo.'

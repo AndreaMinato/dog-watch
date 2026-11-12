@@ -6,7 +6,7 @@ import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from
 import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
 import { missingVideoMascots, rolePoses } from '../mascot/mascot'
 import { startCameraSession } from '../room/camera-session'
-import { screenMayTurnOff } from '../room/messages'
+import { cameraErrorMessage, screenMayTurnOff } from '../room/messages'
 import { cameraNoticeUnderstood, rememberCameraNoticeUnderstood } from '../room/remembered-rooms'
 import CameraMenu from './CameraMenu.vue'
 import CameraWatchers from './CameraWatchers.vue'
@@ -31,6 +31,7 @@ const paused = shallowRef(false)
 const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
 const lensFailed = shallowRef(false)
+const cameraError = shallowRef<string | null>(null)
 const firstStart = shallowRef(!cameraNoticeUnderstood())
 const status = computed<ShownStatus>(() => {
   if (!session.value)
@@ -61,7 +62,15 @@ onMounted(async () => {
   restartIdle()
   window.addEventListener('pointerdown', restartIdle)
   window.addEventListener('keydown', restartIdle)
-  const started = await startCameraSession(room)
+  let started: CameraSession
+  try {
+    started = await startCameraSession(room)
+  }
+  catch (cause) {
+    console.error(cause)
+    cameraError.value = cameraErrorMessage(cause)
+    return
+  }
   if (unmounted) {
     started.close()
     return
@@ -100,11 +109,14 @@ onBeforeUnmount(() => {
         <h1 class="name">
           {{ room.self.name }}
         </h1>
-        <StatusPill :status="status" />
+        <StatusPill v-if="!cameraError" :status="status" />
       </div>
       <CameraWatchers :room-key="roomKey" />
     </div>
     <div class="notices">
+      <p v-if="cameraError" role="alert" class="notice">
+        {{ cameraError }}
+      </p>
       <p v-if="!screenKeptOn" role="alert" class="notice">
         {{ screenMayTurnOff }}
       </p>

@@ -213,6 +213,18 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectUsable(camera)
     })
 
+    test('a camera whose permission was refused is usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      await camera.addInitScript(() => {
+        MediaDevices.prototype.getUserMedia = () => Promise.reject(new DOMException('Refused by the test', 'NotAllowedError'))
+      })
+      await camera.reload()
+      await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      await expect(camera.getByRole('alert')).toHaveText(/^Permesso negato per fotocamera e microfono/)
+      await expectUsable(camera)
+    })
+
     test('the viewer is usable on this screen, its thumbnails below the big video on the phone and on its right on wider screens', async ({ browser }) => {
       const host = await openDevice(browser)
       const key = await createRoom(host, 'Casa al mare')
