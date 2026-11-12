@@ -9,7 +9,7 @@ test('the viewer watches the camera live', async ({ browser }) => {
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 })
 
 test('"In diretta" is the same apricot pill for the camera and the viewer, by day and by night', async ({ browser }) => {
@@ -35,11 +35,11 @@ test('the viewer starts watching a camera that joins after it', async ({ browser
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera' })).toBeVisible()
+  await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera', exact: true })).toBeVisible()
 
   await joinAsCamera(camera, 'soggiorno')
 
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 })
 
 test('the viewer hears the camera only after unmuting it', async ({ browser }) => {
@@ -50,15 +50,15 @@ test('the viewer hears the camera only after unmuting it', async ({ browser }) =
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  const video = viewer.getByLabel('Telecamera soggiorno')
+  const video = viewer.getByLabel('Telecamera soggiorno', { exact: true })
   await expect.poll(() => video.evaluate((element: HTMLVideoElement) =>
     (element.srcObject as MediaStream).getAudioTracks().length)).toBe(1)
   await expect(video).toHaveJSProperty('muted', true)
 
-  await viewer.getByRole('button', { name: 'Attiva audio' }).click()
+  await viewer.getByRole('button', { name: 'Attiva audio', exact: true }).click()
 
   await expect(video).toHaveJSProperty('muted', false)
-  await expect(viewer.getByRole('button', { name: 'Disattiva audio' })).toBeVisible()
+  await expect(viewer.getByRole('button', { name: 'Disattiva audio', exact: true })).toBeVisible()
 })
 
 test('the camera previews what it films', async ({ browser }) => {
@@ -66,22 +66,22 @@ test('the camera previews what it films', async ({ browser }) => {
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
 
-  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expectAdvancingVideo(camera.getByLabel('Anteprima', { exact: true }))
 })
 
 test('the camera keeps connections open only while viewers are present', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
-  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expectAdvancingVideo(camera.getByLabel('Anteprima', { exact: true }))
   expect(await openPeerConnections(camera)).toBe(0)
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
   expect(await openPeerConnections(camera)).toBe(1)
 
-  await viewer.getByRole('button', { name: 'Esci' }).click()
+  await viewer.getByRole('button', { name: 'Esci', exact: true }).click()
 
   await expect.poll(() => openPeerConnections(camera)).toBe(0)
 })
@@ -93,7 +93,7 @@ test('the camera caps its video bitrate at 1.5 Mbps', async ({ browser }) => {
 
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 
   expect(await videoSenderMaxBitrate(camera)).toBe(1_500_000)
 })

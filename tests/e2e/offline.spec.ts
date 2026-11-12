@@ -25,9 +25,9 @@ async function createRoomDuringSignIn(page: Page): Promise<Route> {
   const { promise: signIn, resolve: holdSignIn } = Promise.withResolvers<Route>()
   await page.route('**/auth/v1/signup', holdSignIn)
   await page.goto('/')
-  await page.getByRole('button', { name: 'Farà da telecamera' }).click()
-  await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' }).click()
-  await page.getByLabel('Come si chiama la Stanza?').fill('Casa al mare')
+  await page.getByRole('button', { name: 'Farà da telecamera', exact: true }).click()
+  await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova', exact: true }).click()
+  await page.getByLabel('Come si chiama la Stanza?', { exact: true }).fill('Casa al mare')
   await page.getByRole('button', { name: 'Crea', exact: true }).click()
   return signIn
 }
@@ -37,7 +37,7 @@ test('on a slow first visit, creating a room waits for the sign-in', async ({ pa
 
   await signIn.continue()
 
-  await expect(page.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveCount(4)
+  await expect(page.getByRole('list', { name: 'Chiave della Stanza', exact: true }).getByRole('listitem')).toHaveCount(4)
 })
 
 test('on a slow first visit, a sign-in that fails says the service cannot be reached', async ({ page }) => {
@@ -53,37 +53,37 @@ test('without a connection the app says so, and opens once the connection is bac
   await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Impossibile collegarsi' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Impossibile collegarsi', exact: true })).toBeVisible()
   await expect(page.getByText('Controlla la connessione a internet e riprova.')).toBeVisible()
 
   await page.unroute('**/auth/v1/**')
-  await page.getByRole('button', { name: 'Riprova' }).click()
+  await page.getByRole('button', { name: 'Riprova', exact: true }).click()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
 })
 
 test('with a slow connection the app opens at once, while its session is being renewed', async ({ browser }) => {
   const page = await openDevice(browser)
-  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
   await expireSession(page)
   await page.route('**/auth/v1/**', () => {})
 
   await page.reload()
 
-  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
 })
 
 test('entering a room without a connection says the service cannot be reached', async ({ browser }) => {
   const page = await openDevice(browser)
   const key = await createRoom(page, 'Casa al mare')
   await joinAsCamera(page, 'soggiorno')
-  await (await openCameraMenu(page)).getByRole('button', { name: 'Esci' }).click()
+  await (await openCameraMenu(page)).getByRole('button', { name: 'Esci', exact: true }).click()
   await page.route(supabase, route => route.abort('internetdisconnected'))
 
-  await page.getByRole('list', { name: 'Le tue Stanze' }).getByRole('button', { name: 'Casa al mare', exact: true }).click()
+  await page.getByRole('list', { name: 'Le tue Stanze', exact: true }).getByRole('button', { name: 'Casa al mare', exact: true }).click()
   await expect(page.getByRole('alert')).toHaveText(unreachable)
 
-  await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
+  await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza', exact: true }).click()
   await joinAsViewer(page, key, 'Andrea')
   await expect(page.getByRole('alert')).toHaveText(unreachable)
 })
@@ -92,18 +92,18 @@ test('a camera that starts without a connection re-enters its room on its own on
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
-  await expect(camera.getByLabel('Anteprima')).toBeVisible()
+  await expect(camera.getByLabel('Anteprima', { exact: true })).toBeVisible()
   await forgetSession(camera)
   await camera.route(supabase, route => route.abort('internetdisconnected'))
   await camera.reload()
-  await expect(camera.getByRole('heading', { name: 'Impossibile collegarsi' })).toBeVisible()
+  await expect(camera.getByRole('heading', { name: 'Impossibile collegarsi', exact: true })).toBeVisible()
 
   await camera.context().setOffline(true)
   await camera.unroute(supabase)
   await camera.context().setOffline(false)
 
-  await expect(camera.getByLabel('Anteprima')).toBeVisible()
+  await expect(camera.getByLabel('Anteprima', { exact: true })).toBeVisible()
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
 })

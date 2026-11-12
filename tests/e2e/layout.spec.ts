@@ -92,8 +92,8 @@ async function expectPlacedForTheScreen(sheet: Locator) {
 
 /** On the phone the thumbnails sit below the big video; on wider screens, in a column on its right. */
 async function expectThumbnailsPlacedForTheScreen(page: Page) {
-  const video = (await page.getByRole('region', { name: 'soggiorno' }).boundingBox())!
-  const thumbnails = (await page.getByRole('list', { name: 'Telecamere' }).boundingBox())!
+  const video = (await page.getByRole('region', { name: 'soggiorno', exact: true }).boundingBox())!
+  const thumbnails = (await page.getByRole('list', { name: 'Telecamere', exact: true }).boundingBox())!
   if (test.info().project.name === 'phone')
     expect(thumbnails.y).toBeGreaterThanOrEqual(video.y + video.height)
   else
@@ -113,29 +113,29 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
     test('each question of a new camera is usable on this screen', async ({ browser }) => {
       const page = await openDevice(browser)
-      await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByRole('button', { name: 'Farà da telecamera' }).click()
-      await expect(page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' })).toBeVisible()
+      await page.getByRole('button', { name: 'Farà da telecamera', exact: true }).click()
+      await expect(page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova', exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova' }).click()
-      await expect(page.getByLabel('Come si chiama la Stanza?')).toBeVisible()
+      await page.getByRole('button', { name: 'Non ce l\'ho: crea una Stanza nuova', exact: true }).click()
+      await expect(page.getByLabel('Come si chiama la Stanza?', { exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByLabel('Come si chiama la Stanza?').fill('Casa al mare')
+      await page.getByLabel('Come si chiama la Stanza?', { exact: true }).fill('Casa al mare')
       await page.getByRole('button', { name: 'Crea', exact: true }).click()
-      await expect(page.getByRole('list', { name: 'Chiave della Stanza' })).toBeVisible()
+      await expect(page.getByRole('list', { name: 'Chiave della Stanza', exact: true })).toBeVisible()
       await expectUsable(page)
 
       await next(page)
-      await expect(page.getByRole('button', { name: 'Camera da letto' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Camera da letto', exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByRole('button', { name: 'Camera da letto' }).click()
+      await page.getByRole('button', { name: 'Camera da letto', exact: true }).click()
       await next(page)
-      await expect(page.getByRole('group', { name: 'Scegli il tuo animale' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Scegli il tuo animale', exact: true })).toBeVisible()
       await expectUsable(page)
     })
 
@@ -145,13 +145,13 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(page.getByText('Hai un invito per Casa al mare.')).toBeVisible()
       await expectUsable(page)
 
-      await page.getByRole('button', { name: 'Guarderà la casa' }).click()
-      await expect(page.getByLabel('Come ti chiami?')).toBeVisible()
+      await page.getByRole('button', { name: 'Guarderà la casa', exact: true }).click()
+      await expect(page.getByLabel('Come ti chiami?', { exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByLabel('Come ti chiami?').fill('Andrea')
+      await page.getByLabel('Come ti chiami?', { exact: true }).fill('Andrea')
       await next(page)
-      await expect(page.getByRole('group', { name: 'Scegli il tuo animale' })).toBeVisible()
+      await expect(page.getByRole('group', { name: 'Scegli il tuo animale', exact: true })).toBeVisible()
       await expectUsable(page)
 
       await enter(page)
@@ -163,24 +163,24 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const page = await openDevice(browser)
       await createRoom(page, 'Casa al mare')
       await joinAsCamera(page, 'soggiorno')
-      await (await openCameraMenu(page)).getByRole('button', { name: 'Esci' }).click()
-      await expect(page.getByRole('heading', { name: 'Le tue Stanze' })).toBeVisible()
+      await (await openCameraMenu(page)).getByRole('button', { name: 'Esci', exact: true }).click()
+      await expect(page.getByRole('heading', { name: 'Le tue Stanze', exact: true })).toBeVisible()
       await expectUsable(page)
 
       await page.route('**/functions/v1/join-room', route => route.fulfill({ status: 403 }))
       await page.getByRole('button', { name: 'Casa al mare', exact: true }).click()
-      await expect(page.getByLabel('Chiave nuova')).toBeVisible()
+      await expect(page.getByLabel('Chiave nuova', { exact: true })).toBeVisible()
       await expectUsable(page)
 
-      await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza' }).click()
-      await expect(page.getByRole('button', { name: 'Le tue Stanze' })).toBeVisible()
+      await page.getByRole('button', { name: 'Usa questo dispositivo in un\'altra Stanza', exact: true }).click()
+      await expect(page.getByRole('button', { name: 'Le tue Stanze', exact: true })).toBeVisible()
       await expectUsable(page)
     })
 
     test('the button and the steps to install the app are usable on this screen', async ({ browser }) => {
       const page = await openDevice(browser)
       await offerToInstall(page)
-      await expect(page.getByRole('button', { name: 'Installa l\'app' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Installa l\'app', exact: true })).toBeVisible()
       await expectUsable(page)
 
       const iPhone = await openDevice(browser, { userAgent: devices['iPhone 13 Mini'].userAgent })
@@ -191,7 +191,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('the message without a connection is usable on this screen', async ({ page }) => {
       await page.route('**/auth/v1/**', route => route.abort('internetdisconnected'))
       await page.goto('/')
-      await expect(page.getByRole('heading', { name: 'Impossibile collegarsi' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Impossibile collegarsi', exact: true })).toBeVisible()
       await expectUsable(page)
     })
 
@@ -199,8 +199,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const camera = await openDevice(browser)
       await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
-      await expectAdvancingVideo(camera.getByLabel('Anteprima'))
-      await expect(camera.getByRole('button', { name: 'Ho capito' })).toBeVisible()
+      await expectAdvancingVideo(camera.getByLabel('Anteprima', { exact: true }))
+      await expect(camera.getByRole('button', { name: 'Ho capito', exact: true })).toBeVisible()
       await expectUsable(camera)
     })
 
@@ -230,7 +230,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const key = await createRoom(host, 'Casa al mare')
       const viewer = await openDevice(browser)
       await joinAsViewer(viewer, key, 'Andrea')
-      await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera' })).toBeVisible()
+      await expect(viewer.getByRole('heading', { name: 'Qui non c\'è ancora nessuna telecamera', exact: true })).toBeVisible()
       await expectUsable(viewer)
 
       await joinAsCamera(host, 'soggiorno')
@@ -250,11 +250,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await joinAsCamera(camera, 'soggiorno')
       const viewer = await openDevice(browser)
       await joinAsViewer(viewer, key, 'Andrea')
-      await expect(viewer.getByLabel('Telecamera soggiorno')).toBeVisible()
+      await expect(viewer.getByLabel('Telecamera soggiorno', { exact: true })).toBeVisible()
 
       await camera.close()
 
-      await expect(viewer.getByRole('region', { name: 'soggiorno' }).getByRole('img', { name: /seduto che dorme$/ })).toBeVisible()
+      await expect(viewer.getByRole('region', { name: 'soggiorno', exact: true }).getByRole('img', { name: /seduto che dorme$/ })).toBeVisible()
       expect(await viewer.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0)
       await expectUsable(viewer)
     })
@@ -265,9 +265,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await joinAsCamera(camera, 'soggiorno')
       const viewer = await openDevice(browser)
       await joinAsViewer(viewer, key, 'Andrea')
-      await expect(viewer.getByLabel('Telecamera soggiorno')).toBeVisible()
+      await expect(viewer.getByLabel('Telecamera soggiorno', { exact: true })).toBeVisible()
 
-      await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+      await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa', exact: true }).click()
 
       await expect(camera.getByText('soggiorno è in pausa', { exact: true })).toBeVisible()
       await expectUsable(camera)
@@ -286,7 +286,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await joinAsCamera(camera, 'soggiorno')
       await openCameraMenu(camera)
       const sheet = await openInviteSheet(camera)
-      await expect(sheet.getByRole('button', { name: 'Condividi il link' })).toBeVisible()
+      await expect(sheet.getByRole('button', { name: 'Condividi il link', exact: true })).toBeVisible()
 
       await expectUsable(camera)
       await expect(sheet).toBeVisible()
@@ -298,8 +298,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const key = await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await joinAsViewer(await openDevice(browser), key, 'Andrea')
-      await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
-      await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+      await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
+      await expectAdvancingVideo(camera.getByLabel('Anteprima', { exact: true }))
       await expectUsable(camera)
 
       const watching = await openWatchers(camera)
@@ -324,10 +324,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const key = await createRoom(camera, 'Casa al mare')
       await joinAsCamera(camera, 'soggiorno')
       await joinAsViewer(await openDevice(browser), key, 'Andrea')
-      await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
+      await camera.getByRole('button', { name: 'Oscura lo schermo', exact: true }).click()
 
-      const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
-      await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
+      const rest = camera.getByRole('region', { name: 'Schermata a riposo', exact: true })
+      await expect(rest.getByRole('list', { name: 'Spettatori', exact: true })).toHaveText(['Andrea'])
       await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
       await expectUsable(camera)
       await expect(rest).toBeVisible()

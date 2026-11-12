@@ -30,14 +30,14 @@ test('a camera named like one already in the room is refused', async ({ browser 
   const first = await openDevice(browser)
   const key = await createRoom(first, 'Casa al mare')
   await joinAsCamera(first, 'soggiorno')
-  await expect(first.getByRole('heading', { name: 'soggiorno' })).toBeVisible()
+  await expect(first.getByRole('heading', { name: 'soggiorno', exact: true })).toBeVisible()
 
   const second = await openDevice(browser)
   await joinAsCameraWithKey(second, key, 'Soggiorno')
 
   await expect(second.getByRole('alert')).toHaveText('Nella Stanza c\'è già una telecamera con questo nome: scegline un altro.')
-  await expect(second.getByLabel('Che stanza riprende?')).toHaveValue('Soggiorno')
-  await expect(first.getByRole('heading', { name: 'soggiorno' })).toBeVisible()
+  await expect(second.getByLabel('Che stanza riprende?', { exact: true })).toHaveValue('Soggiorno')
+  await expect(first.getByRole('heading', { name: 'soggiorno', exact: true })).toBeVisible()
 })
 
 test('a fifth camera is refused', async ({ browser }) => {
@@ -54,7 +54,7 @@ test('a fifth camera is refused', async ({ browser }) => {
   await joinAsCameraWithKey(fifth, key, 'camera 5')
 
   await expect(fifth.getByRole('alert')).toHaveText('La Stanza ha già 4 telecamere: non puoi entrare come telecamera.')
-  await expect(fifth.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(fifth.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
 })
 
 test('a fourth viewer is refused', async ({ browser }) => {
@@ -63,14 +63,14 @@ test('a fourth viewer is refused', async ({ browser }) => {
   await joinAsCamera(camera, 'soggiorno')
   for (const nickname of ['Andrea', 'Bea', 'Carlo'])
     await joinAsViewer(await openDevice(browser), key, nickname)
-  await expect(camera.getByRole('button', { name: '3 persone guardano' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '3 persone guardano', exact: true })).toBeVisible()
 
   const fourth = await openDevice(browser)
   await joinAsViewer(fourth, key, 'Dario')
 
   await expect(fourth.getByRole('alert')).toHaveText('La Stanza ha già 3 Spettatori: non puoi entrare come Spettatore.')
-  await expect(fourth.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
-  await expect(camera.getByRole('button', { name: '3 persone guardano' })).toBeVisible()
+  await expect(fourth.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '3 persone guardano', exact: true })).toBeVisible()
 })
 
 test('of two viewers joining together for the last place, the later one leaves even if it got in first', async ({ browser }) => {
@@ -79,7 +79,7 @@ test('of two viewers joining together for the last place, the later one leaves e
   await joinAsCamera(camera, 'soggiorno')
   for (const nickname of ['Andrea', 'Bea'])
     await joinAsViewer(await openDevice(browser), key, nickname)
-  await expect(camera.getByRole('button', { name: '2 persone guardano' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '2 persone guardano', exact: true })).toBeVisible()
 
   const slow = await openDevice(browser)
   const { promise: joined, resolve: onJoined } = Promise.withResolvers<void>()
@@ -111,7 +111,7 @@ test('the camera refuses a fourth viewer that ignores the limit', async ({ brows
   for (const nickname of ['Andrea', 'Bea', 'Carlo']) {
     const viewer = await openDevice(browser)
     await joinAsViewer(viewer, key, nickname)
-    await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+    await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
   }
 
   const intruder = await openDevice(browser)

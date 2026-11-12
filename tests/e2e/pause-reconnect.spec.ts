@@ -8,27 +8,27 @@ async function watchCamera(browser: Parameters<typeof openDevice>[0]): Promise<{
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
   return { camera, viewer }
 }
 
 test('the camera and the viewer see the camera paused, then live again when it resumes', async ({ browser }) => {
   const { camera, viewer } = await watchCamera(browser)
 
-  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa', exact: true }).click()
 
   for (const page of [camera, viewer]) {
     await expect(page.getByText('In pausa', { exact: true })).toBeVisible()
     await expect(page.getByText('In diretta', { exact: true })).toBeHidden()
   }
 
-  await (await openCameraMenu(camera)).getByRole('button', { name: 'Riprendi' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Riprendi', exact: true }).click()
 
   for (const page of [camera, viewer]) {
     await expect(page.getByText('In diretta', { exact: true })).toBeVisible()
     await expect(page.getByText('In pausa', { exact: true })).toBeHidden()
   }
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 })
 
 /** Whether the user sees the video at its middle, or something covering it. */
@@ -41,14 +41,14 @@ function videoShows(video: Locator): Promise<boolean> {
 
 test('a paused camera shows its animal and says it is paused instead of a black video, and the camera tells how to resume', async ({ browser }) => {
   const { camera, viewer } = await watchCamera(browser)
-  const stage = viewer.getByRole('region', { name: 'soggiorno' })
+  const stage = viewer.getByRole('region', { name: 'soggiorno', exact: true })
   const videos = [
-    stage.getByLabel('Telecamera soggiorno'),
+    stage.getByLabel('Telecamera soggiorno', { exact: true }),
     cameraThumbnails(viewer).filter({ hasText: 'soggiorno' }).locator('video'),
-    camera.getByLabel('Anteprima'),
+    camera.getByLabel('Anteprima', { exact: true }),
   ]
 
-  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa', exact: true }).click()
 
   await expect(stage.getByText('soggiorno è in pausa', { exact: true })).toBeVisible()
   await expect(camera.getByText('soggiorno è in pausa', { exact: true })).toBeVisible()
@@ -56,7 +56,7 @@ test('a paused camera shows its animal and says it is paused instead of a black 
   for (const video of videos)
     await expect.poll(() => videoShows(video)).toBe(false)
 
-  await (await openCameraMenu(camera)).getByRole('button', { name: 'Riprendi' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Riprendi', exact: true }).click()
 
   for (const page of [camera, viewer])
     await expect(page.getByText('soggiorno è in pausa')).toHaveCount(0)
@@ -86,10 +86,10 @@ async function audioEnergyGain(page: Page): Promise<number> {
 
 test('the viewer receives no audio while the camera is silenced', async ({ browser }) => {
   const { camera, viewer } = await watchCamera(browser)
-  await viewer.getByRole('button', { name: 'Attiva audio' }).click()
+  await viewer.getByRole('button', { name: 'Attiva audio', exact: true }).click()
   await expect.poll(() => audioEnergyGain(viewer)).toBeGreaterThan(0.001)
 
-  await (await openCameraMenu(camera)).getByRole('button', { name: 'Silenzia' }).click()
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Silenzia', exact: true }).click()
 
   await expect.poll(() => audioEnergyGain(viewer)).toBeLessThan(0.000_01)
 })
@@ -128,7 +128,7 @@ test('the viewer gets the video back after the camera briefly loses the network'
   await camera.context().setOffline(false)
 
   await expect(offline).toBeHidden({ timeout: 60_000 })
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 })
 
 test('the viewer gets the video back after the camera drops out of the room for lack of network', async ({ browser }) => {
@@ -146,5 +146,5 @@ test('the viewer gets the video back after the camera drops out of the room for 
 
   await expect.poll(() => openPeerConnections(viewer), { timeout: 60_000 }).toBe(1)
   await expect(offline).toBeHidden({ timeout: 60_000 })
-  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno', { exact: true }))
 })

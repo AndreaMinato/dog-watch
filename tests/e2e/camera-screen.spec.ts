@@ -6,13 +6,13 @@ test('the camera films on the whole screen, with its animal, its name and "In di
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno', 'Gatto')
 
-  const preview = camera.getByLabel('Anteprima')
+  const preview = camera.getByLabel('Anteprima', { exact: true })
   await expectAdvancingVideo(preview)
   expect(await preview.boundingBox()).toEqual({ x: 0, y: 0, ...camera.viewportSize() })
-  await expect(camera.getByRole('heading', { name: 'soggiorno' })).toBeVisible()
+  await expect(camera.getByRole('heading', { name: 'soggiorno', exact: true })).toBeVisible()
   await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
   await expect(camera.getByText('In diretta', { exact: true })).toBeVisible()
-  await expect(camera.getByRole('button', { name: 'Nessuno guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: 'Nessuno guarda', exact: true })).toBeVisible()
 })
 
 test('the camera says "Collegamento…" while the browser asks for the camera, and "In diretta" only once it films', async ({ browser }) => {
@@ -26,7 +26,7 @@ test('the camera says "Collegamento…" while the browser asks for the camera, a
 
   await allowCamera(camera)
 
-  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expectAdvancingVideo(camera.getByLabel('Anteprima', { exact: true }))
   await expect(camera.getByText('In diretta', { exact: true })).toBeVisible()
   await expect(camera.getByText('Collegamento…', { exact: true })).toHaveCount(0)
 })
@@ -65,17 +65,17 @@ test('the camera always shows how many are watching', async ({ browser }) => {
   const andrea = await openDevice(browser)
   await joinAsViewer(andrea, key, 'Andrea')
 
-  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
 
   const giulia = await openDevice(browser)
   await joinAsViewer(giulia, key, 'Giulia')
 
-  await expect(camera.getByRole('button', { name: '2 persone guardano' })).toHaveText('2')
+  await expect(camera.getByRole('button', { name: '2 persone guardano', exact: true })).toHaveText('2')
 
   await andrea.close()
-  await giulia.getByRole('button', { name: 'Esci' }).click()
+  await giulia.getByRole('button', { name: 'Esci', exact: true }).click()
 
-  await expect(camera.getByRole('button', { name: 'Nessuno guarda' })).toHaveText('Nessuno guarda')
+  await expect(camera.getByRole('button', { name: 'Nessuno guarda', exact: true })).toHaveText('Nessuno guarda')
 })
 
 test('the camera is told for a while when someone starts watching', async ({ browser }) => {
@@ -99,7 +99,7 @@ test('a camera that re-enters is not told about who was already watching', async
 
   await camera.reload()
 
-  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
   await expect(camera.getByText('Marta sta guardando.')).toHaveCount(0)
 })
 
@@ -108,9 +108,9 @@ test('"Stanno guardando" shows the animal and the name of each viewer, and since
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   await joinAsViewer(await openDevice(browser), key, 'Andrea', 'Coniglio')
-  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
   await joinAsViewer(await openDevice(browser), key, 'Giulia', 'Gatto')
-  await expect(camera.getByRole('button', { name: '2 persone guardano' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '2 persone guardano', exact: true })).toBeVisible()
 
   await openWatchers(camera)
 
@@ -124,7 +124,7 @@ test('"Stanno guardando" counts how long each viewer has been watching', async (
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   await joinAsViewer(await openDevice(browser), key, 'Andrea')
-  await expect(camera.getByRole('button', { name: '1 persona guarda' })).toBeVisible()
+  await expect(camera.getByRole('button', { name: '1 persona guarda', exact: true })).toBeVisible()
 
   await camera.clock.setFixedTime(Date.now() + 12.5 * 60_000)
   await openWatchers(camera)

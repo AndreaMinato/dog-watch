@@ -11,7 +11,7 @@ declare global {
 }
 
 async function decodeQr(sheet: Locator): Promise<string | undefined> {
-  const png = PNG.sync.read(await sheet.getByRole('img', { name: 'QR del link' }).screenshot())
+  const png = PNG.sync.read(await sheet.getByRole('img', { name: 'QR del link per entrare', exact: true }).screenshot())
   return jsQR(new Uint8ClampedArray(png.data), png.width, png.height)?.data
 }
 
@@ -20,8 +20,8 @@ async function expectInvitationTo(sheet: Locator, key: string) {
   const link = new URL((await decodeQr(sheet))!)
   expect(link.pathname).toBe('/entra')
   expect(link.hash).toBe(`#${key}&Casa%20al%20mare`)
-  await expect(sheet.getByRole('status', { name: 'Link per entrare' })).toHaveText(`${link.origin}/entra#${key}&Casa al mare`)
-  await expect(sheet.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveText(key.split('-'))
+  await expect(sheet.getByRole('status', { name: 'Link per entrare', exact: true })).toHaveText(`${link.origin}/entra#${key}&Casa al mare`)
+  await expect(sheet.getByRole('list', { name: 'Chiave della Stanza', exact: true }).getByRole('listitem')).toHaveText(key.split('-'))
 }
 
 test('the camera invites with the link, its QR and the key in words', async ({ browser }) => {
@@ -71,7 +71,7 @@ test('"Copia il link" copies the link and says so', async ({ browser }) => {
   await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
-  await sheet.getByRole('button', { name: 'Copia il link' }).click()
+  await sheet.getByRole('button', { name: 'Copia il link', exact: true }).click()
 
   await expect(sheet.getByText('Link copiato')).toBeVisible()
   expect(await camera.evaluate(() => navigator.clipboard.readText())).toBe(await decodeQr(sheet))
@@ -90,7 +90,7 @@ test('"Condividi il link" hands the link to the system share sheet', async ({ br
   await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
-  await sheet.getByRole('button', { name: 'Condividi il link' }).click()
+  await sheet.getByRole('button', { name: 'Condividi il link', exact: true }).click()
 
   await expect.poll(() => camera.evaluate(() => window.shared?.url)).toBe(await decodeQr(sheet))
 })
@@ -106,8 +106,8 @@ test('without a system share sheet the link can only be copied', async ({ browse
   await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
-  await expect(sheet.getByRole('button', { name: 'Copia il link' })).toBeVisible()
-  await expect(sheet.getByRole('button', { name: 'Condividi il link' })).toHaveCount(0)
+  await expect(sheet.getByRole('button', { name: 'Copia il link', exact: true })).toBeVisible()
+  await expect(sheet.getByRole('button', { name: 'Condividi il link', exact: true })).toHaveCount(0)
 })
 
 test('a share the user cancels is no error, a copy that fails says so', async ({ browser }) => {
@@ -128,8 +128,8 @@ test('a share the user cancels is no error, a copy that fails says so', async ({
   await openCameraMenu(camera)
   const sheet = await openInviteSheet(camera)
 
-  await sheet.getByRole('button', { name: 'Condividi il link' }).click()
-  await sheet.getByRole('button', { name: 'Copia il link' }).click()
+  await sheet.getByRole('button', { name: 'Condividi il link', exact: true }).click()
+  await sheet.getByRole('button', { name: 'Copia il link', exact: true }).click()
 
   await expect(sheet.getByText('Copia non riuscita: seleziona il link e copialo a mano.')).toBeVisible()
   expect(errors.filter(error => error.includes('Share canceled'))).toEqual([])

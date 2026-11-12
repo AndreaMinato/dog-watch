@@ -22,9 +22,9 @@ test('test browser provides a fake camera', async ({ page }) => {
 
 test('home links to what the app stores', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('link', { name: 'Come funziona e cosa salviamo' }).click()
+  await page.getByRole('link', { name: 'Come funziona e cosa salviamo', exact: true }).click()
 
-  await expect(page.getByRole('heading', { name: 'Come funziona e cosa salviamo' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Come funziona e cosa salviamo', exact: true })).toBeVisible()
   for (const fact of [
     'non viene registrato',
     'come hash',

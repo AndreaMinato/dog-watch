@@ -11,7 +11,7 @@ test.use({
 })
 
 function filmingCamera(page: Page): Promise<string | undefined> {
-  return page.getByLabel('Anteprima').evaluate((preview: HTMLVideoElement) =>
+  return page.getByLabel('Anteprima', { exact: true }).evaluate((preview: HTMLVideoElement) =>
     (preview.srcObject as MediaStream).getVideoTracks()[0]?.getSettings().deviceId)
 }
 
@@ -27,12 +27,12 @@ test('a camera with several lenses moves to the next one at each tap while its v
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const feed = viewer.getByLabel('Telecamera soggiorno')
+  const feed = viewer.getByLabel('Telecamera soggiorno', { exact: true })
   await expectAdvancingVideo(feed)
   const [first, second, third] = await lenses(camera)
   await expect.poll(() => filmingCamera(camera)).toBe(first)
 
-  const lens = camera.getByRole('button', { name: 'Cambia obiettivo' })
+  const lens = camera.getByRole('button', { name: 'Cambia obiettivo', exact: true })
   await lens.click()
   await expect.poll(() => filmingCamera(camera)).toBe(second)
   await lens.click()
@@ -60,7 +60,7 @@ test('a lens that cannot be opened is reported on the camera', async ({ browser 
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
 
-  await camera.getByRole('button', { name: 'Cambia obiettivo' }).click()
+  await camera.getByRole('button', { name: 'Cambia obiettivo', exact: true }).click()
 
   await expect(camera.getByRole('alert')).toHaveText('Impossibile usare l\'altro obiettivo: potrebbe essere occupato da un\'altra app o non essere più collegato.')
 })

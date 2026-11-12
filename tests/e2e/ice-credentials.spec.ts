@@ -24,7 +24,7 @@ test('the camera renews its TURN credentials before they expire', async ({ brows
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const video = viewer.getByLabel('Telecamera soggiorno')
+  const video = viewer.getByLabel('Telecamera soggiorno', { exact: true })
   await expectAdvancingVideo(video)
 
   const joined = await turnUsername(camera)

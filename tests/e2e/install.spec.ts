@@ -15,14 +15,14 @@ async function openInstalledApp(browser: Browser, options?: BrowserContextOption
     window.matchMedia = query => matchMedia(query.replaceAll('display-mode: standalone', 'display-mode: browser'))
   })
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
   return page
 }
 
 test('when the browser offers to install the app, a button opens its prompt once', async ({ browser }) => {
   const page = await openDevice(browser)
-  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
-  const install = page.getByRole('button', { name: 'Installa l\'app' })
+  await expect(page.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
+  const install = page.getByRole('button', { name: 'Installa l\'app', exact: true })
   await expect(install).toBeHidden()
 
   await offerToInstall(page)
@@ -35,7 +35,7 @@ test('when the browser offers to install the app, a button opens its prompt once
 test('the button goes away when the app is installed from the browser menu', async ({ browser }) => {
   const page = await openDevice(browser)
   await offerToInstall(page)
-  const install = page.getByRole('button', { name: 'Installa l\'app' })
+  const install = page.getByRole('button', { name: 'Installa l\'app', exact: true })
   await expect(install).toBeVisible()
 
   await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')))
@@ -51,14 +51,14 @@ test('iPhone and iPad, which install only from Share, say how; a Mac does not', 
   }
 
   const mac = await openDevice(browser, devices['Desktop Safari'])
-  await expect(mac.getByRole('heading', { name: 'Cosa farà questo dispositivo?' })).toBeVisible()
+  await expect(mac.getByRole('heading', { name: 'Cosa farà questo dispositivo?', exact: true })).toBeVisible()
   await expect(mac.getByText(shareSteps)).toBeHidden()
 })
 
 test('the installed app does not offer to install itself', async ({ browser }) => {
   const chrome = await openInstalledApp(browser)
   await offerToInstall(chrome)
-  await expect(chrome.getByRole('button', { name: 'Installa l\'app' })).toBeHidden()
+  await expect(chrome.getByRole('button', { name: 'Installa l\'app', exact: true })).toBeHidden()
 
   const iPhone = await openInstalledApp(browser, devices['iPhone 13 Mini'])
   await expect(iPhone.getByText(shareSteps)).toBeHidden()
