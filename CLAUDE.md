@@ -1,5 +1,7 @@
 # dog-watch
 
+**Scrivi ad Andrea sempre in italiano**, anche quando skill, strumenti e subagent parlano inglese.
+
 Progetto sperimentale per flussi di lavoro AI. Andrea fa da PM / team lead (definisce requisiti e priorità); Claude fa da senior dev: fa domande, scrive spec, codice, gestisce board e release.
 
 ## Regole di lavoro
@@ -9,7 +11,7 @@ Progetto sperimentale per flussi di lavoro AI. Andrea fa da PM / team lead (defi
 - **Conventional Commits** obbligatori (`feat:`, `fix:`, `chore:`, …): guidano le release automatiche.
 - **Release automatiche** da Conventional Commits.
 - **CI** (GitHub Actions): test e build su ogni PR. **Linting** come git hook locale, non in CI.
-- **Lingua**: codice, identificatori e commit in inglese; issue, spec, ADR, documentazione e conversazione in italiano.
+- **Lingua**: codice, identificatori e commit in inglese; issue, spec, ADR e documentazione in italiano.
 - **GitHub Project**: tenerlo sempre allineato allo stato reale (issue create, in corso, in review, chiuse).
 - **Codice pulito, niente doc che invecchia**: nel repo solo codice. Niente commenti che parafrasano il codice, niente README/doc di design che possono restare indietro: nomi e test raccontano il cosa, un commento solo per un *perché* non ovvio. Decisioni e glossario vanno nella wiki.
 
@@ -32,3 +34,4 @@ Single-context, glossario e ADR nella wiki GitHub (`../dog-watch.wiki`), non nel
 - **Servizi esterni**: `gh`, `netlify` e `supabase` sono autenticati sulla macchina di Andrea. Configura tu GitHub, Netlify e Supabase con le CLI; a lui restano login, carta e segreti. Vedi ADR-0004 nella wiki.
 - **Più agenti in parallelo** che fanno girare test: ogni worktree prende uno slot. See `docs/agents/parallel-worktrees.md`.
 - **Standard di codice** applicati in review: `docs/agents/coding-standards.md`.
+- **Prove su dispositivi** (simulatori iOS, emulatore Android, deploy preview, seconda telecamera finta): `docs/agents/device-testing.md`.
