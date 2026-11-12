@@ -1,5 +1,9 @@
 minimumReleaseAgeExcludePrune: true
+
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - '@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1'
+
 shellEmulator: true
 
 allowBuilds:
@@ -9,6 +13,7 @@ allowBuilds:
 catalogs:
   dev:
     '@antfu/eslint-config': ^9.5.1
+    '@axe-core/playwright': ^4.14.0
     '@playwright/test': ^1.64.1
     '@tsconfig/node24': ^24.0.5
     '@types/node': ^24.19.2
@@ -26,6 +31,7 @@ catalogs:
     simple-git-hooks: ^2.14.0
     typescript: ~6.0.3
     vite: ^8.3.4
+    vite-plugin-pwa: ^2.0.0
     vitest: ^4.1.12
     vue-tsc: ^3.3.13
   frontend:

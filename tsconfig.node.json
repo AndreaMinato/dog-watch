@@ -12,6 +12,7 @@
     "vite.config.*",
     "vitest.config.*",
     "playwright.config.*",
-    "eslint.config.*"
+    "eslint.config.*",
+    "src/brand.ts"
   ]
 }

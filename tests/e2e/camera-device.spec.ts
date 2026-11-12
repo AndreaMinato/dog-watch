@@ -1,7 +1,8 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
+import { cameraThumbnails, createRoom, expectAdvancingVideo, expectFrozenVideo, heldWakeLocks, hideAndShow, joinAsCamera, joinAsCameraWithKey, joinAsViewer, openCameraMenu, openDevice, openPeerConnections, releaseWakeLocks, setVisibility, test } from './devices'
 
-const screenMayTurnOff = /il browser non tiene acceso lo schermo/i
+const screenMayTurnOff = /^Il browser non tiene acceso lo schermo: se si spegne, la telecamera smette di trasmettere\./
+const reminder = /Tieni il dispositivo in carica e questa pagina in primo piano: .* la telecamera smette di trasmettere\./
 
 test('the camera keeps the screen on', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -49,7 +50,7 @@ test('the camera warns that the screen may turn off when the browser refuses to 
 
   await expect(camera.getByRole('alert')).toHaveText(screenMayTurnOff)
 
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' }).getByRole('alert')).toHaveText(screenMayTurnOff)
 })
@@ -60,7 +61,7 @@ test('the camera films again for its viewers after losing the camera while hidde
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
-  const feed = viewer.getByLabel('Camera soggiorno')
+  const feed = viewer.getByLabel('Telecamera soggiorno')
   await expectAdvancingVideo(feed)
 
   await camera.getByLabel('Anteprima').evaluate((preview: HTMLVideoElement) =>
@@ -80,30 +81,138 @@ test('the camera is reminded to stay plugged in and in the foreground', async ({
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await expect(camera.getByText('Tieni il dispositivo in carica e questa pagina in primo piano')).toBeVisible()
-  await expect(viewer.getByRole('list', { name: 'Nella Stanza' })).toBeVisible()
+  await expect(camera.getByText(reminder)).toBeVisible()
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
   await expect(viewer.getByText('Tieni il dispositivo in carica')).toHaveCount(0)
 })
 
-test('the camera rests on a black screen listing its viewers and wakes up on a tap', async ({ browser }) => {
+test('on its first start only, the camera is told to stay open and plugged in, and that the screen dims by itself', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
   const viewer = await openDevice(browser)
   await joinAsViewer(viewer, key, 'Andrea')
 
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  const notice = camera.getByText('Tieni l\'app aperta e il telefono in carica: se blocchi lo schermo la trasmissione si ferma. Lo schermo si oscura da solo dopo 2 minuti.', { exact: true })
+  await expect(notice).toBeVisible()
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
+  await expect(viewer.getByText('Tieni l\'app aperta')).toHaveCount(0)
+
+  await camera.getByRole('button', { name: 'Ho capito' }).click()
+
+  await expect(notice).toBeHidden()
+
+  await camera.reload()
+
+  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expect(camera.getByText(reminder)).toBeVisible()
+  await expect(notice).toHaveCount(0)
+  await expect(camera.getByRole('button', { name: 'Ho capito' })).toHaveCount(0)
+})
+
+test('the camera rests on a black screen saying it is live and listing its viewers, and wakes up on a tap', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
 
   const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
   await expect(rest).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+  await expect(rest.getByText('In diretta', { exact: true })).toBeVisible()
   await expect(rest.getByRole('list', { name: 'Spettatori' })).toHaveText(['Andrea'])
   await expect(camera.getByLabel('Anteprima')).toBeHidden()
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 
   await rest.click()
 
   await expect(rest).toBeHidden()
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+})
+
+test('the browser bars turn black while the camera rests, and take the theme colours back when it wakes', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const lightBars = camera.locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
+  const darkBars = camera.locator('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]')
+
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
+
+  await expect(lightBars).toHaveAttribute('content', '#000')
+  await expect(darkBars).toHaveAttribute('content', '#000')
+
+  await camera.getByRole('region', { name: 'Schermata a riposo' }).click()
+
+  await expect(lightBars).toHaveAttribute('content', '#cbdac6')
+  await expect(darkBars).toHaveAttribute('content', '#1b2249')
+})
+
+test('the camera dims its screen after two minutes without touches or keys, and a tap brings back the framing', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await camera.clock.install()
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+  await joinAsViewer(viewer, key, 'Andrea')
+  const preview = camera.getByLabel('Anteprima')
+  const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+  await expectAdvancingVideo(preview)
+
+  await camera.getByRole('heading', { name: 'soggiorno' }).click()
+  await camera.clock.fastForward('01:50')
+  await camera.keyboard.press('Shift')
+  await camera.clock.fastForward('01:50')
+  await expect(preview).toBeVisible()
+
+  await camera.clock.fastForward('00:10')
+
+  await expect(rest).toBeVisible()
+  await expect(preview).toBeHidden()
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+
+  await rest.click()
+
+  await expect(rest).toBeHidden()
+  await expectAdvancingVideo(preview)
+
+  await camera.clock.fastForward('02:00')
+
+  await expect(rest).toBeVisible()
+})
+
+test('a camera left with its menu open dims its screen too, and a tap brings back the framing', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await camera.clock.install()
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const preview = camera.getByLabel('Anteprima')
+  const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+  await expectAdvancingVideo(preview)
+  const menu = await openCameraMenu(camera)
+
+  await camera.clock.fastForward('02:00')
+  await expect(rest).toBeVisible()
+  await rest.click()
+
+  await expect(rest).toBeHidden()
+  await expect(menu).toBeHidden()
+  await expectAdvancingVideo(preview)
+})
+
+test('a paused camera says so on its rest screen', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  await (await openCameraMenu(camera)).getByRole('button', { name: 'Metti in pausa' }).click()
+
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
+
+  const rest = camera.getByRole('region', { name: 'Schermata a riposo' })
+  await expect(rest.getByText('In pausa', { exact: true })).toBeVisible()
+  await expect(rest.getByText('In diretta', { exact: true })).toHaveCount(0)
 })
 
 test('a resting camera shows that the room was closed', async ({ browser }) => {
@@ -112,11 +221,11 @@ test('a resting camera shows that the room was closed', async ({ browser }) => {
   await joinAsCamera(camera, 'soggiorno')
   const other = await openDevice(browser)
   await joinAsCameraWithKey(other, key, 'cucina')
-  await camera.getByRole('button', { name: 'Schermata a riposo' }).click()
+  await camera.getByRole('button', { name: 'Oscura lo schermo' }).click()
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeVisible()
 
-  await other.getByRole('button', { name: 'Chiudi la Stanza' }).click()
-  await other.getByRole('dialog').getByRole('button', { name: 'Chiudi' }).click()
+  await (await openCameraMenu(other)).getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  await other.getByRole('dialog', { name: /^Chiudere la Stanza\?/ }).getByRole('button', { name: 'Chiudi', exact: true }).click()
 
   await expect(camera.getByRole('region', { name: 'Schermata a riposo' })).toBeHidden()
   await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
@@ -128,5 +237,5 @@ test('a device with a single camera offers no lens choice', async ({ browser }) 
   await joinAsCamera(camera, 'soggiorno')
   await expectAdvancingVideo(camera.getByLabel('Anteprima'))
 
-  await expect(camera.getByLabel('Obiettivo')).toHaveCount(0)
+  await expect(camera.getByRole('button', { name: 'Cambia obiettivo' })).toHaveCount(0)
 })

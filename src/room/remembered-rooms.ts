@@ -1,4 +1,6 @@
+import type { Species } from '../mascot/mascot'
 import type { Role } from './room-client'
+import { speciesOrDefault } from '../mascot/mascot'
 
 export interface RememberedRoom {
   roomId: string
@@ -7,10 +9,14 @@ export interface RememberedRoom {
   role: Role
   /** The Camera's name or the Spettatore's soprannome in this room. */
   memberName: string
+  mascot: Species
+  /** ISO date of the last time this device entered; rooms remembered before it was saved have none. */
+  lastVisit?: string
 }
 
 const ROOMS = 'dog-watch:rooms'
 const CAMERA_ROOM = 'dog-watch:camera-room'
+const CAMERA_NOTICE_UNDERSTOOD = 'dog-watch:camera-notice-understood'
 
 // Storage can be missing or throw (private browsing, blocked site data): the app then
 // simply remembers nothing.
@@ -36,11 +42,13 @@ function write(item: string, value: unknown) {
 
 /** Most recently entered first. */
 export function rememberedRooms(): RememberedRoom[] {
-  return read<RememberedRoom[]>(ROOMS, [])
+  // Rooms remembered before mascots existed have none.
+  return read<RememberedRoom[]>(ROOMS, []).map(room => ({ ...room, mascot: speciesOrDefault(room.mascot) }))
 }
 
-export function rememberEnteredRoom(room: RememberedRoom) {
-  write(ROOMS, [room, ...rememberedRooms().filter(other => other.roomId !== room.roomId)])
+export function rememberEnteredRoom(room: Omit<RememberedRoom, 'lastVisit'>) {
+  const visited = { ...room, lastVisit: new Date().toISOString() }
+  write(ROOMS, [visited, ...rememberedRooms().filter(other => other.roomId !== room.roomId)])
   write(CAMERA_ROOM, room.role === 'camera' ? room.roomId : null)
 }
 
@@ -58,4 +66,13 @@ export function forgetRoom(roomId: string) {
 export function cameraRoomToReenter(): RememberedRoom | undefined {
   const roomId = read<string | null>(CAMERA_ROOM, null)
   return rememberedRooms().find(room => room.roomId === roomId)
+}
+
+/** Whether "Ho capito" was tapped on the notice a Camera gets on its first start on this device. */
+export function cameraNoticeUnderstood(): boolean {
+  return read(CAMERA_NOTICE_UNDERSTOOD, false)
+}
+
+export function rememberCameraNoticeUnderstood() {
+  write(CAMERA_NOTICE_UNDERSTOOD, true)
 }

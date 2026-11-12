@@ -7,6 +7,16 @@ export interface CameraFeed {
   camera: Member
   stream: MediaStream
   offlineSince: Date | null
+  /** No video yet: the first connection to the camera is still being made. */
+  connecting: boolean
+}
+
+export type FeedState = 'connecting' | 'live' | 'paused' | 'offline'
+
+export function feedState({ camera, offlineSince, connecting }: CameraFeed): FeedState {
+  if (offlineSince)
+    return 'offline'
+  return connecting ? 'connecting' : camera.status
 }
 
 export interface ViewerSession {
@@ -24,7 +34,7 @@ const RECONNECT_AFTER_MS = 10_000
 export function startViewerSession(room: RoomClient): ViewerSession {
   const cameras = new Map<string, WatchedCamera>()
   const listeners = createListeners<[CameraFeed[]]>()
-  const feeds = (): CameraFeed[] => [...cameras.values()].map(({ camera, stream, offlineSince }) => ({ camera, stream, offlineSince }))
+  const feeds = (): CameraFeed[] => [...cameras.values()].map(({ camera, stream, offlineSince, connecting }) => ({ camera, stream, offlineSince, connecting }))
   const notify = () => listeners.notify(feeds())
 
   function connect(watched: WatchedCamera) {
@@ -51,8 +61,9 @@ export function startViewerSession(room: RoomClient): ViewerSession {
       if (state === 'connected') {
         clearTimeout(recovery)
         recovery = undefined
-        if (watched.offlineSince) {
+        if (watched.offlineSince || watched.connecting) {
           watched.offlineSince = null
+          watched.connecting = false
           notify()
         }
       }
@@ -103,7 +114,7 @@ export function startViewerSession(room: RoomClient): ViewerSession {
     for (const camera of present.values()) {
       if (cameras.has(camera.id))
         continue
-      const watched: WatchedCamera = { camera, stream: new MediaStream(), offlineSince: null, link: null }
+      const watched: WatchedCamera = { camera, stream: new MediaStream(), offlineSince: null, connecting: true, link: null }
       cameras.set(camera.id, watched)
       connect(watched)
       changed = true

@@ -1,15 +1,16 @@
 import type { ControlEvent, JoinRequest, Member, RoomClient } from './room-client'
-import { shallowReadonly, shallowRef, triggerRef } from 'vue'
+import { computed, shallowReadonly, shallowRef, triggerRef, watch } from 'vue'
 import { forgetRoom, rememberEnteredRoom, rememberLeftRoom } from './remembered-rooms'
 import { joinRoom } from './room-client'
 
 const room = shallowRef<RoomClient | null>(null)
 const members = shallowRef<readonly Member[]>([])
+const viewers = computed(() => members.value.filter(member => member.role === 'viewer'))
 const ended = shallowRef<ControlEvent | null>(null)
 
 function remember(client: RoomClient) {
-  const { roomId, roomName, key, self: { role, name } } = client
-  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name })
+  const { roomId, roomName, key, self: { role, name, mascot } } = client
+  rememberEnteredRoom({ roomId, roomName, key, role, memberName: name, mascot })
 }
 
 function reset() {
@@ -67,5 +68,14 @@ export function useRoom() {
     end(client, { type: 'room_closed' })
   }
 
-  return { room: shallowReadonly(room), members: shallowReadonly(members), ended: shallowReadonly(ended), join, leave, rotateKey, closeRoom }
+  /** Who watched already when the screen opened is no news: only later arrivals are. */
+  function onViewerArrival(listener: (viewer: Member) => void) {
+    let watching = new Set(viewers.value.map(viewer => viewer.id))
+    watch(viewers, (current) => {
+      current.filter(viewer => !watching.has(viewer.id)).forEach(listener)
+      watching = new Set(current.map(viewer => viewer.id))
+    })
+  }
+
+  return { room: shallowReadonly(room), viewers, ended: shallowReadonly(ended), join, leave, rotateKey, closeRoom, onViewerArrival }
 }

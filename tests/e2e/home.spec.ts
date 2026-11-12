@@ -1,11 +1,12 @@
 import { expect } from '@playwright/test'
 import { test } from './devices'
 
-test('home page opens in Italian', async ({ page }) => {
+test('home page opens in Italian under the app name', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'it')
-  await expect(page.getByRole('heading', { name: 'dog-watch' })).toBeVisible()
+  await expect(page).toHaveTitle('Veglia')
+  await expect(page.getByText('Veglia', { exact: true })).toBeVisible()
 })
 
 test('test browser provides a fake camera', async ({ page }) => {

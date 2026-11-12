@@ -1,6 +1,6 @@
 import type { Browser, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, members, openDevice, openPeerConnections, test } from './devices'
+import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openCameraMenu, openDevice, openInviteSheet, openPeerConnections, openWatchers, rotateKey, test, watchers } from './devices'
 
 async function watchedRoom(browser: Browser, prepareViewer?: (viewer: Page) => Promise<void>) {
   const camera = await openDevice(browser)
@@ -9,33 +9,32 @@ async function watchedRoom(browser: Browser, prepareViewer?: (viewer: Page) => P
   const viewer = await openDevice(browser)
   await prepareViewer?.(viewer)
   await joinAsViewer(viewer, key, 'Andrea')
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
   return { camera, viewer, key }
 }
 
-async function confirm(page: Page, action: string, confirmation: string) {
-  await page.getByRole('button', { name: action }).click()
-  await page.getByRole('dialog').getByRole('button', { name: confirmation }).click()
-}
-
-test('rotating the key expels the viewer, who re-enters with the new key', async ({ browser }) => {
+test('rotating the key from "Stanno guardando" expels the viewer and shows the new key, with which the viewer re-enters', async ({ browser }) => {
   const { camera, viewer, key } = await watchedRoom(browser)
 
-  await confirm(camera, 'Rigenera la Chiave', 'Rigenera')
+  const newKey = await rotateKey(camera)
 
   await expect(viewer.getByRole('alert')).toHaveText('La Chiave è stata rigenerata: per rientrare serve la Chiave nuova.')
-  await expect(viewer.getByLabel('Camera soggiorno')).toHaveCount(0)
+  await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
   await expect.poll(() => openPeerConnections(camera)).toBe(0)
-  await expect(members(camera)).toHaveCount(1)
-  const newKey = camera.getByRole('status', { name: 'Chiave della Stanza' })
-  await expect(newKey).toHaveText(/^[a-z]+(?:-[a-z]+){3}$/)
-  await expect(newKey).not.toHaveText(key)
-  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-  await expect(camera.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${await newKey.textContent()}$`))
+  const sheet = camera.getByRole('dialog', { name: 'Stanno guardando' })
+  await expect(watchers(camera)).toHaveCount(0)
+  await expect(sheet.getByText('Nessuno, per ora.')).toBeVisible()
+  expect(newKey).toMatch(/^[a-z]+(?:-[a-z]+){3}$/)
+  expect(newKey).not.toBe(key)
+  await sheet.getByRole('button', { name: 'Chiudi', exact: true }).click()
+  await openCameraMenu(camera)
+  const invitation = await openInviteSheet(camera)
+  await expect(invitation.getByRole('status', { name: 'Link per entrare' })).toHaveText(new RegExp(`#${newKey}&Casa%20al%20mare$`))
 
-  await joinAsViewer(viewer, (await newKey.textContent())!, 'Andrea')
+  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
+  await joinAsViewer(viewer, newKey, 'Andrea')
 
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
 })
 
 test('the camera drops an expelled viewer that ignores the expulsion', async ({ browser }) => {
@@ -51,7 +50,7 @@ test('the camera drops an expelled viewer that ignores the expulsion', async ({ 
     await viewer.reload()
   })
 
-  await confirm(camera, 'Rigenera la Chiave', 'Rigenera')
+  await rotateKey(camera)
 
   await expect.poll(() => openPeerConnections(camera)).toBe(0)
   await expect(viewer.getByRole('alert')).toHaveCount(0)
@@ -59,27 +58,36 @@ test('the camera drops an expelled viewer that ignores the expulsion', async ({ 
 
 test('rotating the key asks for confirmation first', async ({ browser }) => {
   const { camera, viewer } = await watchedRoom(browser)
+  const sheet = await openWatchers(camera)
 
-  await camera.getByRole('button', { name: 'Rigenera la Chiave' }).click()
-  await camera.getByRole('dialog').getByRole('button', { name: 'Annulla' }).click()
+  await sheet.getByRole('button', { name: 'Rigenera la Chiave' }).click()
+  const confirmation = camera.getByRole('dialog', { name: /^Rigenerare la Chiave\?/ })
+  await confirmation.getByRole('button', { name: 'Annulla' }).click()
 
-  await expect(camera.getByRole('dialog')).toBeHidden()
-  await expectAdvancingVideo(viewer.getByLabel('Camera soggiorno'))
-  await expect(members(camera)).toHaveCount(2)
+  await expect(confirmation).toBeHidden()
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await expect(watchers(camera)).toHaveCount(1)
+  await expect(sheet.getByRole('list', { name: 'Chiave della Stanza' })).toHaveCount(0)
 })
 
 test('closing the room tells the viewer and the key stops working', async ({ browser }) => {
   const { camera, viewer, key } = await watchedRoom(browser)
 
-  await camera.getByRole('button', { name: 'Chiudi la Stanza' }).click()
-  await camera.getByRole('dialog').getByRole('button', { name: 'Annulla' }).click()
-  await expect(members(camera)).toHaveCount(2)
-  await confirm(camera, 'Chiudi la Stanza', 'Chiudi')
+  const menu = await openCameraMenu(camera)
+  await menu.getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  const confirmation = camera.getByRole('dialog', { name: /^Chiudere la Stanza\?/ })
+  await confirmation.getByRole('button', { name: 'Annulla' }).click()
+  await expect(confirmation).toBeHidden()
+  await expect(menu).toBeVisible()
+  await expectAdvancingVideo(viewer.getByLabel('Telecamera soggiorno'))
+  await menu.getByRole('button', { name: 'Chiudi la Stanza' }).click()
+  await confirmation.getByRole('button', { name: 'Chiudi', exact: true }).click()
 
   await expect(viewer.getByRole('alert')).toHaveText('Stanza chiusa')
-  await expect(viewer.getByLabel('Camera soggiorno')).toHaveCount(0)
+  await expect(viewer.getByLabel('Telecamera soggiorno')).toHaveCount(0)
   await expect(camera.getByRole('alert')).toHaveText('Stanza chiusa')
 
+  await viewer.getByRole('link', { name: 'Entra in una Stanza' }).click()
   await joinAsViewer(viewer, key, 'Andrea')
 
   await expect(viewer.getByRole('alert')).toHaveText('Chiave non valida')

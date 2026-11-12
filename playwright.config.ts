@@ -21,18 +21,29 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
+    // A service worker answers pages from its cache: only the pwa project lets it in, against a fresh build.
+    serviceWorkers: 'block',
   },
   projects: [
     {
       name: 'chromium',
-      testIgnore: /phone\.spec\.ts/,
+      testIgnore: /(layout|pwa)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], launchOptions: fakeMedia },
     },
     {
       name: 'phone',
-      testMatch: /phone\.spec\.ts/,
+      testMatch: /layout\.spec\.ts/,
       use: { ...devices['iPhone 13 Mini'], browserName: 'chromium', launchOptions: fakeMedia },
     },
+    {
+      name: 'tablet',
+      testMatch: /layout\.spec\.ts/,
+      use: { ...devices['iPad Mini'], browserName: 'chromium', launchOptions: fakeMedia },
+    },
+    // The manifest and the service worker exist only in a production build, the one CI serves.
+    ...(isCI
+      ? [{ name: 'pwa', testMatch: /pwa\.spec\.ts/, use: { ...devices['Desktop Chrome'], serviceWorkers: 'allow' as const } }]
+      : []),
   ],
   webServer: {
     command: isCI ? 'pnpm preview' : 'pnpm dev',

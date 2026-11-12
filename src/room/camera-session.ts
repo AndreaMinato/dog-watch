@@ -93,13 +93,13 @@ export async function startCameraSession(room: RoomClient): Promise<CameraSessio
 
   let present = new Set<string>()
   const stopMembers = room.onMembersChange((members: Member[]) => {
-    const viewers = new Set(members.filter(member => member.role === 'viewer').map(member => member.id))
-    for (const viewerId of present) {
-      if (!viewers.has(viewerId))
-        closeLink(viewerId)
+    const current = new Set(members.map(member => member.id))
+    for (const memberId of present) {
+      if (!current.has(memberId))
+        closeLink(memberId)
     }
-    present = viewers
-    expelled = new Set([...expelled].filter(viewerId => viewers.has(viewerId)))
+    present = current
+    expelled = new Set([...expelled].filter(memberId => current.has(memberId)))
   })
 
   const stopControl = room.onControl((event) => {

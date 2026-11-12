@@ -1,62 +1,87 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import jsQR from 'jsqr'
-import { PNG } from 'pngjs'
-import { createRoom, joinAsCamera, members, openDevice, test } from './devices'
+import { cameraThumbnails, createRoom, enter, joinAsCamera, next, openCameraMenu, openDevice, openInviteSheet, test } from './devices'
 
-async function decodeQr(page: Page): Promise<string | undefined> {
-  const png = PNG.sync.read(await page.getByRole('img', { name: 'QR del link' }).screenshot())
-  return jsQR(new Uint8ClampedArray(png.data), png.width, png.height)?.data
+async function invitationLink(camera: Page): Promise<string> {
+  await openCameraMenu(camera)
+  const sheet = await openInviteSheet(camera)
+  return (await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())!
 }
 
-test('the camera shows the join link and its QR only on request', async ({ browser }) => {
-  const camera = await openDevice(browser)
-  const key = await createRoom(camera, 'Casa al mare')
-  await joinAsCamera(camera, 'soggiorno')
-  const link = camera.getByLabel('Link per entrare')
-  const qr = camera.getByRole('img', { name: 'QR del link' })
-  await expect(members(camera)).toHaveCount(1)
-  await expect(link).toBeHidden()
-  await expect(qr).toBeHidden()
-
-  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-
-  const shown = new URL((await link.textContent())!)
-  expect(shown.hash).toBe(`#${key}`)
-  expect(shown.pathname + shown.search).not.toContain(key)
-  expect(await decodeQr(camera)).toBe(shown.href)
-
-  await camera.getByRole('button', { name: 'Nascondi link e QR' }).click()
-
-  await expect(link).toBeHidden()
-  await expect(qr).toBeHidden()
-})
-
-test('opening the join link asks only for role and name', async ({ browser }) => {
+test('opening the join link skips the key: three questions and the device is in', async ({ browser }) => {
   const camera = await openDevice(browser)
   await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
-  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-  const link = (await camera.getByLabel('Link per entrare').textContent())!
+  const link = await invitationLink(camera)
 
   const viewer = await openDevice(browser)
   await viewer.goto(link)
 
-  await expect(viewer.getByRole('heading', { name: 'Entra in una Stanza' })).toBeVisible()
   await expect(viewer).toHaveURL(new URL('/entra', link).href)
-  await expect(viewer.getByLabel('Chiave')).toHaveCount(0)
-  await viewer.getByLabel('Spettatore').check()
-  await viewer.getByLabel('Soprannome').fill('Andrea')
-  await viewer.getByRole('button', { name: 'Entra' }).click()
-  await expect(members(viewer)).toHaveCount(2)
+  await expect(viewer.getByText('Hai un invito per Casa al mare.')).toBeVisible()
+  await expect(viewer.getByText('1 di 3')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await expect(viewer.getByText('2 di 3')).toBeVisible()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await expect(viewer.getByText('3 di 3')).toBeVisible()
+  await enter(viewer)
+  await expect(cameraThumbnails(viewer)).toHaveCount(1)
 })
 
-test('going back after opening the join link does not bring the key back', async ({ browser }) => {
+test('a link shared before it carried the room name says only that there is an invitation', async ({ browser }) => {
   const camera = await openDevice(browser)
   const key = await createRoom(camera, 'Casa al mare')
   await joinAsCamera(camera, 'soggiorno')
-  await camera.getByRole('button', { name: 'Mostra link e QR' }).click()
-  const link = (await camera.getByLabel('Link per entrare').textContent())!
+  const viewer = await openDevice(browser)
+
+  await viewer.goto(`/entra#${key}`)
+
+  await expect(viewer).toHaveURL(/\/entra$/)
+  await expect(viewer.getByText('Hai un invito per una Stanza.')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await enter(viewer)
+  await expect(viewer.getByRole('heading', { level: 1, name: 'Casa al mare' })).toBeVisible()
+})
+
+test('once in, the room goes by the name it has, not the one written in the link', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const viewer = await openDevice(browser)
+
+  await viewer.goto(`/entra#${key}&${encodeURIComponent('Casa di Marta & Luca')}`)
+
+  await expect(viewer).toHaveURL(/\/entra$/)
+  await expect(viewer.getByText('Hai un invito per Casa di Marta & Luca.')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await enter(viewer)
+  await expect(viewer.getByRole('heading', { level: 1, name: 'Casa al mare' })).toBeVisible()
+})
+
+test('a link with a key that no longer works leads to the key question, with the link\'s key to correct', async ({ browser }) => {
+  const viewer = await openDevice(browser)
+  await viewer.goto('/entra#abaco-abete-abisso-zuppa&Casa%20al%20mare')
+
+  await viewer.getByRole('button', { name: 'Guarderà la casa' }).click()
+  await viewer.getByLabel('Come ti chiami?').fill('Andrea')
+  await next(viewer)
+  await enter(viewer)
+
+  await expect(viewer.getByRole('alert')).toHaveText('Chiave non valida')
+  await expect(viewer.getByText('2 di 4')).toBeVisible()
+  await expect(viewer.getByLabel('Hai la Chiave della Stanza?')).toHaveValue('abaco-abete-abisso-zuppa')
+})
+
+test('going back after opening the join link brings back neither the key nor the room name', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  const key = await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+  const link = await invitationLink(camera)
 
   const viewer = await openDevice(browser)
   await viewer.goto('/')
@@ -67,4 +92,5 @@ test('going back after opening the join link does not bring the key back', async
 
   await expect(viewer).toHaveURL(new URL('/', link).href)
   expect(viewer.url()).not.toContain(key)
+  expect(viewer.url()).not.toContain('Casa')
 })
