@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.1.1...dog-watch-v1.2.0) (2026-11-12)
+
+
+### Features
+
+* Veglia identity, interface and installable app ([#56](https://github.com/AndreaMinato/dog-watch/issues/56)) ([ab786ca](https://github.com/AndreaMinato/dog-watch/commit/ab786ca12f446c38534989f847c99f3246e6f8ad))
+* warn the camera when the browser refuses to keep the screen on ([#42](https://github.com/AndreaMinato/dog-watch/issues/42)) ([f5d797b](https://github.com/AndreaMinato/dog-watch/commit/f5d797b3ac9855ebe850252e2329ab0fd5750b68)), closes [#26](https://github.com/AndreaMinato/dog-watch/issues/26)
+
 ## [1.1.1](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.1.0...dog-watch-v1.1.1) (2026-11-11)
 
 
