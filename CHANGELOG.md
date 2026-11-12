@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.2.0...dog-watch-v1.2.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* show the invite link with plain spaces in the Invite sheet ([#58](https://github.com/AndreaMinato/dog-watch/issues/58)) ([0759234](https://github.com/AndreaMinato/dog-watch/commit/075923458afb8d50037e971fb4ddf91159f5ccb5))
+
 ## [1.2.0](https://github.com/AndreaMinato/dog-watch/compare/dog-watch-v1.1.1...dog-watch-v1.2.0) (2026-11-12)
 
 
