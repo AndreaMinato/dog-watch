@@ -17,10 +17,10 @@ async function decodeQr(sheet: Locator): Promise<string | undefined> {
 
 /** Every room in these tests is "Casa al mare". */
 async function expectInvitationTo(sheet: Locator, key: string) {
-  const link = new URL((await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())!)
+  const link = new URL((await decodeQr(sheet))!)
   expect(link.pathname).toBe('/entra')
   expect(link.hash).toBe(`#${key}&Casa%20al%20mare`)
-  expect(await decodeQr(sheet)).toBe(link.href)
+  await expect(sheet.getByRole('status', { name: 'Link per entrare' })).toHaveText(`${link.origin}/entra#${key}&Casa al mare`)
   await expect(sheet.getByRole('list', { name: 'Chiave della Stanza' }).getByRole('listitem')).toHaveText(key.split('-'))
 }
 
@@ -74,8 +74,7 @@ test('"Copia il link" copies the link and says so', async ({ browser }) => {
   await sheet.getByRole('button', { name: 'Copia il link' }).click()
 
   await expect(sheet.getByText('Link copiato')).toBeVisible()
-  expect(await camera.evaluate(() => navigator.clipboard.readText()))
-    .toBe(await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())
+  expect(await camera.evaluate(() => navigator.clipboard.readText())).toBe(await decodeQr(sheet))
 })
 
 test('"Condividi il link" hands the link to the system share sheet', async ({ browser }) => {
@@ -93,8 +92,7 @@ test('"Condividi il link" hands the link to the system share sheet', async ({ br
 
   await sheet.getByRole('button', { name: 'Condividi il link' }).click()
 
-  await expect.poll(() => camera.evaluate(() => window.shared?.url))
-    .toBe(await sheet.getByRole('status', { name: 'Link per entrare' }).textContent())
+  await expect.poll(() => camera.evaluate(() => window.shared?.url)).toBe(await decodeQr(sheet))
 })
 
 test('without a system share sheet the link can only be copied', async ({ browser }) => {
