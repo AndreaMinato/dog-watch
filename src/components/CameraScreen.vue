@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { CameraSession } from '../room/camera-session'
+import type { ShownStatus } from '../room/messages'
 import type { RoomClient } from '../room/room-client'
-import { onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef } from 'vue'
 import { keepScreenAndCameraOn } from '../device/screen-and-camera-keeper'
 import { rolePoses } from '../mascot/mascot'
 import { startCameraSession } from '../room/camera-session'
@@ -31,6 +32,11 @@ const resting = shallowRef(false)
 const screenKeptOn = shallowRef(true)
 const lensFailed = shallowRef(false)
 const firstStart = shallowRef(!cameraNoticeUnderstood())
+const status = computed<ShownStatus>(() => {
+  if (!session.value)
+    return 'connecting'
+  return paused.value ? 'paused' : 'live'
+})
 let unmounted = false
 let releaseScreenAndCamera = () => {}
 let idle: ReturnType<typeof setTimeout> | undefined
@@ -93,7 +99,7 @@ onBeforeUnmount(() => {
         <h1 class="name">
           {{ room.self.name }}
         </h1>
-        <StatusPill :status="paused ? 'paused' : 'live'" />
+        <StatusPill :status="status" />
       </div>
       <CameraWatchers :room-key="roomKey" />
     </div>
@@ -131,7 +137,7 @@ onBeforeUnmount(() => {
       />
     </div>
   </main>
-  <RestScreen v-if="resting" :status="paused ? 'paused' : 'live'" :screen-kept-on="screenKeptOn" @wake="resting = false" />
+  <RestScreen v-if="resting" :status="status" :screen-kept-on="screenKeptOn" @wake="resting = false" />
 </template>
 
 <style scoped>

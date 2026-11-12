@@ -7,6 +7,7 @@ declare global {
     peerConnections: RTCPeerConnection[]
     wakeLocks: WakeLockSentinel[]
     installPrompts: number
+    allowCamera: () => void
   }
 }
 
@@ -229,4 +230,23 @@ export async function expectFrozenVideo(video: Locator): Promise<void> {
     await video.page().waitForTimeout(1_000)
     return before === await captureFrame(video)
   }).toBe(true)
+}
+
+/** The camera waits, as while the browser asks for the permission, until allowCamera(). */
+export async function holdCameraPermission(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const getUserMedia = MediaDevices.prototype.getUserMedia
+    const allowed = new Promise<void>((resolve) => {
+      window.allowCamera = resolve
+    })
+    MediaDevices.prototype.getUserMedia = async function (constraints) {
+      await allowed
+      return getUserMedia.call(this, constraints)
+    }
+  })
+  await page.reload()
+}
+
+export function allowCamera(page: Page): Promise<void> {
+  return page.evaluate(() => window.allowCamera())
 }

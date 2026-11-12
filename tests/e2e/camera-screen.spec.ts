@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test'
-import { createRoom, expectAdvancingVideo, joinAsCamera, joinAsViewer, openDevice, openWatchers, test, watchers } from './devices'
+import { allowCamera, createRoom, expectAdvancingVideo, holdCameraPermission, joinAsCamera, joinAsViewer, openDevice, openWatchers, test, watchers } from './devices'
 
 test('the camera films on the whole screen, with its animal, its name and "In diretta" on top', async ({ browser }) => {
   const camera = await openDevice(browser)
@@ -13,6 +13,22 @@ test('the camera films on the whole screen, with its animal, its name and "In di
   await expect(camera.getByRole('img', { name: 'Gatto seduto', exact: true })).toBeVisible()
   await expect(camera.getByText('In diretta', { exact: true })).toBeVisible()
   await expect(camera.getByRole('button', { name: 'Nessuno guarda' })).toBeVisible()
+})
+
+test('the camera says "Collegamento…" while the browser asks for the camera, and "In diretta" only once it films', async ({ browser }) => {
+  const camera = await openDevice(browser)
+  await holdCameraPermission(camera)
+  await createRoom(camera, 'Casa al mare')
+  await joinAsCamera(camera, 'soggiorno')
+
+  await expect(camera.getByText('Collegamento…', { exact: true })).toBeVisible()
+  await expect(camera.getByText('In diretta', { exact: true })).toHaveCount(0)
+
+  await allowCamera(camera)
+
+  await expectAdvancingVideo(camera.getByLabel('Anteprima'))
+  await expect(camera.getByText('In diretta', { exact: true })).toBeVisible()
+  await expect(camera.getByText('Collegamento…', { exact: true })).toHaveCount(0)
 })
 
 test('the camera always shows how many are watching', async ({ browser }) => {

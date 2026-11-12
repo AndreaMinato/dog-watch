@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { CameraStatus } from '../room/room-client'
+import type { ShownStatus } from '../room/messages'
 import { statusLabels } from '../room/messages'
 
-const { status } = defineProps<{ status: CameraStatus }>()
+const { status } = defineProps<{ status: ShownStatus }>()
 </script>
 
 <template>
@@ -22,7 +22,8 @@ const { status } = defineProps<{ status: CameraStatus }>()
   background: var(--live);
   color: var(--on-live);
 }
-.paused {
+.paused,
+.connecting {
   background: var(--surface);
   color: var(--text);
   box-shadow: inset 0 0 0 2px var(--text-muted);

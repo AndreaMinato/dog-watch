@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { devices, expect } from '@playwright/test'
-import { cameraThumbnails, createRoom, enter, expectAdvancingVideo, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, offerToInstall, openCameraMenu, openDevice, openInviteSheet, openWatchers, rotateKey, test, watchers } from './devices'
+import { cameraThumbnails, createRoom, enter, expectAdvancingVideo, holdCameraPermission, joinAsCamera, joinAsCameraWithKey, joinAsViewer, next, offerToInstall, openCameraMenu, openDevice, openInviteSheet, openWatchers, rotateKey, test, watchers } from './devices'
 
 const MIN_TOUCH_TARGET = 44
 
@@ -201,6 +201,15 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await joinAsCamera(camera, 'soggiorno')
       await expectAdvancingVideo(camera.getByLabel('Anteprima'))
       await expect(camera.getByRole('button', { name: 'Ho capito' })).toBeVisible()
+      await expectUsable(camera)
+    })
+
+    test('the camera saying "Collegamento…" while the browser asks for the camera is usable on this screen', async ({ browser }) => {
+      const camera = await openDevice(browser)
+      await holdCameraPermission(camera)
+      await createRoom(camera, 'Casa al mare')
+      await joinAsCamera(camera, 'soggiorno')
+      await expect(camera.getByText('Collegamento…', { exact: true })).toBeVisible()
       await expectUsable(camera)
     })
 

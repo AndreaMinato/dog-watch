@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { CameraStatus } from '../room/room-client'
+import type { ShownStatus } from '../room/messages'
 import { screenMayTurnOff, statusLabels } from '../room/messages'
 import ViewerList from './ViewerList.vue'
 
-defineProps<{ status: CameraStatus, screenKeptOn: boolean }>()
+defineProps<{ status: ShownStatus, screenKeptOn: boolean }>()
 const emit = defineEmits<{ wake: [] }>()
 </script>
 

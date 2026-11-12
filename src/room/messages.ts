@@ -6,7 +6,10 @@ import { InvalidKeyError, MEMBER_LIMITS, RoomRefusedError, TooManyAttemptsError 
 
 export const roleLabels: Record<Role, string> = { camera: 'Telecamera', viewer: 'Spettatore' }
 
-export const statusLabels: Record<CameraStatus, string> = { live: 'In diretta', paused: 'In pausa' }
+/** A camera says "Collegamento…" until its own stream exists. */
+export type ShownStatus = CameraStatus | 'connecting'
+
+export const statusLabels: Record<ShownStatus, string> = { connecting: 'Collegamento…', live: 'In diretta', paused: 'In pausa' }
 
 export const speciesLabels: Record<Species, string> = { dog: 'Cane', cat: 'Gatto', rabbit: 'Coniglio' }
 
