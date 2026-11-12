@@ -13,7 +13,7 @@ test('a camera and a viewer join the same room and see each other', async ({ bro
   await openWatchers(camera)
   await expect(watchers(camera)).toHaveText([/^Andrea /])
 
-  await viewer.getByRole('button', { name: 'Esci' }).click()
+  await viewer.getByRole('button', { name: 'Esci', exact: true }).click()
 
   await expect(viewer).toHaveURL('/')
   await expect(watchers(camera)).toHaveCount(0)
@@ -29,5 +29,5 @@ test('too many wrong keys ask to retry later, back at the key', async ({ browser
   }
 
   await expect(viewer.getByRole('alert')).toHaveText('Troppi tentativi, riprova più tardi.')
-  await expect(viewer.getByLabel('Hai la Chiave della Stanza?')).toHaveValue('abaco abete abisso zuppa')
+  await expect(viewer.getByLabel('Hai la Chiave della Stanza?', { exact: true })).toHaveValue('abaco abete abisso zuppa')
 })

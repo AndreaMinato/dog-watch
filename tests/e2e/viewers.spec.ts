@@ -67,7 +67,7 @@ test('a viewer sees who else is watching with it', async ({ browser }) => {
   await expect(andrea.getByText('Con te: Giulia e Marta')).toBeVisible()
 
   await giulia.close()
-  await marta.getByRole('button', { name: 'Esci' }).click()
+  await marta.getByRole('button', { name: 'Esci', exact: true }).click()
 
   await expect(andrea.getByText('Stai guardando solo tu')).toBeVisible()
 })
